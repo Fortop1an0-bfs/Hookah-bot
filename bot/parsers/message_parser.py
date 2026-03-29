@@ -218,13 +218,7 @@ def parse_mix_from_text(text: str) -> Optional[ParsedMix]:
         if not line_clean:
             continue
 
-        # Вся строка — бренд?
-        brand_only = normalize_brand(line_clean)
-        if brand_only:
-            current_brand = brand_only
-            continue
-
-        # Строка = Бренд + Вкус?
+        # Строка = Бренд + Вкус? (проверяем первым — важнее чем бренд-alone)
         parsed_inline = _try_parse_brand_flavor(line_clean)
         if parsed_inline:
             brand, flavor = parsed_inline
@@ -236,6 +230,12 @@ def parse_mix_from_text(text: str) -> Optional[ParsedMix]:
                     percentage=percentage,
                     grams=grams
                 ))
+            continue
+
+        # Вся строка — только бренд?
+        brand_only = normalize_brand(line_clean)
+        if brand_only:
+            current_brand = brand_only
             continue
 
         # Строка содержит бренд внутри (контекстная, без числа)

@@ -1,0 +1,17 @@
+{
+  "date": "2026-03-22",
+  "groq": {
+    "tokens_today": 30489,
+    "calls_today": 75,
+    "tokens_total": 30489,
+    "calls_total": 75,
+    "last_used": "22.03 17:39"
+  },
+  "gemini": {
+    "tokens_today": 0,
+    "calls_today": 0,
+    "tokens_total": 0,
+    "calls_total": 0,
+    "last_used": null
+  }
+}

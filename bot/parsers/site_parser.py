@@ -13,6 +13,7 @@ import json
 import logging
 import base64
 import aiohttp
+from bot.services.usage_tracker import record_groq
 from dataclasses import dataclass
 from typing import Optional
 from playwright.async_api import async_playwright, Page
@@ -113,6 +114,8 @@ async def normalize_tobacco_with_groq(brand: str, flavor: str) -> list[str]:
                 timeout=aiohttp.ClientTimeout(total=15)
             ) as resp:
                 data = await resp.json()
+                tokens = data.get("usage", {}).get("total_tokens", 0)
+                record_groq(tokens)
                 text = data["choices"][0]["message"]["content"].strip()
                 text = re.sub(r"```json|```", "", text).strip()
                 queries = json.loads(text)
@@ -284,10 +287,49 @@ async def parse_all_brands(brands: list[str]) -> list[TobaccoStockInfo]:
     return all_results
 
 
+def _filter_by_relevance(results: list[TobaccoStockInfo], brand: str, flavor: str) -> list[TobaccoStockInfo]:
+    """
+    Оставляет только карточки чей full_name реально содержит искомый вкус.
+    Группирует по URL (один товар = одна запись), берёт все граммовки одного товара.
+    """
+    flavor_words = [w.lower() for w in flavor.split() if len(w) > 2]
+    brand_lower = brand.lower()
+
+    def score(item: TobaccoStockInfo) -> int:
+        name = item.full_name.lower()
+        # Должен содержать бренд
+        if brand_lower not in name:
+            return 0
+        # Считаем сколько слов вкуса встречается в названии
+        return sum(1 for w in flavor_words if w in name)
+
+    # Берём только те у кого score > 0, сортируем по убыванию
+    scored = [(score(r), r) for r in results]
+    best_score = max((s for s, _ in scored), default=0)
+
+    if best_score == 0:
+        # Ничего не совпало — вернём всё что нашли (лучше чем ничего)
+        return results
+
+    # Берём только карточки с максимальным score
+    best = [r for s, r in scored if s == best_score]
+
+    # Дедупликация по URL
+    seen = set()
+    unique = []
+    for r in best:
+        key = r.url.rstrip('/')
+        if key not in seen:
+            seen.add(key)
+            unique.append(r)
+
+    return unique
+
+
 async def check_single_tobacco(brand: str, flavor: str) -> list[TobaccoStockInfo]:
     """
-    Проверяет наличие табака: Groq нормализует -> ищем на сайте.
-    Возвращает ВСЕ найденные граммовки.
+    Проверяет наличие табака: Groq нормализует -> ищем на сайте -> фильтруем по вкусу.
+    Возвращает только граммовки конкретного табака.
     """
     async with async_playwright() as p:
         browser = await p.chromium.launch(headless=True)
@@ -297,12 +339,14 @@ async def check_single_tobacco(brand: str, flavor: str) -> list[TobaccoStockInfo
         page = await context.new_page()
         try:
             queries = await normalize_tobacco_with_groq(brand, flavor)
-            results = []
             for query in queries:
-                results = await search_tobacco_on_site(page, query)
-                if results:
-                    logger.info(f"Найдено {len(results)} граммовок по запросу: '{query}'")
-                    break
-            return results
+                raw = await search_tobacco_on_site(page, query)
+                if not raw:
+                    continue
+                filtered = _filter_by_relevance(raw, brand, flavor)
+                logger.info(f"'{query}': {len(raw)} найдено -> {len(filtered)} после фильтра")
+                if filtered:
+                    return filtered
+            return []
         finally:
             await browser.close()

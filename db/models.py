@@ -71,3 +71,22 @@ class MixTobacco(Base):
 
     mix = relationship("Mix", back_populates="tobaccos")
     tobacco = relationship("Tobacco", back_populates="mix_entries")
+
+
+class StoreMix(Base):
+    __tablename__ = "store_mixes"
+    __table_args__ = {"comment": "Готовые миксы из магазина smokyart.ru"}
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    name = Column(String(400), nullable=False, comment="Полное название с сайта")
+    brand = Column(String(100), nullable=True, comment="Бренд смеси")
+    flavor = Column(String(200), nullable=True, comment="Вкус/название смеси")
+    mix_type = Column(String(50), nullable=True, comment="Тип: Medium, Strong, Light и т.д.")
+    grams = Column(String(20), nullable=True, comment="Граммовка: 25 гр, 100 гр")
+    price = Column(Integer, nullable=True, comment="Цена в рублях")
+    url = Column(String(500), nullable=True, unique=True, comment="URL товара")
+    image_url = Column(String(500), nullable=True, comment="URL картинки")
+    in_stock = Column(Boolean, default=None, nullable=True,
+                      comment="Наличие на Металлургической д1")
+    synced_at = Column(DateTime(timezone=True), server_default=func.now(),
+                       onupdate=func.now(), comment="Дата последней синхронизации")

@@ -6,10 +6,12 @@ from aiogram.types import Message, CallbackQuery, InlineKeyboardMarkup, InlineKe
 from db.database import async_session
 from db.models import Mix, MixTobacco, Tobacco
 from bot.services.mix_service import get_recent_mixes, update_mix_availability
-from bot.services.tobacco_service import sync_brand_tobaccos, sync_all_brands
+from bot.services.tobacco_service import sync_brand_tobaccos, sync_all_brands, sync_from_catalog
+from bot.services.usage_tracker import get_stats, reset_stats, GROQ_DAILY_LIMIT, GEMINI_DAILY_TOKENS, GEMINI_DAILY_REQUESTS
 from bot.parsers.site_parser import check_single_tobacco
 from sqlalchemy import select
 from datetime import datetime, timezone, timedelta
+import html
 import logging
 
 logger = logging.getLogger(__name__)
@@ -105,16 +107,17 @@ async def _render_mixes_page(mixes: list, page: int) -> tuple[str, InlineKeyboar
         date = vld_time(mix.origin_date)
         upd = vld_time(mix.updated_at)
         # Если есть своё название — показываем его жирным, под ним состав
+        source = f"  📌 {mix.source_channel}" if mix.source_channel else ""
         if mix.title:
             lines.append(
-                f"{icon} <code>{mix.code}</code>  {date}\n"
+                f"{icon} <code>{mix.code}</code>  {date}{source}\n"
                 f"   <b>{mix.title}</b>\n"
                 f"   {mix.tobaccos_summary or '—'}\n"
                 f"   🕐 {upd} (Влад.)\n"
             )
         else:
             lines.append(
-                f"{icon} <code>{mix.code}</code>  {date}\n"
+                f"{icon} <code>{mix.code}</code>  {date}{source}\n"
                 f"   {name}\n"
                 f"   🕐 {upd} (Влад.)\n"
             )
@@ -147,7 +150,10 @@ async def cb_mixes_page(callback: CallbackQuery):
         await callback.message.edit_text(text, parse_mode="HTML", reply_markup=keyboard)
     except Exception:
         pass
-    await callback.answer()
+    try:
+        await callback.answer()
+    except Exception:
+        pass
 
 
 @router.callback_query(F.data.startswith("mix:"))
@@ -198,7 +204,9 @@ async def cb_mix_detail(callback: CallbackQuery):
         else:
             lines.append(f"❓ <b>{entry.raw_brand} {entry.raw_flavor}</b>{pct} — не найден")
 
-    lines.append(f"\n🕐 Проверено: {vld_time(mix.updated_at)} (Влад.)")
+    if mix.source_channel:
+        lines.append(f"📌 Источник: {mix.source_channel}")
+    lines.append(f"🕐 Проверено: {vld_time(mix.updated_at)} (Влад.)")
 
     try:
         await callback.message.edit_text(
@@ -364,17 +372,18 @@ async def cmd_tobaccos(message: Message):
         if t.brand != current_brand:
             current_brand = t.brand
             lines.append(f"\n<b>{t.brand}</b>")
+        flavor = html.escape(t.flavor or "")
         if t.variants:
             parts = []
             for v in t.variants:
-                grams = v.get("grams") or "?"
+                grams = html.escape(v.get("grams") or "?")
                 url = v.get("url", "")
                 s = "✅" if v.get("in_stock") else "❌"
                 parts.append(f'{s} <a href="{url}">{grams}</a>' if url else f"{s} {grams}")
-            lines.append(f"  {t.flavor}: {' | '.join(parts)}")
+            lines.append(f"  {flavor}: {' | '.join(parts)}")
         else:
             s = "✅" if t.in_stock else ("❌" if t.in_stock is False else "⏳")
-            lines.append(f"  {s} {t.flavor}")
+            lines.append(f"  {s} {flavor}")
 
     text = '\n'.join(lines)
     for i in range(0, len(text), 4000):
@@ -421,28 +430,168 @@ async def cmd_update(message: Message):
 
 @router.message(Command("sync"))
 async def cmd_sync(message: Message):
-    args = message.text.split()
-    if len(args) > 1:
-        brand_name = ' '.join(args[1:])
-        KNOWN_BRANDS = [
-            "MustHave", "Muassel", "Jent", "Darkside", "Spectrum", "Overdose",
-            "Burn Black", "Starline", "Adalya", "Endorphin", "Brusko", "Chaba",
-            "Chabacco", "Satyr", "Snobless", "Trofimoff", "Morpheus", "Husky",
-            "Joy", "DEUS", "Dogma", "DUFT", "НАШ", "Душа", "Сарма"
-        ]
-        matched = next((b for b in KNOWN_BRANDS if b.lower() == brand_name.lower()), None)
-        if not matched:
-            await message.answer(f"Бренд <code>{brand_name}</code> не найден.", parse_mode="HTML")
-            return
-        msg = await message.answer(f"🔄 <b>{matched}</b>...", parse_mode="HTML")
+    msg = await message.answer(
+        "⚙️ Запускаю полный парсинг каталога табаков...\n"
+        "Это займёт несколько минут."
+    )
+
+    async def on_progress(text: str):
+        try:
+            await msg.edit_text(text, parse_mode="HTML")
+        except Exception:
+            pass
+
+    try:
         async with async_session() as session:
-            updated, created = await sync_brand_tobaccos(session, matched)
-        await msg.edit_text(f"✅ <b>{matched}</b>: обновлено {updated}, добавлено {created}", parse_mode="HTML")
-    else:
-        msg = await message.answer("🔄 Синхронизирую все бренды...")
-        async with async_session() as session:
-            updated, created = await sync_all_brands(session)
-        await msg.edit_text(f"✅ Готово! Обновлено: {updated}, добавлено: {created}")
+            updated, created = await sync_from_catalog(session, on_progress=on_progress)
+        await msg.edit_text(
+            f"✅ <b>Каталог синхронизирован!</b>\n\n"
+            f"🔄 Обновлено: <b>{updated}</b>\n"
+            f"🆕 Добавлено: <b>{created}</b>\n"
+            f"📦 Всего позиций: <b>{updated + created}</b>",
+            parse_mode="HTML"
+        )
+    except Exception as e:
+        logger.error(f"sync error: {e}", exc_info=True)
+        await msg.edit_text(f"❌ Ошибка: {html.escape(str(e))}", parse_mode="HTML")
+
+
+@router.message(Command("syncstore"))
+async def cmd_syncstore(message: Message):
+    from bot.parsers.store_mix_parser import parse_all_store_mixes
+    from db.models import StoreMix
+    from sqlalchemy.dialects.postgresql import insert as pg_insert
+
+    msg = await message.answer("🔄 Парсю раздел миксов магазина...")
+
+    async def on_progress(text: str):
+        try:
+            await msg.edit_text(text)
+        except Exception:
+            pass
+
+    try:
+        mixes = await parse_all_store_mixes(on_progress=on_progress)
+    except Exception as e:
+        logger.error(f"syncstore error: {e}", exc_info=True)
+        await msg.edit_text(f"❌ Ошибка: {e}")
+        return
+
+    if not mixes:
+        await msg.edit_text("😕 Ничего не найдено.")
+        return
+
+    await on_progress(f"💾 Сохраняю {len(mixes)} миксов в БД...")
+
+    created = 0
+    updated = 0
+    async with async_session() as session:
+        for m in mixes:
+            res = await session.execute(
+                select(StoreMix).where(StoreMix.url == m.url)
+            )
+            existing = res.scalar_one_or_none()
+            if existing:
+                existing.name = m.name
+                existing.brand = m.brand
+                existing.flavor = m.flavor
+                existing.mix_type = m.mix_type
+                existing.grams = m.grams
+                existing.price = m.price
+                existing.image_url = m.image_url
+                existing.in_stock = m.in_stock
+                updated += 1
+            else:
+                session.add(StoreMix(
+                    name=m.name, brand=m.brand, flavor=m.flavor,
+                    mix_type=m.mix_type, grams=m.grams, price=m.price,
+                    url=m.url, image_url=m.image_url, in_stock=m.in_stock,
+                ))
+                created += 1
+        await session.commit()
+
+    in_stock_count = sum(1 for m in mixes if m.in_stock)
+    await msg.edit_text(
+        f"✅ <b>Миксы магазина синхронизированы!</b>\n\n"
+        f"📦 Всего: <b>{len(mixes)}</b>\n"
+        f"🆕 Новых: <b>{created}</b>\n"
+        f"🔄 Обновлено: <b>{updated}</b>\n"
+        f"✅ В наличии (Металлургическая): <b>{in_stock_count}</b>",
+        parse_mode="HTML"
+    )
+
+
+@router.message(Command("storemixes"))
+async def cmd_storemixes(message: Message):
+    from db.models import StoreMix
+    async with async_session() as session:
+        result = await session.execute(
+            select(StoreMix).where(StoreMix.in_stock == True).order_by(StoreMix.brand, StoreMix.flavor)
+        )
+        mixes = result.scalars().all()
+
+    if not mixes:
+        await message.answer("База миксов пуста. Запусти /syncstore")
+        return
+
+    lines = [f"🏪 <b>Миксы в наличии ({len(mixes)} шт.):</b>\n"]
+    current_brand = None
+    for m in mixes:
+        if m.brand != current_brand:
+            current_brand = m.brand
+            lines.append(f"\n<b>{html.escape(m.brand or '—')}</b>")
+        grams = f" {m.grams}" if m.grams else ""
+        price = f" — {m.price}₽" if m.price else ""
+        mix_type = f" [{m.mix_type}]" if m.mix_type else ""
+        flavor = html.escape(m.flavor or m.name)
+        url = m.url or ""
+        lines.append(f"  ✅ <a href=\"{url}\">{flavor}</a>{mix_type}{grams}{price}")
+
+    text = '\n'.join(lines)
+    for i in range(0, len(text), 4000):
+        await message.answer(text[i:i+4000], parse_mode="HTML",
+                             disable_web_page_preview=True)
+
+
+@router.message(Command("usage"))
+async def cmd_usage(message: Message):
+    s = get_stats()
+    g = s["groq"]
+    m = s["gemini"]
+
+    def bar(used: int, limit: int, width: int = 16) -> str:
+        pct = min(used / limit, 1.0) if limit else 0
+        filled = round(pct * width)
+        color = "🟩" if pct < 0.6 else ("🟨" if pct < 0.85 else "🟥")
+        return color * filled + "⬜" * (width - filled) + f"  {pct * 100:.1f}%"
+
+    groq_bar   = bar(g["tokens_today"], GROQ_DAILY_LIMIT)
+    gemini_bar = bar(m["tokens_today"], GEMINI_DAILY_TOKENS)
+    gemini_req_bar = bar(m["calls_today"], GEMINI_DAILY_REQUESTS)
+
+    text = (
+        f"📊 <b>Использование API</b>  (<i>сброс в 00:00</i>)\n\n"
+        f"<b>🟣 Groq</b>  (лимит {GROQ_DAILY_LIMIT:,} токенов/день)\n"
+        f"{groq_bar}\n"
+        f"  Токены сегодня: <b>{g['tokens_today']:,}</b>\n"
+        f"  Запросы сегодня: <b>{g['calls_today']}</b>\n"
+        f"  Всего токенов: {g['tokens_total']:,} | запросов: {g['calls_total']}\n"
+        f"  Последний запрос: {g['last_used'] or '—'}\n\n"
+        f"<b>🔵 Gemini</b>  (лимит {GEMINI_DAILY_TOKENS:,} токенов, {GEMINI_DAILY_REQUESTS} запросов/день)\n"
+        f"Токены:   {gemini_bar}\n"
+        f"Запросы:  {gemini_req_bar}\n"
+        f"  Токены сегодня: <b>{m['tokens_today']:,}</b>\n"
+        f"  Запросы сегодня: <b>{m['calls_today']}</b>\n"
+        f"  Всего токенов: {m['tokens_total']:,} | запросов: {m['calls_total']}\n"
+        f"  Последний запрос: {m['last_used'] or '—'}"
+    )
+    await message.answer(text, parse_mode="HTML")
+
+
+@router.message(Command("resetusage"))
+async def cmd_reset_usage(message: Message):
+    reset_stats()
+    await message.answer("✅ Статистика использования API сброшена.")
 
 
 @router.message(Command("help"))
@@ -458,5 +607,6 @@ async def cmd_help(message: Message):
 /update — обновить наличие всех табаков
 /tobaccos — все табаки со ссылками
 /sync — синхронизация с сайтом
+/research [N] — агент ищет N миксов и сохраняет доступные
 /help — справка
 """, parse_mode="HTML")
