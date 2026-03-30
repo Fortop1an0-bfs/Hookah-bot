@@ -20,3 +20,18 @@ alembic/versions/
 # OS
 .DS_Store
 Thumbs.db
+
+# Temp / debug scripts
+_*.py
+_*.txt
+_*.html
+*.txt
+out.txt
+err.txt
+ssh_results.txt
+status_out.txt
+bot_log.txt
+usage_stats.json
+
+# Claude
+.claude/
