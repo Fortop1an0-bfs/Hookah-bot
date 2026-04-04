@@ -39,7 +39,7 @@ async def get_mixes():
     async with pool.acquire() as conn:
         mixes = await conn.fetch("""
             SELECT m.id, m.name, m.category, m.description,
-                   m.recommended_bowl, m.bowl_note, m.strength, m.coal_tip,
+                   m.recommended_bowl, m.bowl_note, m.strength, m.coal_tip, m.pack_method,
                    COALESCE(
                        (SELECT ROUND(AVG(r.rating)::numeric, 1) FROM web_reviews r WHERE r.mix_id = m.id), 0
                    ) as avg_rating,
@@ -61,6 +61,7 @@ async def get_mixes():
                 "bowl_note": m["bowl_note"],
                 "strength": m["strength"],
                 "coal_tip": m["coal_tip"],
+                "pack_method": m["pack_method"],
                 "avg_rating": float(m["avg_rating"]),
                 "review_count": m["review_count"],
                 "items": [dict(i) for i in items]

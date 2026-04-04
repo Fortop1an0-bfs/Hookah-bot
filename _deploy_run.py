@@ -1,18 +1,17 @@
-import paramiko
-import sys
+import paramiko, sys, time
+sys.stdout.reconfigure(encoding='utf-8')
 
 HOST = "198.13.184.39"
-PORT = 22
 USER = "root"
 PASS = "Alcodome_99"
 
 uploads = [
-    ("C:/Project/hookah-mixes/main.py", "/opt/hookah-mixes/main.py"),
-    ("C:/Project/hookah-mixes/templates/index.html", "/opt/hookah-mixes/templates/index.html"),
+    ("C:/Project/Hookah/_new_main.py", "/opt/hookah-mixes/main.py"),
+    ("C:/Project/Hookah/_new_index.html", "/opt/hookah-mixes/templates/index.html"),
 ]
 
 print("=== SFTP Upload ===")
-transport = paramiko.Transport((HOST, PORT))
+transport = paramiko.Transport((HOST, 22))
 transport.connect(username=USER, password=PASS)
 sftp = paramiko.SFTPClient.from_transport(transport)
 
@@ -25,25 +24,23 @@ sftp.close()
 transport.close()
 print("Upload complete.\n")
 
-print("=== SSH Commands ===")
+print("=== Restarting server ===")
 ssh = paramiko.SSHClient()
 ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-ssh.connect(HOST, port=PORT, username=USER, password=PASS)
+ssh.connect(HOST, username=USER, password=PASS)
 
-commands = (
-    "systemctl restart hookah-mixes && "
-    "sleep 2 && "
-    "curl -s http://localhost:8081/api/calendar | head -c 200"
-)
+ssh.exec_command("pkill -f 'uvicorn main:app'")
+time.sleep(1)
+ssh.exec_command("cd /opt/hookah-mixes && nohup uvicorn main:app --host 0.0.0.0 --port 8081 > /tmp/uvicorn.log 2>&1 &")
+time.sleep(2)
 
-stdin, stdout, stderr = ssh.exec_command(commands, timeout=30)
-out = stdout.read().decode()
-err = stderr.read().decode()
+i, o, e = ssh.exec_command("curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:8081/api/mixes")
+code = o.read().decode().strip()
+print(f"API status: {code}")
 
-print("STDOUT:")
-print(out)
-if err:
-    print("STDERR:")
-    print(err)
+if code == '200':
+    i, o, e = ssh.exec_command("curl -s http://127.0.0.1:8081/api/mixes | python3 -c \"import json,sys; m=json.load(sys.stdin); [print(x['name'],'→',x.get('pack_method')) for x in m[:5]]\"")
+    print(o.read().decode('utf-8', errors='replace').strip())
 
 ssh.close()
+print("Done!")

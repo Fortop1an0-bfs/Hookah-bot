@@ -99,6 +99,8 @@ body.edit-mode .avail-toggle{display:flex}
 .total-badge{font-family:'JetBrains Mono',monospace;font-size:0.78rem;color:var(--teal);padding:0.6rem 1.25rem;background:rgba(45,212,191,0.05);border-top:1px solid rgba(255,255,255,0.04)}
 .coal-badge{font-size:0.78rem;color:var(--amber);padding:0.5rem 1.25rem;background:rgba(251,191,36,0.05);border-top:1px solid rgba(255,255,255,0.03);display:flex;gap:6px;align-items:flex-start;line-height:1.4}
 .coal-badge .coal-icon{flex-shrink:0;font-size:0.85rem}
+.pack-badge{font-size:0.78rem;color:#a5b4fc;padding:0.5rem 1.25rem;background:rgba(165,180,252,0.05);border-top:1px solid rgba(255,255,255,0.03);display:flex;gap:6px;align-items:center;line-height:1.4}
+.pack-badge .pack-icon{flex-shrink:0;font-size:0.85rem}
 .card-footer{padding:0.75rem 1.25rem;border-top:1px solid rgba(255,255,255,0.04);display:flex;justify-content:space-between;align-items:center}
 .bowl-rec{display:flex;align-items:center;gap:6px;font-size:0.78rem;color:var(--text2)}
 .bowl-rec .dot{width:8px;height:8px;border-radius:50%}
@@ -285,6 +287,18 @@ textarea::placeholder{color:var(--text3)}
 
 <script>
 const barColors=['#a855f7','#2dd4bf','#fb923c','#60a5fa','#f87171','#34d399','#fbbf24','#c084fc','#f472b6'];
+
+function packIcon(m){
+  return {компот:'🔀',секторами:'🥧',слоями:'📑','центр+края':'🎯'}[m]||'🫕';
+}
+function packHint(m){
+  return {
+    компот:'перемешай все табаки вместе',
+    секторами:'раздели чашу на секторы, каждый табак в свой',
+    слоями:'нежный (MH, BB) — вниз, жаростойкий (DS, HARD) — наверх',
+    'центр+края':'доминант (больший %) — по краям и дну, акцент — в центр'
+  }[m]||'';
+}
 let mixes=[],bowlSize=20,activeCat='all',activeStrength='all',selectedBowl='',selectedRating=0;
 let editMode=false;
 let currentRandomId=null;
@@ -402,6 +416,7 @@ function renderGrid(){
       }).join('')}</div>
       <div class="total-badge">Итого: ${bowlSize}г на чашу</div>
       ${m.coal_tip?`<div class="coal-badge"><span class="coal-icon">🪨</span><span>${coalHeat}${coalSmoke?' <span style="color:var(--text3)">→</span> '+coalSmoke:''}</span></div>`:''}
+      ${m.pack_method?`<div class="pack-badge"><span class="pack-icon">${packIcon(m.pack_method)}</span><span><b style="color:#c7d2fe">${m.pack_method.charAt(0).toUpperCase()+m.pack_method.slice(1)}</b> — ${packHint(m.pack_method)}</span></div>`:''}
       <div class="card-footer">
         <div class="bowl-rec"><span class="dot ${m.recommended_bowl}"></span>Чаша: ${m.recommended_bowl}</div>
         <div class="rating-display">${stars?`<span class="star">${stars}</span><span class="review-count">(${m.review_count})</span>`:'<span class="review-count">нет отзывов</span>'}</div>
@@ -489,6 +504,11 @@ async function openModal(id){
     </div>
     <div class="modal-bowl-note">${m.bowl_note}</div>
     ${coalHtml}
+    ${m.pack_method?`<div class="modal-coal-tip" style="border-left-color:#818cf8;background:rgba(129,140,248,0.06);margin-top:${coalHtml?'0.5rem':'0.75rem'}">
+      <div class="coal-title" style="color:#a5b4fc">${packIcon(m.pack_method)} Набивка чаши</div>
+      <div class="coal-row"><span class="coal-label">Метод:</span><span class="coal-val">${m.pack_method.charAt(0).toUpperCase()+m.pack_method.slice(1)}</span></div>
+      <div class="coal-row"><span class="coal-label">Как:</span><span class="coal-val" style="color:var(--text2)">${packHint(m.pack_method)}</span></div>
+    </div>`:''}
     <div class="modal-items">${m.items.map((it,i)=>{
       const g20=Math.round(20*it.percentage/100*10)/10;
       const g15=Math.round(15*it.percentage/100*10)/10;
