@@ -1,34 +1,33 @@
 """
-HookahLab Social Network — FastAPI Backend
+HookahLab — FastAPI Backend
 Port: 8082
 """
 from fastapi import FastAPI, Request, Header, HTTPException, Depends
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, HTMLResponse
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
-from fastapi.responses import HTMLResponse
-import asyncpg, os, hashlib, secrets, json, re
+import asyncpg, hashlib, secrets, json, re, httpx, os
 from typing import Optional
-from datetime import datetime
 
 app = FastAPI()
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
-app.mount("/static", StaticFiles(directory="static"), name="static")
 
-DB_CONFIG = {
-    "host": os.getenv("DB_HOST", "localhost"),
-    "port": int(os.getenv("DB_PORT", 5432)),
-    "database": os.getenv("DB_NAME", "hookah_db"),
-    "user": os.getenv("DB_USER", "hookah"),
-    "password": os.getenv("DB_PASS", "hookah123"),
-}
+try:
+    app.mount("/static", StaticFiles(directory="static"), name="static")
+except Exception:
+    pass
+
+DB_DSN   = "postgresql://hookah:hookah123@localhost:5432/hookah_db"
+GROQ_KEY = os.environ.get("GROQ_KEY", "")
+GROQ_URL = "https://api.groq.com/openai/v1/chat/completions"
+GROQ_MODEL = "llama-3.3-70b-versatile"
 
 pool = None
 
 @app.on_event("startup")
 async def startup():
     global pool
-    pool = await asyncpg.create_pool(**DB_CONFIG, min_size=2, max_size=10)
+    pool = await asyncpg.create_pool(DB_DSN, min_size=2, max_size=10)
     async with pool.acquire() as conn:
         await conn.execute(SCHEMA_SQL)
 
@@ -37,7 +36,7 @@ async def shutdown():
     if pool:
         await pool.close()
 
-# ── SCHEMA ──────────────────────────────────────────────────────────────────
+# ── SCHEMA ───────────────────────────────────────────────────────────────────
 
 SCHEMA_SQL = """
 CREATE TABLE IF NOT EXISTS hl_users (
@@ -59,13 +58,18 @@ CREATE TABLE IF NOT EXISTS hl_user_setup (
     hookah      TEXT DEFAULT '',
     bowl        TEXT DEFAULT '',
     coal        TEXT DEFAULT '',
-    foil        TEXT DEFAULT ''
+    notes       TEXT DEFAULT ''
 );
 CREATE TABLE IF NOT EXISTS hl_user_tobaccos (
+    id          SERIAL PRIMARY KEY,
     user_id     INT REFERENCES hl_users(id) ON DELETE CASCADE,
-    tobacco_id  INT REFERENCES tobaccos(id) ON DELETE CASCADE,
+    ali_id      INT,
+    name        TEXT NOT NULL,
+    brand       TEXT NOT NULL,
+    line        TEXT DEFAULT '',
+    weight      TEXT DEFAULT '',
     added_at    TIMESTAMPTZ DEFAULT NOW(),
-    PRIMARY KEY (user_id, tobacco_id)
+    UNIQUE(user_id, ali_id)
 );
 CREATE TABLE IF NOT EXISTS hl_mixes (
     id          SERIAL PRIMARY KEY,
@@ -78,28 +82,23 @@ CREATE TABLE IF NOT EXISTS hl_mixes (
     coal_tip    TEXT DEFAULT '',
     strength    TEXT DEFAULT 'средний',
     is_public   BOOLEAN DEFAULT TRUE,
+    is_llm      BOOLEAN DEFAULT FALSE,
+    llm_prompt  TEXT DEFAULT '',
     created_at  TIMESTAMPTZ DEFAULT NOW()
 );
 CREATE TABLE IF NOT EXISTS hl_mix_items (
     id          SERIAL PRIMARY KEY,
     mix_id      INT REFERENCES hl_mixes(id) ON DELETE CASCADE,
-    tobacco_id  INT REFERENCES tobaccos(id),
+    ali_id      INT,
     tobacco_name TEXT NOT NULL,
     brand       TEXT NOT NULL,
     percentage  INT NOT NULL,
     sort_order  INT DEFAULT 0
 );
-CREATE TABLE IF NOT EXISTS hl_posts (
-    id          SERIAL PRIMARY KEY,
-    user_id     INT REFERENCES hl_users(id) ON DELETE CASCADE,
-    mix_id      INT REFERENCES hl_mixes(id) ON DELETE CASCADE,
-    caption     TEXT DEFAULT '',
-    created_at  TIMESTAMPTZ DEFAULT NOW()
-);
 CREATE TABLE IF NOT EXISTS hl_likes (
     user_id     INT REFERENCES hl_users(id) ON DELETE CASCADE,
-    post_id     INT REFERENCES hl_posts(id) ON DELETE CASCADE,
-    PRIMARY KEY (user_id, post_id)
+    mix_id      INT REFERENCES hl_mixes(id) ON DELETE CASCADE,
+    PRIMARY KEY (user_id, mix_id)
 );
 CREATE TABLE IF NOT EXISTS hl_saves (
     user_id     INT REFERENCES hl_users(id) ON DELETE CASCADE,
@@ -107,7 +106,7 @@ CREATE TABLE IF NOT EXISTS hl_saves (
     PRIMARY KEY (user_id, mix_id)
 );
 CREATE TABLE IF NOT EXISTS hl_follows (
-    follower_id INT REFERENCES hl_users(id) ON DELETE CASCADE,
+    follower_id  INT REFERENCES hl_users(id) ON DELETE CASCADE,
     following_id INT REFERENCES hl_users(id) ON DELETE CASCADE,
     PRIMARY KEY (follower_id, following_id)
 );
@@ -115,13 +114,13 @@ CREATE TABLE IF NOT EXISTS hl_follows (
 
 # ── HELPERS ──────────────────────────────────────────────────────────────────
 
-def hash_password(pw: str) -> str:
+def hash_pw(pw: str) -> str:
     return hashlib.sha256(pw.encode()).hexdigest()
 
 def make_token() -> str:
     return secrets.token_hex(32)
 
-async def get_current_user(authorization: Optional[str] = Header(None)):
+async def get_user(authorization: Optional[str] = Header(None)):
     if not authorization or not authorization.startswith("Bearer "):
         return None
     token = authorization[7:]
@@ -130,27 +129,37 @@ async def get_current_user(authorization: Optional[str] = Header(None)):
             "SELECT u.* FROM hl_sessions s JOIN hl_users u ON u.id=s.user_id WHERE s.token=$1", token)
         return dict(row) if row else None
 
-async def require_user(authorization: Optional[str] = Header(None)):
-    user = await get_current_user(authorization)
-    if not user:
+async def req_user(authorization: Optional[str] = Header(None)):
+    u = await get_user(authorization)
+    if not u:
         raise HTTPException(401, "Не авторизован")
-    return user
+    return u
 
-# ── SERVE HTML ───────────────────────────────────────────────────────────────
+async def _mix_items(conn, mix_id: int):
+    rows = await conn.fetch(
+        "SELECT * FROM hl_mix_items WHERE mix_id=$1 ORDER BY sort_order", mix_id)
+    return [dict(r) for r in rows]
+
+async def _mix_stats(conn, mix_id: int):
+    likes = await conn.fetchval("SELECT COUNT(*) FROM hl_likes WHERE mix_id=$1", mix_id)
+    saves = await conn.fetchval("SELECT COUNT(*) FROM hl_saves WHERE mix_id=$1", mix_id)
+    return {"likes": likes, "saves": saves}
+
+# ── SERVE ────────────────────────────────────────────────────────────────────
 
 @app.get("/", response_class=HTMLResponse)
 async def index():
     with open("templates/social.html", "r", encoding="utf-8") as f:
         return f.read()
 
-# ── AUTH ──────────────────────────────────────────────────────────────────────
+# ── AUTH ─────────────────────────────────────────────────────────────────────
 
 @app.post("/api/auth/register")
 async def register(request: Request):
-    data = await request.json()
-    username = (data.get("username") or "").strip()
-    email = (data.get("email") or "").strip().lower()
-    password = data.get("password") or ""
+    d = await request.json()
+    username = (d.get("username") or "").strip()
+    email    = (d.get("email") or "").strip().lower()
+    password = d.get("password") or ""
     if not username or not email or not password:
         raise HTTPException(400, "Заполни все поля")
     if len(username) < 3:
@@ -158,41 +167,37 @@ async def register(request: Request):
     if len(password) < 6:
         raise HTTPException(400, "Пароль минимум 6 символов")
     async with pool.acquire() as conn:
-        existing = await conn.fetchval(
-            "SELECT id FROM hl_users WHERE username=$1 OR email=$2", username, email)
-        if existing:
-            raise HTTPException(409, "Такой пользователь уже существует")
-        user_id = await conn.fetchval(
-            "INSERT INTO hl_users (username, email, pass_hash) VALUES ($1,$2,$3) RETURNING id",
-            username, email, hash_password(password))
-        await conn.execute("INSERT INTO hl_user_setup (user_id) VALUES ($1)", user_id)
+        if await conn.fetchval("SELECT id FROM hl_users WHERE username=$1 OR email=$2", username, email):
+            raise HTTPException(409, "Пользователь уже существует")
+        uid = await conn.fetchval(
+            "INSERT INTO hl_users (username,email,pass_hash) VALUES ($1,$2,$3) RETURNING id",
+            username, email, hash_pw(password))
+        await conn.execute("INSERT INTO hl_user_setup (user_id) VALUES ($1)", uid)
         token = make_token()
-        await conn.execute("INSERT INTO hl_sessions (token, user_id) VALUES ($1,$2)", token, user_id)
-    return {"token": token, "username": username, "user_id": user_id}
+        await conn.execute("INSERT INTO hl_sessions (token,user_id) VALUES ($1,$2)", token, uid)
+    return {"token": token, "username": username, "user_id": uid}
 
 @app.post("/api/auth/login")
 async def login(request: Request):
-    data = await request.json()
-    login_val = (data.get("login") or "").strip().lower()
-    password = data.get("password") or ""
+    d = await request.json()
+    login_val = (d.get("login") or "").strip().lower()
+    password  = d.get("password") or ""
     async with pool.acquire() as conn:
         row = await conn.fetchrow(
             "SELECT * FROM hl_users WHERE (lower(email)=$1 OR lower(username)=$1) AND pass_hash=$2",
-            login_val, hash_password(password))
+            login_val, hash_pw(password))
         if not row:
             raise HTTPException(401, "Неверный логин или пароль")
         token = make_token()
-        await conn.execute("INSERT INTO hl_sessions (token, user_id) VALUES ($1,$2)", token, row["id"])
+        await conn.execute("INSERT INTO hl_sessions (token,user_id) VALUES ($1,$2)", token, row["id"])
     return {"token": token, "username": row["username"], "user_id": row["id"]}
 
 @app.get("/api/me")
-async def get_me(user=Depends(require_user)):
+async def get_me(user=Depends(req_user)):
     async with pool.acquire() as conn:
-        setup = await conn.fetchrow("SELECT * FROM hl_user_setup WHERE user_id=$1", user["id"])
+        setup    = await conn.fetchrow("SELECT * FROM hl_user_setup WHERE user_id=$1", user["id"])
         tobaccos = await conn.fetch(
-            """SELECT t.id, t.brand, t.flavor FROM hl_user_tobaccos ut
-               JOIN tobaccos t ON t.id=ut.tobacco_id
-               WHERE ut.user_id=$1 ORDER BY ut.added_at DESC""", user["id"])
+            "SELECT * FROM hl_user_tobaccos WHERE user_id=$1 ORDER BY added_at DESC", user["id"])
         mixes_count = await conn.fetchval(
             "SELECT COUNT(*) FROM hl_mixes WHERE user_id=$1", user["id"])
         followers = await conn.fetchval(
@@ -200,337 +205,378 @@ async def get_me(user=Depends(require_user)):
         following = await conn.fetchval(
             "SELECT COUNT(*) FROM hl_follows WHERE follower_id=$1", user["id"])
     return {
-        "id": user["id"],
-        "username": user["username"],
-        "bio": user["bio"],
-        "avatar": user["avatar"],
+        "id": user["id"], "username": user["username"],
+        "bio": user["bio"], "avatar": user["avatar"],
         "setup": dict(setup) if setup else {},
         "tobaccos": [dict(t) for t in tobaccos],
         "stats": {"mixes": mixes_count, "followers": followers, "following": following},
     }
 
+@app.patch("/api/me")
+async def update_me(request: Request, user=Depends(req_user)):
+    d = await request.json()
+    async with pool.acquire() as conn:
+        if "bio" in d or "avatar" in d:
+            await conn.execute(
+                "UPDATE hl_users SET bio=COALESCE($1,bio), avatar=COALESCE($2,avatar) WHERE id=$3",
+                d.get("bio"), d.get("avatar"), user["id"])
+        setup_fields = {k: d[k] for k in ("hookah","bowl","coal","notes") if k in d}
+        if setup_fields:
+            sets = ", ".join(f"{k}=${i+2}" for i, k in enumerate(setup_fields))
+            vals = list(setup_fields.values())
+            await conn.execute(
+                f"INSERT INTO hl_user_setup (user_id,{','.join(setup_fields)}) VALUES ($1,{','.join(f'${i+2}' for i in range(len(vals)))}) "
+                f"ON CONFLICT (user_id) DO UPDATE SET {sets}",
+                user["id"], *vals)
+    return {"ok": True}
+
 # ── TOBACCOS ─────────────────────────────────────────────────────────────────
 
 @app.get("/api/tobaccos")
-async def search_tobaccos(q: str = "", brand: str = "", in_stock: bool = True, limit: int = 30):
+async def search_tobaccos(q: str = "", brand: str = "", limit: int = 40):
     async with pool.acquire() as conn:
-        query = """
-            SELECT t.id, t.brand, t.flavor, t.in_stock, t.variants,
-                   ht.avg_rating, ht.total_reviews, ht.strength_user, ht.strength_official,
-                   ht.flavor_tags, ht.url_path as htr_url
-            FROM tobaccos t
-            LEFT JOIN scraper.htr_tobaccos ht ON (
-                similarity(lower(t.flavor), lower(ht.name)) > 0.4
-                AND (
-                    lower(t.brand) ILIKE '%' || lower(split_part(ht.url_path, '/', 3)) || '%'
-                    OR lower(split_part(ht.url_path, '/', 3)) ILIKE '%' || lower(t.brand) || '%'
-                )
-            )
-            WHERE ($1 = '' OR t.brand ILIKE '%' || $1 || '%' OR t.flavor ILIKE '%' || $1 || '%')
-              AND ($2 = '' OR t.brand ILIKE '%' || $2 || '%')
-              AND ($3 = FALSE OR t.in_stock = TRUE)
-            ORDER BY t.in_stock DESC NULLS LAST, ht.avg_rating DESC NULLS LAST, t.brand, t.flavor
-            LIMIT $4
-        """
-        # Fallback if pg_trgm not available
-        try:
-            rows = await conn.fetch(query, q, brand, in_stock, limit)
-        except Exception:
-            rows = await conn.fetch("""
-                SELECT id, brand, flavor, in_stock, variants,
-                       NULL::numeric as avg_rating, NULL::int as total_reviews,
-                       NULL::text as strength_user, NULL::text as strength_official,
-                       NULL::text[] as flavor_tags, NULL::text as htr_url
-                FROM tobaccos
-                WHERE ($1 = '' OR brand ILIKE '%' || $1 || '%' OR flavor ILIKE '%' || $1 || '%')
-                  AND ($2 = '' OR brand ILIKE '%' || $2 || '%')
-                  AND ($3 = FALSE OR in_stock = TRUE)
-                ORDER BY in_stock DESC NULLS LAST, brand, flavor
-                LIMIT $4
-            """, q, brand, in_stock, limit)
-
-        result = []
-        for r in rows:
-            d = dict(r)
-            if d.get("variants") and isinstance(d["variants"], str):
-                try:
-                    d["variants"] = json.loads(d["variants"])
-                except Exception:
-                    d["variants"] = None
-            result.append(d)
-        return result
+        rows = await conn.fetch("""
+            SELECT a.id, a.name, a.brand_name as brand, a.line, a.weight,
+                   a.price, a.price_before_discount, a.has_discount,
+                   a.in_stock, a.stores_count, a.total_amount,
+                   a.htreviews_id, a.image_url, a.is_bestseller,
+                   ht.avg_rating, ht.strength_user, ht.strength_official,
+                   ht.flavor_tags, ht.total_reviews, ht.url_path as htr_url
+            FROM scraper.ali_products a
+            LEFT JOIN scraper.htr_tobaccos ht ON
+                NULLIF(regexp_replace(a.htreviews_id, '[^0-9]', '', 'g'), '')::int = ht.htreviews_id
+            WHERE ($1 = '' OR a.name ILIKE '%' || $1 || '%' OR a.brand_name ILIKE '%' || $1 || '%')
+              AND ($2 = '' OR a.brand_name ILIKE '%' || $2 || '%')
+            ORDER BY
+                CASE WHEN a.brand_name ILIKE $1 THEN 0 ELSE 1 END,
+                a.in_stock DESC NULLS LAST,
+                ht.avg_rating DESC NULLS LAST,
+                a.brand_name, a.name
+            LIMIT $3
+        """, q, brand, limit)
+        return [dict(r) for r in rows]
 
 @app.get("/api/brands")
 async def get_brands():
     async with pool.acquire() as conn:
         rows = await conn.fetch("""
-            SELECT brand, COUNT(*) as total,
-                   SUM(CASE WHEN in_stock THEN 1 ELSE 0 END) as in_stock_count
-            FROM tobaccos GROUP BY brand ORDER BY in_stock_count DESC, brand
+            SELECT brand_name as brand,
+                   COUNT(*) as total,
+                   SUM(CASE WHEN in_stock THEN 1 ELSE 0 END) as in_stock_count,
+                   ROUND(AVG(price)) as avg_price
+            FROM scraper.ali_products
+            GROUP BY brand_name
+            ORDER BY in_stock_count DESC, brand_name
         """)
         return [dict(r) for r in rows]
 
-@app.get("/api/tobaccos/{tobacco_id}/reviews")
-async def get_tobacco_reviews(tobacco_id: int, limit: int = 20):
+@app.get("/api/tobaccos/{ali_id}/reviews")
+async def get_tobacco_reviews(ali_id: int, limit: int = 20):
     async with pool.acquire() as conn:
-        tob = await conn.fetchrow("SELECT brand, flavor FROM tobaccos WHERE id=$1", tobacco_id)
-        if not tob:
+        product = await conn.fetchrow(
+            "SELECT htreviews_id, name FROM scraper.ali_products WHERE id=$1", ali_id)
+        if not product or not product["htreviews_id"]:
             return {"reviews": [], "htr_info": None}
-        # Fuzzy match in htr_tobaccos
-        htr = await conn.fetchrow("""
-            SELECT ht.*, b.name as brand_name
-            FROM scraper.htr_tobaccos ht
-            LEFT JOIN scraper.htr_brands b ON b.id=ht.brand_id
-            WHERE lower(ht.name) ILIKE '%' || lower($1) || '%'
-               OR lower($1) ILIKE '%' || lower(ht.name) || '%'
-            ORDER BY ht.total_reviews DESC LIMIT 1
-        """, tob["flavor"])
 
-        reviews = []
-        if htr:
-            rows = await conn.fetch("""
-                SELECT r.rating, r.review_text, r.reviewed_at, r.likes,
-                       rv.username
-                FROM scraper.htr_reviews r
-                LEFT JOIN scraper.htr_reviewers rv ON rv.id=r.reviewer_id
-                WHERE r.tobacco_id=$1
-                  AND r.review_text IS NOT NULL AND length(r.review_text) > 20
-                ORDER BY r.likes DESC, r.reviewed_at DESC
-                LIMIT $2
-            """, htr["id"], limit)
-            reviews = [dict(r) for r in rows]
+        htr_int = re.sub(r"[^0-9]", "", product["htreviews_id"] or "")
+        if not htr_int:
+            return {"reviews": [], "htr_info": None}
 
-        return {
-            "htr_info": dict(htr) if htr else None,
-            "reviews": reviews,
-        }
+        htr = await conn.fetchrow(
+            "SELECT * FROM scraper.htr_tobaccos WHERE htreviews_id=$1", int(htr_int))
+        if not htr:
+            return {"reviews": [], "htr_info": None}
+
+        rows = await conn.fetch("""
+            SELECT r.rating, r.review_text, r.reviewed_at, r.likes,
+                   rv.username
+            FROM scraper.htr_reviews r
+            LEFT JOIN scraper.htr_reviewers rv ON rv.id=r.reviewer_id
+            WHERE r.tobacco_id=$1
+              AND r.review_text IS NOT NULL AND length(r.review_text) > 15
+            ORDER BY r.likes DESC, r.reviewed_at DESC
+            LIMIT $2
+        """, htr["id"], limit)
+        return {"htr_info": dict(htr), "reviews": [dict(r) for r in rows]}
+
+# ── USER TOBACCOS (cabinet) ──────────────────────────────────────────────────
+
+@app.post("/api/cabinet/tobaccos")
+async def add_to_cabinet(request: Request, user=Depends(req_user)):
+    d = await request.json()
+    async with pool.acquire() as conn:
+        await conn.execute("""
+            INSERT INTO hl_user_tobaccos (user_id, ali_id, name, brand, line, weight)
+            VALUES ($1,$2,$3,$4,$5,$6)
+            ON CONFLICT (user_id, ali_id) DO NOTHING
+        """, user["id"], d.get("ali_id"), d.get("name",""), d.get("brand",""),
+            d.get("line",""), d.get("weight",""))
+    return {"ok": True}
+
+@app.delete("/api/cabinet/tobaccos/{ali_id}")
+async def remove_from_cabinet(ali_id: int, user=Depends(req_user)):
+    async with pool.acquire() as conn:
+        await conn.execute(
+            "DELETE FROM hl_user_tobaccos WHERE user_id=$1 AND ali_id=$2", user["id"], ali_id)
+    return {"ok": True}
 
 # ── MIXES ────────────────────────────────────────────────────────────────────
 
 @app.post("/api/mixes")
-async def create_mix(request: Request, user=Depends(require_user)):
-    data = await request.json()
-    name = (data.get("name") or "Без названия").strip()
-    items = data.get("items", [])
+async def create_mix(request: Request, user=Depends(req_user)):
+    d = await request.json()
+    name  = (d.get("name") or "Без названия").strip()
+    items = d.get("items", [])
     if not items:
         raise HTTPException(400, "Добавь хотя бы один табак")
     async with pool.acquire() as conn:
         mix_id = await conn.fetchval("""
-            INSERT INTO hl_mixes (user_id, name, description, bowl_type, bowl_grams,
-                                  pack_method, coal_tip, strength)
-            VALUES ($1,$2,$3,$4,$5,$6,$7,$8) RETURNING id
-        """, user["id"], name,
-            data.get("description", ""),
-            data.get("bowl_type", "убивашка"),
-            data.get("bowl_grams", 20),
-            data.get("pack_method", "секторами"),
-            data.get("coal_tip", ""),
-            data.get("strength", "средний"))
+            INSERT INTO hl_mixes (user_id,name,description,bowl_type,bowl_grams,
+                                  pack_method,coal_tip,strength,is_public,is_llm,llm_prompt)
+            VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11) RETURNING id
+        """, user["id"], name, d.get("description",""),
+            d.get("bowl_type","убивашка"), d.get("bowl_grams",20),
+            d.get("pack_method","секторами"), d.get("coal_tip",""),
+            d.get("strength","средний"), d.get("is_public",True),
+            d.get("is_llm",False), d.get("llm_prompt",""))
         for i, item in enumerate(items):
             await conn.execute("""
-                INSERT INTO hl_mix_items (mix_id, tobacco_id, tobacco_name, brand, percentage, sort_order)
+                INSERT INTO hl_mix_items (mix_id,ali_id,tobacco_name,brand,percentage,sort_order)
                 VALUES ($1,$2,$3,$4,$5,$6)
-            """, mix_id,
-                item.get("tobacco_id"),
-                item.get("tobacco_name", ""),
-                item.get("brand", ""),
-                item.get("percentage", 0),
-                i)
+            """, mix_id, item.get("ali_id"), item.get("tobacco_name",""),
+                item.get("brand",""), item.get("percentage",0), i)
     return {"id": mix_id, "ok": True}
 
 @app.get("/api/mixes")
-async def get_my_mixes(user=Depends(require_user)):
-    return await _fetch_mixes_for_user(user["id"])
+async def get_my_mixes(user=Depends(req_user)):
+    return await _fetch_mixes(user["id"])
 
 @app.get("/api/mixes/{mix_id}")
 async def get_mix(mix_id: int):
     async with pool.acquire() as conn:
         mix = await conn.fetchrow(
-            "SELECT m.*, u.username FROM hl_mixes m JOIN hl_users u ON u.id=m.user_id WHERE m.id=$1", mix_id)
+            "SELECT m.*,u.username FROM hl_mixes m JOIN hl_users u ON u.id=m.user_id WHERE m.id=$1",
+            mix_id)
         if not mix:
             raise HTTPException(404, "Микс не найден")
-        items = await conn.fetch(
-            "SELECT * FROM hl_mix_items WHERE mix_id=$1 ORDER BY sort_order", mix_id)
-        return {**dict(mix), "items": [dict(i) for i in items]}
+        items = await _mix_items(conn, mix_id)
+        stats = await _mix_stats(conn, mix_id)
+    return {**dict(mix), "items": items, **stats}
 
-async def _fetch_mixes_for_user(user_id: int):
+@app.delete("/api/mixes/{mix_id}")
+async def delete_mix(mix_id: int, user=Depends(req_user)):
     async with pool.acquire() as conn:
-        mixes = await conn.fetch(
-            "SELECT * FROM hl_mixes WHERE user_id=$1 ORDER BY created_at DESC", user_id)
-        result = []
-        for m in mixes:
-            items = await conn.fetch(
-                "SELECT * FROM hl_mix_items WHERE mix_id=$1 ORDER BY sort_order", m["id"])
-            result.append({**dict(m), "items": [dict(i) for i in items]})
-        return result
+        mix = await conn.fetchrow("SELECT user_id FROM hl_mixes WHERE id=$1", mix_id)
+        if not mix or mix["user_id"] != user["id"]:
+            raise HTTPException(403, "Нет доступа")
+        await conn.execute("DELETE FROM hl_mixes WHERE id=$1", mix_id)
+    return {"ok": True}
 
-# ── FEED ──────────────────────────────────────────────────────────────────────
-
-@app.get("/api/feed")
-async def get_feed(offset: int = 0, limit: int = 20, user=Depends(get_current_user)):
-    user_id = user["id"] if user else None
+@app.post("/api/mixes/{mix_id}/like")
+async def toggle_like(mix_id: int, user=Depends(req_user)):
     async with pool.acquire() as conn:
-        posts = await conn.fetch("""
-            SELECT p.id, p.caption, p.created_at,
-                   u.id as user_id, u.username, u.avatar,
-                   m.id as mix_id, m.name as mix_name, m.description, m.bowl_type,
-                   m.bowl_grams, m.pack_method, m.coal_tip, m.strength,
-                   COUNT(DISTINCT l.user_id) as likes_count,
-                   COUNT(DISTINCT s.user_id) as saves_count,
-                   BOOL_OR(l.user_id = $3) as i_liked,
-                   BOOL_OR(s.user_id = $3) as i_saved
-            FROM hl_posts p
-            JOIN hl_users u ON u.id = p.user_id
-            JOIN hl_mixes m ON m.id = p.mix_id
-            LEFT JOIN hl_likes l ON l.post_id = p.id
-            LEFT JOIN hl_saves s ON s.mix_id = m.id
-            GROUP BY p.id, u.id, m.id
-            ORDER BY p.created_at DESC
-            LIMIT $1 OFFSET $2
-        """, limit, offset, user_id)
-
-        result = []
-        for post in posts:
-            items = await conn.fetch(
-                "SELECT * FROM hl_mix_items WHERE mix_id=$1 ORDER BY sort_order", post["mix_id"])
-            result.append({
-                **dict(post),
-                "items": [dict(i) for i in items],
-            })
-        return result
-
-@app.post("/api/feed")
-async def create_post(request: Request, user=Depends(require_user)):
-    data = await request.json()
-    mix_id = data.get("mix_id")
-    caption = data.get("caption", "")
-    if not mix_id:
-        raise HTTPException(400, "Нужен mix_id")
-    async with pool.acquire() as conn:
-        # Verify mix belongs to user
-        m = await conn.fetchval(
-            "SELECT id FROM hl_mixes WHERE id=$1 AND user_id=$2", mix_id, user["id"])
-        if not m:
-            raise HTTPException(403, "Нет доступа к этому миксу")
-        post_id = await conn.fetchval(
-            "INSERT INTO hl_posts (user_id, mix_id, caption) VALUES ($1,$2,$3) RETURNING id",
-            user["id"], mix_id, caption)
-    return {"id": post_id, "ok": True}
-
-@app.post("/api/feed/{post_id}/like")
-async def toggle_like(post_id: int, user=Depends(require_user)):
-    async with pool.acquire() as conn:
-        existing = await conn.fetchval(
-            "SELECT 1 FROM hl_likes WHERE user_id=$1 AND post_id=$2", user["id"], post_id)
-        if existing:
-            await conn.execute("DELETE FROM hl_likes WHERE user_id=$1 AND post_id=$2", user["id"], post_id)
+        exists = await conn.fetchval(
+            "SELECT 1 FROM hl_likes WHERE user_id=$1 AND mix_id=$2", user["id"], mix_id)
+        if exists:
+            await conn.execute("DELETE FROM hl_likes WHERE user_id=$1 AND mix_id=$2", user["id"], mix_id)
             liked = False
         else:
-            await conn.execute("INSERT INTO hl_likes VALUES ($1,$2)", user["id"], post_id)
+            await conn.execute("INSERT INTO hl_likes (user_id,mix_id) VALUES ($1,$2)", user["id"], mix_id)
             liked = True
-        count = await conn.fetchval("SELECT COUNT(*) FROM hl_likes WHERE post_id=$1", post_id)
+        count = await conn.fetchval("SELECT COUNT(*) FROM hl_likes WHERE mix_id=$1", mix_id)
     return {"liked": liked, "count": count}
 
 @app.post("/api/mixes/{mix_id}/save")
-async def toggle_save(mix_id: int, user=Depends(require_user)):
+async def toggle_save(mix_id: int, user=Depends(req_user)):
     async with pool.acquire() as conn:
-        existing = await conn.fetchval(
+        exists = await conn.fetchval(
             "SELECT 1 FROM hl_saves WHERE user_id=$1 AND mix_id=$2", user["id"], mix_id)
-        if existing:
+        if exists:
             await conn.execute("DELETE FROM hl_saves WHERE user_id=$1 AND mix_id=$2", user["id"], mix_id)
             saved = False
         else:
-            await conn.execute("INSERT INTO hl_saves VALUES ($1,$2)", user["id"], mix_id)
+            await conn.execute("INSERT INTO hl_saves (user_id,mix_id) VALUES ($1,$2)", user["id"], mix_id)
             saved = True
         count = await conn.fetchval("SELECT COUNT(*) FROM hl_saves WHERE mix_id=$1", mix_id)
     return {"saved": saved, "count": count}
 
-# ── PROFILE ───────────────────────────────────────────────────────────────────
+# ── FEED ─────────────────────────────────────────────────────────────────────
+
+@app.get("/api/feed")
+async def get_feed(offset: int = 0, limit: int = 20):
+    async with pool.acquire() as conn:
+        rows = await conn.fetch("""
+            SELECT m.id, m.name, m.description, m.bowl_type, m.bowl_grams,
+                   m.pack_method, m.coal_tip, m.strength, m.created_at, m.is_llm,
+                   u.username, u.avatar,
+                   (SELECT COUNT(*) FROM hl_likes l WHERE l.mix_id=m.id) as likes,
+                   (SELECT COUNT(*) FROM hl_saves s WHERE s.mix_id=m.id) as saves
+            FROM hl_mixes m
+            JOIN hl_users u ON u.id=m.user_id
+            WHERE m.is_public=TRUE
+            ORDER BY m.created_at DESC
+            OFFSET $1 LIMIT $2
+        """, offset, limit)
+        result = []
+        for row in rows:
+            items = await _mix_items(conn, row["id"])
+            result.append({**dict(row), "items": items})
+        return result
+
+@app.get("/api/saved")
+async def get_saved(user=Depends(req_user)):
+    async with pool.acquire() as conn:
+        rows = await conn.fetch("""
+            SELECT m.id, m.name, m.description, m.bowl_type, m.bowl_grams,
+                   m.pack_method, m.coal_tip, m.strength, m.created_at,
+                   u.username, u.avatar,
+                   (SELECT COUNT(*) FROM hl_likes l WHERE l.mix_id=m.id) as likes
+            FROM hl_saves s
+            JOIN hl_mixes m ON m.id=s.mix_id
+            JOIN hl_users u ON u.id=m.user_id
+            WHERE s.user_id=$1
+            ORDER BY m.created_at DESC
+        """, user["id"])
+        result = []
+        for row in rows:
+            items = await _mix_items(conn, row["id"])
+            result.append({**dict(row), "items": items})
+        return result
+
+# ── PROFILE ──────────────────────────────────────────────────────────────────
 
 @app.get("/api/profile/{username}")
-async def get_profile(username: str, user=Depends(get_current_user)):
+async def get_profile(username: str):
     async with pool.acquire() as conn:
-        u = await conn.fetchrow("SELECT * FROM hl_users WHERE lower(username)=lower($1)", username)
-        if not u:
+        user = await conn.fetchrow("SELECT * FROM hl_users WHERE lower(username)=$1", username.lower())
+        if not user:
             raise HTTPException(404, "Пользователь не найден")
-        setup = await conn.fetchrow("SELECT * FROM hl_user_setup WHERE user_id=$1", u["id"])
-        tobaccos = await conn.fetch("""
-            SELECT t.id, t.brand, t.flavor FROM hl_user_tobaccos ut
-            JOIN tobaccos t ON t.id=ut.tobacco_id
-            WHERE ut.user_id=$1 ORDER BY ut.added_at DESC
-        """, u["id"])
-        mixes = await _fetch_mixes_for_user(u["id"])
-        followers = await conn.fetchval("SELECT COUNT(*) FROM hl_follows WHERE following_id=$1", u["id"])
-        following = await conn.fetchval("SELECT COUNT(*) FROM hl_follows WHERE follower_id=$1", u["id"])
-        i_follow = False
-        if user:
-            i_follow = bool(await conn.fetchval(
-                "SELECT 1 FROM hl_follows WHERE follower_id=$1 AND following_id=$2",
-                user["id"], u["id"]))
+        setup = await conn.fetchrow("SELECT * FROM hl_user_setup WHERE user_id=$1", user["id"])
+        tobaccos = await conn.fetch(
+            "SELECT * FROM hl_user_tobaccos WHERE user_id=$1 ORDER BY added_at DESC", user["id"])
+        followers = await conn.fetchval(
+            "SELECT COUNT(*) FROM hl_follows WHERE following_id=$1", user["id"])
+        following = await conn.fetchval(
+            "SELECT COUNT(*) FROM hl_follows WHERE follower_id=$1", user["id"])
+        mixes = await _fetch_mixes(user["id"])
     return {
-        "id": u["id"],
-        "username": u["username"],
-        "bio": u["bio"],
-        "avatar": u["avatar"],
+        "id": user["id"], "username": user["username"],
+        "bio": user["bio"], "avatar": user["avatar"],
         "setup": dict(setup) if setup else {},
         "tobaccos": [dict(t) for t in tobaccos],
         "mixes": mixes,
         "stats": {"mixes": len(mixes), "followers": followers, "following": following},
-        "i_follow": i_follow,
     }
 
-@app.put("/api/profile")
-async def update_profile(request: Request, user=Depends(require_user)):
-    data = await request.json()
-    async with pool.acquire() as conn:
-        if "bio" in data or "avatar" in data:
-            await conn.execute("""
-                UPDATE hl_users SET bio=COALESCE($1, bio), avatar=COALESCE($2, avatar) WHERE id=$3
-            """, data.get("bio"), data.get("avatar"), user["id"])
-        setup = data.get("setup")
-        if setup:
-            await conn.execute("""
-                INSERT INTO hl_user_setup (user_id, hookah, bowl, coal, foil)
-                VALUES ($1,$2,$3,$4,$5)
-                ON CONFLICT (user_id) DO UPDATE SET
-                    hookah=EXCLUDED.hookah, bowl=EXCLUDED.bowl,
-                    coal=EXCLUDED.coal, foil=EXCLUDED.foil
-            """, user["id"],
-                setup.get("hookah", ""), setup.get("bowl", ""),
-                setup.get("coal", ""), setup.get("foil", ""))
-    return {"ok": True}
-
-@app.post("/api/profile/tobaccos/{tobacco_id}")
-async def add_to_cabinet(tobacco_id: int, user=Depends(require_user)):
-    async with pool.acquire() as conn:
-        await conn.execute("""
-            INSERT INTO hl_user_tobaccos (user_id, tobacco_id) VALUES ($1,$2)
-            ON CONFLICT DO NOTHING
-        """, user["id"], tobacco_id)
-    return {"ok": True}
-
-@app.delete("/api/profile/tobaccos/{tobacco_id}")
-async def remove_from_cabinet(tobacco_id: int, user=Depends(require_user)):
-    async with pool.acquire() as conn:
-        await conn.execute(
-            "DELETE FROM hl_user_tobaccos WHERE user_id=$1 AND tobacco_id=$2",
-            user["id"], tobacco_id)
-    return {"ok": True}
-
 @app.post("/api/follow/{username}")
-async def toggle_follow(username: str, user=Depends(require_user)):
+async def toggle_follow(username: str, user=Depends(req_user)):
     async with pool.acquire() as conn:
-        target = await conn.fetchval("SELECT id FROM hl_users WHERE lower(username)=lower($1)", username)
-        if not target or target == user["id"]:
+        target = await conn.fetchrow("SELECT id FROM hl_users WHERE lower(username)=$1", username.lower())
+        if not target or target["id"] == user["id"]:
             raise HTTPException(400, "Нельзя")
-        existing = await conn.fetchval(
+        exists = await conn.fetchval(
             "SELECT 1 FROM hl_follows WHERE follower_id=$1 AND following_id=$2",
-            user["id"], target)
-        if existing:
-            await conn.execute("DELETE FROM hl_follows WHERE follower_id=$1 AND following_id=$2",
-                               user["id"], target)
-            following = False
-        else:
-            await conn.execute("INSERT INTO hl_follows VALUES ($1,$2)", user["id"], target)
-            following = True
-    return {"following": following}
+            user["id"], target["id"])
+        if exists:
+            await conn.execute(
+                "DELETE FROM hl_follows WHERE follower_id=$1 AND following_id=$2",
+                user["id"], target["id"])
+            return {"following": False}
+        await conn.execute(
+            "INSERT INTO hl_follows (follower_id,following_id) VALUES ($1,$2)",
+            user["id"], target["id"])
+        return {"following": True}
+
+# ── LLM ──────────────────────────────────────────────────────────────────────
+
+@app.post("/api/llm/generate")
+async def llm_generate(request: Request):
+    d = await request.json()
+    prompt = (d.get("prompt") or "").strip()
+    if not prompt or len(prompt) < 5:
+        raise HTTPException(400, "Опиши желаемый вкус")
+
+    # Берём топ-80 табаков из наличия для контекста
+    async with pool.acquire() as conn:
+        rows = await conn.fetch("""
+            SELECT a.id, a.brand_name, a.name,
+                   COALESCE(a.line,'') as line,
+                   COALESCE(a.weight,'') as weight,
+                   a.price,
+                   COALESCE(ht.strength_user, ht.strength_official, '') as strength,
+                   COALESCE(array_to_string(ht.flavor_tags,', '),'') as tags
+            FROM scraper.ali_products a
+            LEFT JOIN scraper.htr_tobaccos ht ON
+                NULLIF(regexp_replace(a.htreviews_id,'[^0-9]','','g'),'')::int = ht.htreviews_id
+            WHERE a.in_stock = TRUE
+            ORDER BY ht.avg_rating DESC NULLS LAST, a.is_bestseller DESC
+            LIMIT 100
+        """)
+        tobaccos_ctx = "\n".join(
+            f"ID:{r['id']} | {r['brand_name']} {r['name']} | {r['strength']} | {r['tags']} | {r['price']}р"
+            for r in rows
+        )
+
+    system_prompt = """Ты эксперт по кальянным миксам. Пользователь описывает желаемый вкус/сессию.
+Твоя задача — создать идеальный микс из КОНКРЕТНЫХ табаков из предоставленного списка.
+
+Правила:
+1. Используй ТОЛЬКО табаки из списка (обязательно укажи их ID)
+2. 2-4 табака в миксе
+3. Сумма процентов = 100
+4. Отвечай СТРОГО в JSON формате
+
+JSON формат ответа:
+{
+  "name": "Название микса",
+  "description": "Описание вкусового профиля (2-3 предложения)",
+  "strength": "лёгкий|средний|крепкий",
+  "bowl_type": "убивашка|фанел|чаша-обратная|стандарт",
+  "pack_method": "секторами|слоями|компот|центр+края",
+  "coal_tip": "2 угля под колпаком|3 угля|2 угля стандарт",
+  "items": [
+    {"ali_id": 123, "tobacco_name": "Название вкуса", "brand": "Бренд", "percentage": 60},
+    {"ali_id": 456, "tobacco_name": "Название вкуса", "brand": "Бренд", "percentage": 40}
+  ],
+  "why": "Почему этот микс подойдёт (1-2 предложения)"
+}"""
+
+    user_msg = f"Запрос пользователя: {prompt}\n\nДоступные табаки:\n{tobaccos_ctx}"
+
+    try:
+        async with httpx.AsyncClient(timeout=30) as client:
+            resp = await client.post(GROQ_URL, json={
+                "model": GROQ_MODEL,
+                "messages": [
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": user_msg}
+                ],
+                "temperature": 0.7,
+                "max_tokens": 1000,
+            }, headers={"Authorization": f"Bearer {GROQ_KEY}"})
+
+        content = resp.json()["choices"][0]["message"]["content"]
+        # Извлекаем JSON из ответа
+        json_match = re.search(r'\{.*\}', content, re.DOTALL)
+        if not json_match:
+            raise ValueError("No JSON in response")
+        mix_data = json.loads(json_match.group())
+        mix_data["is_llm"] = True
+        mix_data["llm_prompt"] = prompt
+        return mix_data
+
+    except Exception as e:
+        raise HTTPException(500, f"Ошибка генерации: {str(e)}")
+
+# ── INTERNAL ─────────────────────────────────────────────────────────────────
+
+async def _fetch_mixes(user_id: int):
+    async with pool.acquire() as conn:
+        rows = await conn.fetch(
+            "SELECT * FROM hl_mixes WHERE user_id=$1 ORDER BY created_at DESC", user_id)
+        result = []
+        for row in rows:
+            items = await _mix_items(conn, row["id"])
+            stats = await _mix_stats(conn, row["id"])
+            result.append({**dict(row), "items": items, **stats})
+        return result
