@@ -1,0 +1,1123 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>HookahLab</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+:root{
+  --bg:#0e0c14;
+  --bg2:#161320;
+  --bg3:#1e1b2c;
+  --bg4:#272438;
+  --bg5:#302d44;
+  --border:rgba(255,255,255,0.07);
+  --border2:rgba(255,255,255,0.12);
+  --text:#f0edf8;
+  --text2:#8a879f;
+  --text3:#4a4862;
+  --gold:#e8a23b;
+  --gold2:#ffd280;
+  --purple:#9d6fff;
+  --purple2:#7c4fd6;
+  --purple3:#4a2d9e;
+  --teal:#3dd6ac;
+  --red:#f06b6b;
+  --green:#4ade80;
+  --nav-h:72px;
+  --radius:20px;
+  --radius-sm:12px;
+}
+html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);font-family:'Space Grotesk',sans-serif}
+#app{display:flex;flex-direction:column;height:100%;max-width:480px;margin:0 auto;position:relative;overflow:hidden}
+
+/* ── PAGES ── */
+.page{flex:1;overflow-y:auto;overflow-x:hidden;display:none;scrollbar-width:none;-ms-overflow-style:none}
+.page::-webkit-scrollbar{display:none}
+.page.active{display:block}
+.page-inner{padding:0 0 calc(var(--nav-h) + 16px)}
+
+/* ── HEADER ── */
+.top-bar{position:sticky;top:0;z-index:50;padding:16px 20px 12px;display:flex;align-items:center;justify-content:space-between;background:linear-gradient(to bottom,var(--bg) 70%,transparent);backdrop-filter:blur(20px)}
+.top-bar h1{font-size:1.4rem;font-weight:700;letter-spacing:-0.5px}
+.top-bar .logo{font-size:1.3rem;font-weight:700;background:linear-gradient(135deg,var(--gold),var(--purple));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.icon-btn{width:38px;height:38px;border-radius:50%;background:var(--bg3);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:1rem;color:var(--text2);transition:all 0.2s}
+.icon-btn:hover{background:var(--bg4);color:var(--text)}
+
+/* ── BOTTOM NAV ── */
+.bottom-nav{height:var(--nav-h);background:var(--bg2);border-top:1px solid var(--border);display:flex;align-items:flex-start;padding-top:10px;z-index:100;flex-shrink:0}
+.nav-item{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer;padding:4px 0;transition:all 0.2s;position:relative}
+.nav-icon{font-size:1.4rem;transition:transform 0.3s cubic-bezier(0.34,1.56,0.64,1)}
+.nav-label{font-size:0.65rem;font-weight:500;color:var(--text3);transition:color 0.2s;letter-spacing:0.3px}
+.nav-item.active .nav-icon{transform:scale(1.15)}
+.nav-item.active .nav-label{color:var(--gold)}
+.nav-item.active::before{content:'';position:absolute;top:-10px;left:50%;transform:translateX(-50%);width:32px;height:3px;background:linear-gradient(90deg,var(--gold),var(--purple));border-radius:0 0 4px 4px}
+
+/* ── CARDS ── */
+.card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden}
+.card:hover{border-color:var(--border2)}
+
+/* ── FEED ── */
+.feed-wrap{padding:0 16px}
+
+/* Stories */
+.stories{padding:12px 0 12px 16px;display:flex;gap:12px;overflow-x:auto;scrollbar-width:none}
+.stories::-webkit-scrollbar{display:none}
+.story{display:flex;flex-direction:column;align-items:center;gap:6px;cursor:pointer;flex-shrink:0}
+.story-ring{width:60px;height:60px;border-radius:50%;background:linear-gradient(135deg,var(--gold),var(--purple));padding:2.5px}
+.story-ring.seen{background:var(--bg4)}
+.story-avatar{width:100%;height:100%;border-radius:50%;background:var(--bg3);border:2px solid var(--bg2);overflow:hidden;display:flex;align-items:center;justify-content:center;font-size:1.3rem}
+.story-name{font-size:0.62rem;color:var(--text2);max-width:60px;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+/* Feed post */
+.feed-post{margin-bottom:16px}
+.post-header{display:flex;align-items:center;gap:10px;padding:14px 14px 10px}
+.post-avatar{width:38px;height:38px;border-radius:50%;background:var(--bg4);display:flex;align-items:center;justify-content:center;font-size:1.1rem;flex-shrink:0;border:1px solid var(--border2)}
+.post-meta{flex:1}
+.post-username{font-size:0.9rem;font-weight:600}
+.post-time{font-size:0.72rem;color:var(--text3)}
+.post-more{color:var(--text3);cursor:pointer;font-size:1.2rem;line-height:1}
+
+/* Mix card inside post */
+.mix-card{margin:0 14px;background:var(--bg3);border-radius:16px;overflow:hidden;border:1px solid var(--border)}
+.mix-card-header{padding:14px 16px 8px;background:linear-gradient(135deg,rgba(157,111,255,0.15),rgba(61,214,172,0.08))}
+.mix-card-name{font-size:1.1rem;font-weight:700;letter-spacing:-0.3px;margin-bottom:2px}
+.mix-card-desc{font-size:0.78rem;color:var(--text2);line-height:1.4}
+.mix-card-tags{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap}
+.mix-tag{font-size:0.65rem;padding:3px 9px;border-radius:50px;background:rgba(255,255,255,0.07);color:var(--text2);font-weight:500}
+.mix-card-bowl-vis{padding:12px 16px;display:flex;gap:16px;align-items:center}
+.mix-bowl-svg-wrap{flex-shrink:0}
+.mix-tobaccos{flex:1;display:flex;flex-direction:column;gap:5px}
+.mix-tob-row{display:flex;align-items:center;gap:6px;font-size:0.75rem}
+.mix-tob-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.mix-tob-name{flex:1;color:var(--text)}
+.mix-tob-pct{font-family:'JetBrains Mono',monospace;font-size:0.72rem;color:var(--text3)}
+.mix-card-footer{padding:10px 16px;border-top:1px solid var(--border);display:flex;gap:16px;font-size:0.75rem;color:var(--text3)}
+.mix-card-footer span{display:flex;align-items:center;gap:4px}
+
+/* Post actions */
+.post-actions{display:flex;gap:4px;padding:10px 14px 14px}
+.action-btn{display:flex;align-items:center;gap:5px;padding:7px 14px;border-radius:50px;background:var(--bg3);border:1px solid var(--border);color:var(--text2);font-size:0.8rem;font-weight:500;cursor:pointer;transition:all 0.2s;font-family:inherit}
+.action-btn:hover{background:var(--bg4)}
+.action-btn.liked{background:rgba(232,162,59,0.12);border-color:rgba(232,162,59,0.3);color:var(--gold)}
+.action-btn.saved{background:rgba(157,111,255,0.12);border-color:rgba(157,111,255,0.3);color:var(--purple)}
+
+/* ── LAB ── */
+.lab-wrap{padding:0 16px 32px}
+.lab-name-input{width:100%;background:transparent;border:none;outline:none;font-family:'Space Grotesk',sans-serif;font-size:1.6rem;font-weight:700;color:var(--text);letter-spacing:-0.5px;padding:16px 0 4px;caret-color:var(--gold)}
+.lab-name-input::placeholder{color:var(--text3)}
+.lab-section{margin-bottom:20px}
+.lab-section-label{font-size:0.72rem;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px}
+
+/* Bowl area */
+.lab-bowl-area{display:flex;gap:16px;align-items:flex-start;margin-bottom:20px}
+.bowl-vis-wrap{flex-shrink:0;display:flex;flex-direction:column;align-items:center;gap:10px}
+.bowl-svg-container{position:relative;width:180px;height:180px}
+#bowlSvg{width:180px;height:180px;filter:drop-shadow(0 0 20px rgba(157,111,255,0.2))}
+.bowl-empty-label{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:0.78rem;color:var(--text3);text-align:center;line-height:1.5;pointer-events:none}
+.bowl-size-toggle{display:flex;border:1px solid var(--border);border-radius:50px;overflow:hidden;background:var(--bg3)}
+.bowl-size-btn{padding:5px 14px;font-family:inherit;font-size:0.75rem;font-weight:600;color:var(--text3);background:transparent;border:none;cursor:pointer;transition:all 0.2s}
+.bowl-size-btn.active{background:var(--bg5);color:var(--text)}
+
+/* Pack method */
+.pack-methods{flex:1;display:flex;flex-direction:column;gap:6px}
+.pack-method-btn{padding:9px 12px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--bg3);display:flex;align-items:center;gap:8px;cursor:pointer;transition:all 0.2s;text-align:left}
+.pack-method-btn:hover{border-color:var(--border2)}
+.pack-method-btn.active{border-color:var(--purple);background:rgba(157,111,255,0.1)}
+.pack-method-icon{font-size:1rem;flex-shrink:0}
+.pack-method-text{flex:1}
+.pack-method-name{font-size:0.82rem;font-weight:600}
+.pack-method-hint{font-size:0.68rem;color:var(--text3);margin-top:1px}
+
+/* Tobacco list */
+.tobacco-list{display:flex;flex-direction:column;gap:10px;margin-bottom:12px}
+.tob-item{background:var(--bg3);border:1px solid var(--border);border-radius:16px;padding:12px 14px;position:relative;transition:border-color 0.2s}
+.tob-item-top{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+.tob-color-dot{width:12px;height:12px;border-radius:50%;flex-shrink:0;box-shadow:0 0 8px currentColor}
+.tob-item-name{flex:1;font-size:0.88rem;font-weight:600}
+.tob-item-brand{font-size:0.72rem;color:var(--text3)}
+.tob-item-grams{font-family:'JetBrains Mono',monospace;font-size:0.88rem;color:var(--gold);font-weight:500}
+.tob-remove{width:22px;height:22px;border-radius:50%;background:var(--bg4);border:none;color:var(--text3);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:0.75rem;flex-shrink:0;transition:all 0.2s}
+.tob-remove:hover{background:rgba(240,107,107,0.2);color:var(--red)}
+
+/* Percentage slider */
+.tob-pct-row{display:flex;align-items:center;gap:10px}
+.pct-val{font-family:'JetBrains Mono',monospace;font-size:0.88rem;font-weight:500;min-width:36px;text-align:right}
+.pct-slider{flex:1;-webkit-appearance:none;appearance:none;height:4px;border-radius:4px;outline:none;cursor:pointer;background:var(--bg5)}
+.pct-slider::-webkit-slider-thumb{-webkit-appearance:none;width:18px;height:18px;border-radius:50%;cursor:grab;box-shadow:0 2px 8px rgba(0,0,0,0.4);border:2px solid var(--bg3);transition:transform 0.15s}
+.pct-slider::-webkit-slider-thumb:active{cursor:grabbing;transform:scale(1.3)}
+.pct-bar{flex:1;height:4px;border-radius:4px;background:var(--bg5);position:relative;overflow:hidden}
+.pct-bar-fill{height:100%;border-radius:4px;transition:width 0.2s}
+
+/* Remaining pct indicator */
+.pct-remaining{font-size:0.75rem;color:var(--text3);display:flex;align-items:center;gap:6px}
+.pct-remaining.over{color:var(--red)}
+.pct-remaining.full{color:var(--teal)}
+.pct-gauge{height:3px;border-radius:3px;background:var(--bg4);overflow:hidden;flex:1}
+.pct-gauge-fill{height:100%;background:var(--teal);border-radius:3px;transition:all 0.3s}
+.pct-gauge-fill.over{background:var(--red)}
+
+/* Add tobacco btn */
+.add-tob-btn{display:flex;align-items:center;justify-content:center;gap:8px;padding:12px;background:var(--bg3);border:1px dashed rgba(157,111,255,0.3);border-radius:16px;color:var(--purple);font-family:inherit;font-size:0.88rem;font-weight:600;cursor:pointer;width:100%;transition:all 0.2s}
+.add-tob-btn:hover{background:rgba(157,111,255,0.08);border-color:var(--purple)}
+
+/* Lab details */
+.lab-details{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px}
+.detail-card{background:var(--bg3);border:1px solid var(--border);border-radius:14px;padding:12px 14px}
+.detail-card-label{font-size:0.65rem;color:var(--text3);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:4px}
+.detail-card-val{font-size:0.88rem;font-weight:600;color:var(--text)}
+.strength-bar{display:flex;gap:3px;margin-top:6px}
+.strength-pip{flex:1;height:4px;border-radius:2px;background:var(--bg5);transition:background 0.3s}
+
+/* Lab save btn */
+.lab-save-row{display:flex;gap:10px}
+.lab-btn{flex:1;padding:14px;border-radius:16px;font-family:inherit;font-size:0.95rem;font-weight:700;cursor:pointer;border:none;transition:all 0.2s;letter-spacing:-0.2px}
+.lab-btn-primary{background:linear-gradient(135deg,var(--purple2),var(--purple));color:#fff}
+.lab-btn-primary:hover{transform:scale(1.02);box-shadow:0 6px 24px rgba(157,111,255,0.35)}
+.lab-btn-secondary{background:var(--bg3);border:1px solid var(--border);color:var(--text2)}
+.lab-btn-secondary:hover{background:var(--bg4)}
+
+/* ── PROFILE ── */
+.profile-wrap{}
+.profile-cover{height:140px;background:linear-gradient(135deg,#1a1233 0%,#0e1a28 50%,#1a1233 100%);position:relative;overflow:hidden}
+.profile-cover::after{content:'';position:absolute;inset:0;background:linear-gradient(to bottom,transparent 50%,var(--bg))}
+.profile-cover-art{position:absolute;inset:0;opacity:0.15}
+.profile-info{padding:0 20px 16px;position:relative;margin-top:-40px}
+.profile-avatar{width:80px;height:80px;border-radius:50%;background:linear-gradient(135deg,var(--purple2),var(--gold));border:3px solid var(--bg);display:flex;align-items:center;justify-content:center;font-size:2rem;margin-bottom:12px}
+.profile-name{font-size:1.3rem;font-weight:700;letter-spacing:-0.4px}
+.profile-handle{font-size:0.82rem;color:var(--text3);margin-bottom:10px}
+.profile-bio{font-size:0.85rem;color:var(--text2);line-height:1.5;margin-bottom:14px}
+.profile-stats{display:flex;gap:24px;margin-bottom:16px}
+.stat-item{text-align:center}
+.stat-num{font-size:1.1rem;font-weight:700}
+.stat-label{font-size:0.68rem;color:var(--text3)}
+.profile-edit-btn{width:100%;padding:10px;background:var(--bg3);border:1px solid var(--border2);border-radius:50px;color:var(--text);font-family:inherit;font-size:0.88rem;font-weight:600;cursor:pointer;transition:all 0.2s;margin-bottom:16px}
+.profile-edit-btn:hover{background:var(--bg4)}
+
+/* Profile sections */
+.profile-section{padding:0 16px;margin-bottom:20px}
+.section-title{font-size:0.78rem;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:10px;display:flex;align-items:center;justify-content:space-between}
+.section-add{font-size:0.75rem;color:var(--purple);cursor:pointer;font-weight:600;text-transform:none;letter-spacing:0}
+
+/* Setup card */
+.setup-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:16px;display:flex;flex-direction:column;gap:10px}
+.setup-row{display:flex;align-items:center;gap:10px}
+.setup-icon{font-size:1.1rem;width:32px;text-align:center;flex-shrink:0}
+.setup-info{flex:1}
+.setup-label{font-size:0.65rem;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px}
+.setup-val{font-size:0.88rem;font-weight:500}
+.setup-val.empty{color:var(--text3);font-style:italic;font-weight:400}
+
+/* Tobacco cabinet */
+.tob-cabinet{display:flex;flex-wrap:wrap;gap:8px}
+.tob-chip{padding:6px 12px;background:var(--bg3);border:1px solid var(--border);border-radius:50px;font-size:0.75rem;display:flex;align-items:center;gap:6px;cursor:pointer;transition:all 0.2s}
+.tob-chip:hover{border-color:var(--purple);background:rgba(157,111,255,0.08)}
+.tob-chip-dot{width:8px;height:8px;border-radius:50%}
+.tob-chip-remove{color:var(--text3);font-size:0.75rem}
+
+/* Mix grid */
+.mix-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:2px}
+.mix-grid-item{aspect-ratio:1;background:var(--bg3);position:relative;cursor:pointer;overflow:hidden}
+.mix-grid-item svg{width:100%;height:100%}
+.mix-grid-overlay{position:absolute;inset:0;display:flex;flex-direction:column;justify-content:flex-end;padding:6px;background:linear-gradient(to top,rgba(0,0,0,0.7) 0%,transparent 50%)}
+.mix-grid-name{font-size:0.62rem;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mix-grid-rating{font-size:0.58rem;color:var(--gold)}
+
+/* ── AUTH ── */
+.auth-cta{padding:32px 20px;text-align:center}
+.auth-cta h2{font-size:1.6rem;font-weight:700;margin-bottom:8px;letter-spacing:-0.5px}
+.auth-cta p{color:var(--text2);font-size:0.9rem;margin-bottom:24px;line-height:1.5}
+.auth-btn-row{display:flex;flex-direction:column;gap:10px}
+.btn-gold{padding:14px;background:linear-gradient(135deg,var(--gold2),var(--gold));color:#000;border:none;border-radius:50px;font-family:inherit;font-size:0.95rem;font-weight:700;cursor:pointer;transition:all 0.2s}
+.btn-ghost{padding:14px;background:transparent;color:var(--text2);border:1px solid var(--border2);border-radius:50px;font-family:inherit;font-size:0.95rem;cursor:pointer;transition:all 0.2s}
+
+/* ── MODAL ── */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);backdrop-filter:blur(8px);z-index:200;align-items:flex-end;justify-content:center}
+.modal-overlay.open{display:flex}
+.modal-sheet{background:var(--bg2);border:1px solid var(--border);border-radius:28px 28px 0 0;width:100%;max-width:480px;max-height:90vh;overflow:hidden;display:flex;flex-direction:column;animation:slideUp 0.35s cubic-bezier(0.34,1.56,0.64,1)}
+@keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+.modal-handle{width:36px;height:4px;background:var(--bg5);border-radius:2px;margin:12px auto 0}
+.modal-header{padding:16px 20px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border)}
+.modal-header h3{font-size:1.1rem;font-weight:700}
+.modal-close{width:32px;height:32px;border-radius:50%;background:var(--bg3);border:none;color:var(--text2);font-size:1rem;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.modal-body{padding:16px 20px;flex:1;overflow-y:auto}
+
+/* Search input */
+.search-input-wrap{position:relative;margin-bottom:12px}
+.search-input{width:100%;padding:11px 14px 11px 40px;background:var(--bg3);border:1px solid var(--border);border-radius:50px;color:var(--text);font-family:inherit;font-size:0.9rem;outline:none;transition:border-color 0.2s}
+.search-input:focus{border-color:var(--purple)}
+.search-icon{position:absolute;left:14px;top:50%;transform:translateY(-50%);color:var(--text3);font-size:0.9rem}
+
+/* Search results */
+.search-results{display:flex;flex-direction:column;gap:2px}
+.search-result-item{padding:11px 14px;border-radius:12px;cursor:pointer;transition:background 0.15s;display:flex;align-items:center;gap:10px}
+.search-result-item:hover{background:var(--bg3)}
+.search-result-icon{width:36px;height:36px;border-radius:10px;background:var(--bg4);display:flex;align-items:center;justify-content:center;font-size:0.9rem;flex-shrink:0}
+.search-result-main{flex:1}
+.search-result-name{font-size:0.88rem;font-weight:600}
+.search-result-brand{font-size:0.72rem;color:var(--text3)}
+.search-result-badge{font-size:0.65rem;padding:2px 7px;border-radius:50px;background:rgba(255,255,255,0.07);color:var(--text2)}
+
+/* Auth modal form */
+.auth-tabs{display:flex;border:1px solid var(--border);border-radius:50px;margin-bottom:20px;overflow:hidden}
+.auth-tab{flex:1;padding:9px;text-align:center;font-size:0.85rem;font-weight:600;cursor:pointer;color:var(--text3);transition:all 0.2s;background:transparent;border:none;font-family:inherit}
+.auth-tab.active{background:var(--bg4);color:var(--text)}
+.form-field{margin-bottom:12px}
+.form-label{font-size:0.72rem;color:var(--text3);margin-bottom:5px;display:block;font-weight:500;text-transform:uppercase;letter-spacing:0.5px}
+.form-input{width:100%;padding:12px 14px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text);font-family:inherit;font-size:0.9rem;outline:none;transition:border-color 0.2s}
+.form-input:focus{border-color:var(--purple)}
+
+/* Toast */
+.toast{position:fixed;bottom:calc(var(--nav-h) + 16px);left:50%;transform:translateX(-50%) translateY(20px);background:var(--bg3);border:1px solid var(--border2);color:var(--text);padding:10px 20px;border-radius:50px;font-size:0.85rem;font-weight:500;z-index:300;opacity:0;transition:all 0.3s;pointer-events:none;white-space:nowrap}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+/* Misc */
+.divider{height:1px;background:var(--border);margin:4px 0}
+.empty-state{padding:48px 20px;text-align:center;color:var(--text3)}
+.empty-state .es-icon{font-size:2.5rem;margin-bottom:12px}
+.empty-state p{font-size:0.88rem;line-height:1.6}
+</style>
+</head>
+<body>
+<div id="app">
+
+  <!-- ──────────── FEED PAGE ──────────── -->
+  <div id="feedPage" class="page active">
+    <div class="page-inner">
+      <div class="top-bar">
+        <span class="logo">HookahLab</span>
+        <div style="display:flex;gap:8px">
+          <button class="icon-btn" onclick="openAuth()">🔔</button>
+          <button class="icon-btn" onclick="openAuth()">💬</button>
+        </div>
+      </div>
+
+      <!-- Stories -->
+      <div class="stories" id="storiesRow"></div>
+
+      <!-- Posts -->
+      <div class="feed-wrap" id="feedList"></div>
+    </div>
+  </div>
+
+  <!-- ──────────── LAB PAGE ──────────── -->
+  <div id="labPage" class="page">
+    <div class="page-inner">
+      <div class="top-bar">
+        <h1 style="background:linear-gradient(135deg,var(--gold),var(--purple));-webkit-background-clip:text;-webkit-text-fill-color:transparent">Лаборатория</h1>
+        <button class="icon-btn" id="labHistoryBtn">📋</button>
+      </div>
+      <div class="lab-wrap">
+        <input class="lab-name-input" id="labMixName" placeholder="Название микса..." maxlength="50">
+
+        <!-- Bowl + Method -->
+        <div class="lab-bowl-area">
+          <div class="bowl-vis-wrap">
+            <div class="bowl-svg-container">
+              <svg id="bowlSvg" viewBox="0 0 180 180" xmlns="http://www.w3.org/2000/svg">
+                <!-- Rendered by JS -->
+              </svg>
+              <div class="bowl-empty-label" id="bowlEmptyLabel">Добавь<br>табак</div>
+            </div>
+            <div class="bowl-size-toggle">
+              <button class="bowl-size-btn active" onclick="setBowlSize(20,this)">Убивашка 20г</button>
+              <button class="bowl-size-btn" onclick="setBowlSize(15,this)">Фанел 15г</button>
+            </div>
+          </div>
+          <div class="pack-methods" id="packMethods">
+            <button class="pack-method-btn active" onclick="setPackMethod('секторами',this)">
+              <span class="pack-method-icon">🥧</span>
+              <div class="pack-method-text">
+                <div class="pack-method-name">Секторами</div>
+                <div class="pack-method-hint">каждый табак в свой сектор</div>
+              </div>
+            </button>
+            <button class="pack-method-btn" onclick="setPackMethod('слоями',this)">
+              <span class="pack-method-icon">📑</span>
+              <div class="pack-method-text">
+                <div class="pack-method-name">Слоями</div>
+                <div class="pack-method-hint">нежный вниз, стойкий наверх</div>
+              </div>
+            </button>
+            <button class="pack-method-btn" onclick="setPackMethod('компот',this)">
+              <span class="pack-method-icon">🔀</span>
+              <div class="pack-method-text">
+                <div class="pack-method-name">Компот</div>
+                <div class="pack-method-hint">перемешать всё вместе</div>
+              </div>
+            </button>
+            <button class="pack-method-btn" onclick="setPackMethod('центр+края',this)">
+              <span class="pack-method-icon">🎯</span>
+              <div class="pack-method-text">
+                <div class="pack-method-name">Центр+края</div>
+                <div class="pack-method-hint">акцент в центр, база по краям</div>
+              </div>
+            </button>
+          </div>
+        </div>
+
+        <!-- Tabaccos -->
+        <div class="lab-section">
+          <div class="lab-section-label">Состав</div>
+          <!-- Remaining indicator -->
+          <div class="pct-remaining" id="pctRemaining" style="margin-bottom:10px">
+            <span id="pctRemText">100% свободно</span>
+            <div class="pct-gauge"><div class="pct-gauge-fill" id="pctGaugeFill" style="width:0%"></div></div>
+          </div>
+          <div class="tobacco-list" id="tobaccoList"></div>
+          <button class="add-tob-btn" onclick="openTobaccoSearch()">
+            <span style="font-size:1.1rem">+</span> Добавить табак
+          </button>
+        </div>
+
+        <!-- Details grid -->
+        <div class="lab-details">
+          <div class="detail-card">
+            <div class="detail-card-label">☕ Чаша</div>
+            <div class="detail-card-val" id="labBowlLabel">Убивашка</div>
+          </div>
+          <div class="detail-card">
+            <div class="detail-card-label">🪨 Угли</div>
+            <div class="detail-card-val" id="labCoalLabel">—</div>
+          </div>
+          <div class="detail-card" style="grid-column:1/-1">
+            <div class="detail-card-label">💪 Крепость</div>
+            <div class="strength-bar" id="strengthBar">
+              <div class="strength-pip" id="sp1"></div>
+              <div class="strength-pip" id="sp2"></div>
+              <div class="strength-pip" id="sp3"></div>
+              <div class="strength-pip" id="sp4"></div>
+              <div class="strength-pip" id="sp5"></div>
+            </div>
+            <div style="font-size:0.75rem;color:var(--text3);margin-top:5px" id="strengthLabel">—</div>
+          </div>
+        </div>
+
+        <!-- Save row -->
+        <div class="lab-save-row">
+          <button class="lab-btn lab-btn-secondary" onclick="previewCard()">👁 Превью</button>
+          <button class="lab-btn lab-btn-primary" onclick="saveMix()">✦ Сохранить</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ──────────── PROFILE PAGE ──────────── -->
+  <div id="profilePage" class="page">
+    <div id="profileContent"></div>
+  </div>
+
+  <!-- ──────────── BOTTOM NAV ──────────── -->
+  <nav class="bottom-nav">
+    <div class="nav-item active" onclick="navigate('feed',this)">
+      <span class="nav-icon">🌿</span>
+      <span class="nav-label">Лента</span>
+    </div>
+    <div class="nav-item" onclick="navigate('lab',this)">
+      <span class="nav-icon">⚗️</span>
+      <span class="nav-label">Лаборатория</span>
+    </div>
+    <div class="nav-item" onclick="navigate('profile',this)">
+      <span class="nav-icon">👤</span>
+      <span class="nav-label">Профиль</span>
+    </div>
+  </nav>
+</div>
+
+<!-- ──────────── TOBACCO SEARCH MODAL ──────────── -->
+<div class="modal-overlay" id="tobaccoModal" onclick="if(event.target===this)closeTobaccoSearch()">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-header">
+      <h3>Добавить табак</h3>
+      <button class="modal-close" onclick="closeTobaccoSearch()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="search-input-wrap">
+        <span class="search-icon">🔍</span>
+        <input class="search-input" id="tobaccoSearchInput" placeholder="Поиск табака..." oninput="filterTobaccos(this.value)" autofocus>
+      </div>
+      <div class="search-results" id="tobaccoResults"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ──────────── AUTH MODAL ──────────── -->
+<div class="modal-overlay" id="authModal" onclick="if(event.target===this)closeAuth()">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-header">
+      <h3>HookahLab</h3>
+      <button class="modal-close" onclick="closeAuth()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="auth-tabs">
+        <button class="auth-tab active" onclick="switchAuthTab('login',this)">Войти</button>
+        <button class="auth-tab" onclick="switchAuthTab('register',this)">Регистрация</button>
+      </div>
+      <div id="authLoginForm">
+        <div class="form-field">
+          <label class="form-label">Email</label>
+          <input class="form-input" type="email" placeholder="you@example.com">
+        </div>
+        <div class="form-field">
+          <label class="form-label">Пароль</label>
+          <input class="form-input" type="password" placeholder="••••••••">
+        </div>
+        <button class="btn-gold" style="width:100%;margin-top:8px" onclick="fakeLogin()">Войти</button>
+      </div>
+      <div id="authRegForm" style="display:none">
+        <div class="form-field">
+          <label class="form-label">Никнейм</label>
+          <input class="form-input" id="regUsername" placeholder="hookah_master">
+        </div>
+        <div class="form-field">
+          <label class="form-label">Email</label>
+          <input class="form-input" id="regEmail" type="email" placeholder="you@example.com">
+        </div>
+        <div class="form-field">
+          <label class="form-label">Пароль</label>
+          <input class="form-input" id="regPassword" type="password" placeholder="••••••••">
+        </div>
+        <button class="btn-gold" style="width:100%;margin-top:8px" onclick="fakeRegister()">Создать аккаунт</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ──────────── MIX PREVIEW MODAL ──────────── -->
+<div class="modal-overlay" id="previewModal" onclick="if(event.target===this)closePreview()">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-header">
+      <h3>Карточка микса</h3>
+      <button class="modal-close" onclick="closePreview()">✕</button>
+    </div>
+    <div class="modal-body" id="previewBody"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ── CONSTANTS ──
+const COLORS = ['#9d6fff','#e8a23b','#3dd6ac','#f472b6','#60a5fa','#fb923c','#f87171','#a78bfa','#34d399'];
+
+const TOBACCO_DB = [
+  {id:1,name:'Cane Mint',brand:'Tangiers',line:'Noir',strength:'крепкий',htid:71747},
+  {id:2,name:'Ice Baby',brand:'Black Burn',line:'',strength:'средний'},
+  {id:3,name:'Blueberry',brand:'MustHave',line:'',strength:'лёгкий'},
+  {id:4,name:'Banana Mama',brand:'MustHave',line:'',strength:'лёгкий'},
+  {id:5,name:'Cheesecake',brand:'Black Burn',line:'',strength:'средний'},
+  {id:6,name:'Supernova',brand:'Darkside',line:'Core',strength:'крепкий'},
+  {id:7,name:'Торпедо',brand:'Darkside',line:'Torpedo',strength:'крепкий'},
+  {id:8,name:'HARD Young B',brand:'Хулиган',line:'HARD',strength:'крепкий'},
+  {id:9,name:'HARD Bali',brand:'Хулиган',line:'HARD',strength:'крепкий'},
+  {id:10,name:'Lova Lova',brand:'Хулиган',line:'Base',strength:'средний'},
+  {id:11,name:'Cranberry Shock',brand:'Black Burn',line:'',strength:'средний'},
+  {id:12,name:'Pineapple Rings',brand:'MustHave',line:'',strength:'лёгкий'},
+  {id:13,name:'Strawberry',brand:'MustHave',line:'',strength:'лёгкий'},
+  {id:14,name:'Grapeberry',brand:'Bonche',line:'',strength:'лёгкий'},
+  {id:15,name:'Зима',brand:'Сарма',line:'Классическая',strength:'средний'},
+  {id:16,name:'Ореховое молочко',brand:'Сарма',line:'Классическая',strength:'средний'},
+  {id:17,name:'Watermelon',brand:'MustHave',line:'',strength:'лёгкий'},
+  {id:18,name:'Mango',brand:'Bonche',line:'',strength:'лёгкий'},
+  {id:19,name:'Ice Mint',brand:'Black Burn',line:'',strength:'средний'},
+  {id:20,name:'Cherry',brand:'Darkside',line:'Base',strength:'средний'},
+];
+
+const MOCK_POSTS = [
+  {id:1,user:'smoke_vibe',avatar:'🧔',time:'2 ч назад',mix:{name:'Ночной тропик',desc:'Манго + холодок, сладко и свежо',tobaccos:[{name:'Mango',brand:'Bonche',pct:50,color:COLORS[0]},{name:'Ice Baby',brand:'Black Burn',pct:30,color:COLORS[2]},{name:'Banana Mama',brand:'MustHave',pct:20,color:COLORS[1]}],bowl:'фанел',method:'секторами',coal:'2 угля',strength:2},likes:24,comments:5,saves:8},
+  {id:2,user:'kalyan_pro',avatar:'👨‍🍳',time:'5 ч назад',mix:{name:'Ягодный сорбет',desc:'Сладко, чуть холодок, без горечи',tobaccos:[{name:'Ice Baby',brand:'Black Burn',pct:40,color:COLORS[2]},{name:'Blueberry',brand:'MustHave',pct:35,color:COLORS[0]},{name:'Supernova',brand:'Darkside',pct:25,color:COLORS[1]}],bowl:'убивашка',method:'компот',coal:'3 угля',strength:3},likes:47,comments:12,saves:19},
+  {id:3,user:'hookah_art',avatar:'🎨',time:'1 д назад',mix:{name:'Тропический вайб',desc:'Маракуйя, киви, лёгкая мята',tobaccos:[{name:'Pineapple Rings',brand:'MustHave',pct:45,color:COLORS[3]},{name:'Ice Baby',brand:'Black Burn',pct:35,color:COLORS[2]},{name:'Banana Mama',brand:'MustHave',pct:20,color:COLORS[1]}],bowl:'фанел',method:'секторами',coal:'2 угля',strength:1},likes:83,comments:21,saves:34},
+];
+
+// ── STATE ──
+const lab = {
+  mixName: '',
+  bowlSize: 20,
+  packMethod: 'секторами',
+  tobaccos: [],  // {id, name, brand, strength, percentage, color}
+};
+
+let currentUser = JSON.parse(localStorage.getItem('hl_user') || 'null');
+let likedPosts = JSON.parse(localStorage.getItem('hl_liked') || '[]');
+let savedPosts = JSON.parse(localStorage.getItem('hl_saved') || '[]');
+
+// ── NAVIGATION ──
+function navigate(page, navEl) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById(page + 'Page').classList.add('active');
+  navEl.classList.add('active');
+  if (page === 'profile') renderProfile();
+}
+
+// ── BOWL SVG ──
+function polarToCartesian(cx, cy, r, angleDeg) {
+  const rad = (angleDeg - 90) * Math.PI / 180;
+  return { x: cx + r * Math.cos(rad), y: cy + r * Math.sin(rad) };
+}
+
+function arcSectorPath(cx, cy, outerR, innerR, startAngle, endAngle) {
+  if (endAngle - startAngle >= 359.9) endAngle = startAngle + 359.5;
+  const o1 = polarToCartesian(cx, cy, outerR, startAngle);
+  const o2 = polarToCartesian(cx, cy, outerR, endAngle);
+  const i1 = polarToCartesian(cx, cy, innerR, endAngle);
+  const i2 = polarToCartesian(cx, cy, innerR, startAngle);
+  const large = endAngle - startAngle > 180 ? 1 : 0;
+  return `M ${o1.x} ${o1.y} A ${outerR} ${outerR} 0 ${large} 1 ${o2.x} ${o2.y} L ${i1.x} ${i1.y} A ${innerR} ${innerR} 0 ${large} 0 ${i2.x} ${i2.y} Z`;
+}
+
+function renderBowl() {
+  const svg = document.getElementById('bowlSvg');
+  const empty = document.getElementById('bowlEmptyLabel');
+  const cx = 90, cy = 90;
+  const outerR = 80, innerR = 28, rimR = 88;
+  const tobaccos = lab.tobaccos.filter(t => t.percentage > 0);
+
+  let html = '';
+
+  // Rim
+  html += `<circle cx="${cx}" cy="${cy}" r="${rimR}" fill="#1e1b2c" stroke="rgba(255,255,255,0.08)" stroke-width="2"/>`;
+  // Base
+  html += `<circle cx="${cx}" cy="${cy}" r="${outerR}" fill="#161320"/>`;
+
+  if (tobaccos.length === 0) {
+    html += `<circle cx="${cx}" cy="${cy}" r="${outerR}" fill="#161320"/>`;
+    empty.style.display = 'flex';
+  } else {
+    empty.style.display = 'none';
+    const total = tobaccos.reduce((s, t) => s + t.percentage, 0);
+    const scale = Math.min(total, 100) / 100;
+
+    if (lab.packMethod === 'секторами') {
+      let angle = -90;
+      tobaccos.forEach(t => {
+        const sweep = (t.percentage / Math.max(total, 100)) * 360;
+        const path = arcSectorPath(cx, cy, outerR * scale, innerR, angle, angle + sweep - 1.5);
+        html += `<path d="${path}" fill="${t.color}" opacity="0.92"/>`;
+        // Label if sweep > 25
+        if (sweep > 25) {
+          const mid = angle + sweep / 2;
+          const lp = polarToCartesian(cx, cy, (outerR * scale + innerR) / 2, mid);
+          html += `<text x="${lp.x}" y="${lp.y}" text-anchor="middle" dominant-baseline="middle" font-size="9" fill="rgba(255,255,255,0.7)" font-family="Space Grotesk">${t.percentage}%</text>`;
+        }
+        angle += sweep;
+      });
+    } else if (lab.packMethod === 'слоями') {
+      const step = (outerR - innerR) / tobaccos.length;
+      tobaccos.forEach((t, i) => {
+        const r1 = outerR - i * step;
+        const r2 = outerR - (i + 1) * step;
+        html += `<circle cx="${cx}" cy="${cy}" r="${r1 * scale}" fill="${t.color}" opacity="0.85"/>`;
+      });
+    } else if (lab.packMethod === 'компот') {
+      // Blended: pie but with irregular soft look
+      let angle = -90;
+      tobaccos.forEach(t => {
+        const sweep = (t.percentage / Math.max(total, 100)) * 360;
+        const path = arcSectorPath(cx, cy, outerR * 0.95, innerR, angle, angle + sweep);
+        html += `<path d="${path}" fill="${t.color}" opacity="0.7"/>`;
+        angle += sweep;
+      });
+      // Overlay noise/blend
+      html += `<circle cx="${cx}" cy="${cy}" r="${outerR * 0.95}" fill="rgba(0,0,0,0.18)" style="mix-blend-mode:multiply"/>`;
+    } else if (lab.packMethod === 'центр+края') {
+      if (tobaccos.length >= 1) {
+        html += `<circle cx="${cx}" cy="${cy}" r="${outerR * scale}" fill="${tobaccos[0].color}" opacity="0.85"/>`;
+      }
+      if (tobaccos.length >= 2) {
+        html += `<circle cx="${cx}" cy="${cy}" r="${(outerR * 0.45) * scale}" fill="${tobaccos[1].color}" opacity="0.9"/>`;
+      }
+    }
+
+    // Inner hole
+    html += `<circle cx="${cx}" cy="${cy}" r="${innerR}" fill="#161320"/>`;
+    // Center dot
+    html += `<circle cx="${cx}" cy="${cy}" r="5" fill="rgba(255,255,255,0.1)"/>`;
+    // Inner rim
+    html += `<circle cx="${cx}" cy="${cy}" r="${innerR}" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="1.5"/>`;
+  }
+
+  // Outer rim ring
+  html += `<circle cx="${cx}" cy="${cy}" r="${rimR}" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="1"/>`;
+
+  svg.innerHTML = html;
+}
+
+// ── LAB ──
+function setBowlSize(g, btn) {
+  lab.bowlSize = g;
+  document.querySelectorAll('.bowl-size-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('labBowlLabel').textContent = g === 20 ? 'Убивашка' : 'Фанел';
+  renderTobaccoList();
+}
+
+function setPackMethod(method, btn) {
+  lab.packMethod = method;
+  document.querySelectorAll('.pack-method-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderBowl();
+}
+
+function addTobacco(tob) {
+  const remaining = 100 - lab.tobaccos.reduce((s, t) => s + t.percentage, 0);
+  if (remaining <= 0) { showToast('Чаша уже заполнена на 100%'); return; }
+  const colorIdx = lab.tobaccos.length % COLORS.length;
+  lab.tobaccos.push({
+    ...tob,
+    percentage: Math.min(remaining, Math.max(10, Math.round(remaining / 2 / 5) * 5)),
+    color: COLORS[colorIdx],
+  });
+  closeTobaccoSearch();
+  renderTobaccoList();
+  renderBowl();
+  updateLabDetails();
+}
+
+function removeTobacco(idx) {
+  lab.tobaccos.splice(idx, 1);
+  renderTobaccoList();
+  renderBowl();
+  updateLabDetails();
+}
+
+function updatePct(idx, val) {
+  lab.tobaccos[idx].percentage = parseInt(val);
+  document.getElementById(`pct-val-${idx}`).textContent = val + '%';
+  const fill = document.getElementById(`pct-fill-${idx}`);
+  if (fill) fill.style.width = val + '%';
+  // Update grams
+  const grams = Math.round(lab.bowlSize * val / 100 * 10) / 10;
+  document.getElementById(`tob-grams-${idx}`).textContent = grams + 'г';
+  updatePctIndicator();
+  renderBowl();
+  updateLabDetails();
+}
+
+function updatePctIndicator() {
+  const total = lab.tobaccos.reduce((s, t) => s + t.percentage, 0);
+  const remaining = 100 - total;
+  const el = document.getElementById('pctRemaining');
+  const text = document.getElementById('pctRemText');
+  const gauge = document.getElementById('pctGaugeFill');
+  gauge.style.width = Math.min(total, 100) + '%';
+  if (total > 100) {
+    el.className = 'pct-remaining over';
+    text.textContent = `Перебор на ${total - 100}%`;
+    gauge.className = 'pct-gauge-fill over';
+  } else if (total === 100) {
+    el.className = 'pct-remaining full';
+    text.textContent = '100% — готово!';
+    gauge.className = 'pct-gauge-fill';
+  } else {
+    el.className = 'pct-remaining';
+    text.textContent = `${remaining}% свободно`;
+    gauge.className = 'pct-gauge-fill';
+  }
+}
+
+function renderTobaccoList() {
+  const list = document.getElementById('tobaccoList');
+  if (lab.tobaccos.length === 0) { list.innerHTML = ''; updatePctIndicator(); return; }
+  list.innerHTML = lab.tobaccos.map((t, i) => {
+    const grams = Math.round(lab.bowlSize * t.percentage / 100 * 10) / 10;
+    return `<div class="tob-item" id="tob-item-${i}">
+      <div class="tob-item-top">
+        <div class="tob-color-dot" style="background:${t.color};color:${t.color}"></div>
+        <div style="flex:1">
+          <div class="tob-item-name">${t.name}</div>
+          <div class="tob-item-brand">${t.brand}${t.line ? ' · ' + t.line : ''} · ${t.strength}</div>
+        </div>
+        <div class="tob-item-grams" id="tob-grams-${i}">${grams}г</div>
+        <button class="tob-remove" onclick="removeTobacco(${i})">✕</button>
+      </div>
+      <div class="tob-pct-row">
+        <input type="range" class="pct-slider" min="5" max="100" step="5" value="${t.percentage}"
+          style="--thumb-color:${t.color}"
+          oninput="updatePct(${i},this.value)"
+          onchange="updatePct(${i},this.value)">
+        <div class="pct-val" id="pct-val-${i}">${t.percentage}%</div>
+      </div>
+    </div>`;
+  }).join('');
+  // Style slider thumbs
+  lab.tobaccos.forEach((t, i) => {
+    const slider = list.querySelector(`#tob-item-${i} .pct-slider`);
+    if (slider) {
+      slider.style.setProperty('--c', t.color);
+      slider.style.background = `linear-gradient(to right, ${t.color} ${t.percentage}%, var(--bg5) ${t.percentage}%)`;
+      slider.addEventListener('input', function() {
+        this.style.background = `linear-gradient(to right, ${t.color} ${this.value}%, var(--bg5) ${this.value}%)`;
+      });
+    }
+  });
+  updatePctIndicator();
+}
+
+function updateLabDetails() {
+  // Coal tip based on tobaccos
+  const hasHard = lab.tobaccos.some(t => t.brand === 'Хулиган' || (t.brand === 'Darkside' && t.line === 'Torpedo'));
+  const hasLight = lab.tobaccos.some(t => t.brand === 'MustHave' || t.brand === 'Bonche');
+  let coal = '—';
+  if (lab.tobaccos.length > 0) {
+    if (hasHard) coal = lab.bowlSize === 20 ? '3 угля 5 мин' : '2–3 угля';
+    else if (hasLight) coal = lab.bowlSize === 20 ? '2–3 угля' : '2 угля';
+    else coal = lab.bowlSize === 20 ? '3 угля 4–5 мин' : '2–3 угля';
+  }
+  document.getElementById('labCoalLabel').textContent = coal;
+
+  // Strength from tobaccos
+  const strMap = { лёгкий: 1, средний: 3, крепкий: 5 };
+  const total = lab.tobaccos.reduce((s, t) => s + t.percentage, 0);
+  if (total === 0) { document.getElementById('strengthLabel').textContent = '—'; return; }
+  const avgStr = lab.tobaccos.reduce((s, t) => s + (strMap[t.strength] || 3) * t.percentage, 0) / total;
+  const pips = document.querySelectorAll('.strength-pip');
+  const filled = Math.round(avgStr);
+  let strColor = avgStr < 2 ? '#4ade80' : avgStr < 4 ? '#e8a23b' : '#f06b6b';
+  let strText = avgStr < 2 ? '🍃 Лёгкий' : avgStr < 4 ? '🔥 Средний' : '💀 Крепкий';
+  pips.forEach((p, i) => {
+    p.style.background = i < filled ? strColor : 'var(--bg5)';
+  });
+  document.getElementById('strengthLabel').textContent = strText;
+}
+
+// ── TOBACCO SEARCH ──
+function openTobaccoSearch() {
+  document.getElementById('tobaccoModal').classList.add('open');
+  document.getElementById('tobaccoSearchInput').value = '';
+  filterTobaccos('');
+  setTimeout(() => document.getElementById('tobaccoSearchInput').focus(), 300);
+}
+function closeTobaccoSearch() {
+  document.getElementById('tobaccoModal').classList.remove('open');
+}
+function filterTobaccos(query) {
+  const q = query.toLowerCase().trim();
+  const results = q ? TOBACCO_DB.filter(t =>
+    t.name.toLowerCase().includes(q) || t.brand.toLowerCase().includes(q)
+  ) : TOBACCO_DB;
+  const container = document.getElementById('tobaccoResults');
+  container.innerHTML = results.slice(0, 20).map(t => `
+    <div class="search-result-item" onclick="addTobacco(${JSON.stringify(t).replace(/"/g,'&quot;')})">
+      <div class="search-result-icon">${t.brand === 'MustHave' ? '🍋' : t.brand === 'Darkside' ? '🌑' : t.brand === 'Хулиган' ? '💥' : t.brand === 'Black Burn' ? '🔥' : t.brand === 'Bonche' ? '🌸' : t.brand === 'Tangiers' ? '🌿' : '🪴'}</div>
+      <div class="search-result-main">
+        <div class="search-result-name">${t.name}</div>
+        <div class="search-result-brand">${t.brand}${t.line ? ' · ' + t.line : ''}</div>
+      </div>
+      <span class="search-result-badge str-badge-${t.strength}">${t.strength}</span>
+    </div>`).join('');
+}
+
+// ── PREVIEW CARD ──
+function previewCard() {
+  if (lab.tobaccos.length === 0) { showToast('Добавь хотя бы один табак'); return; }
+  const name = document.getElementById('labMixName').value || 'Без названия';
+  const body = document.getElementById('previewBody');
+  const total = lab.tobaccos.reduce((s, t) => s + t.percentage, 0);
+
+  // Mini bowl SVG
+  const svgSize = 80;
+  const cx = 40, cy = 40, outerR = 35, innerR = 12;
+  let svgContent = `<circle cx="${cx}" cy="${cy}" r="${outerR}" fill="#161320"/>`;
+  let angle = -90;
+  lab.tobaccos.forEach(t => {
+    const sweep = (t.percentage / Math.max(total, 100)) * 360;
+    const path = arcSectorPath(cx, cy, outerR, innerR, angle, angle + sweep - 1);
+    svgContent += `<path d="${path}" fill="${t.color}" opacity="0.9"/>`;
+    angle += sweep;
+  });
+  svgContent += `<circle cx="${cx}" cy="${cy}" r="${innerR}" fill="#161320"/>`;
+
+  body.innerHTML = `
+    <div style="background:var(--bg3);border-radius:20px;overflow:hidden;border:1px solid var(--border);margin-bottom:16px">
+      <div style="padding:16px;background:linear-gradient(135deg,rgba(157,111,255,0.2),rgba(61,214,172,0.1))">
+        <div style="font-size:1.2rem;font-weight:700;margin-bottom:4px">${name}</div>
+        <div style="font-size:0.78rem;color:var(--text2)">${document.getElementById('labBowlLabel').textContent} · ${document.getElementById('labCoalLabel').textContent} · ${document.getElementById('strengthLabel').textContent}</div>
+      </div>
+      <div style="padding:14px 16px;display:flex;gap:14px;align-items:center">
+        <svg width="${svgSize}" height="${svgSize}" viewBox="0 0 80 80" style="flex-shrink:0">${svgContent}</svg>
+        <div style="flex:1;display:flex;flex-direction:column;gap:5px">
+          ${lab.tobaccos.map(t => {
+            const g = Math.round(lab.bowlSize * t.percentage / 100 * 10) / 10;
+            return `<div style="display:flex;align-items:center;gap:7px;font-size:0.78rem">
+              <div style="width:8px;height:8px;border-radius:50%;background:${t.color};flex-shrink:0"></div>
+              <span style="flex:1">${t.name} <span style="color:var(--text3)">${t.brand}</span></span>
+              <span style="font-family:monospace;color:var(--gold)">${g}г</span>
+            </div>`;
+          }).join('')}
+        </div>
+      </div>
+      <div style="padding:10px 16px;border-top:1px solid var(--border);display:flex;gap:12px;font-size:0.75rem;color:var(--text3)">
+        <span>🥧 ${lab.packMethod}</span>
+        <span>☕ ${document.getElementById('labBowlLabel').textContent}</span>
+        <span>🪨 ${document.getElementById('labCoalLabel').textContent}</span>
+      </div>
+    </div>
+    <div style="display:flex;gap:10px">
+      <button class="lab-btn lab-btn-secondary" style="flex:1" onclick="closePreview()">Изменить</button>
+      <button class="lab-btn lab-btn-primary" style="flex:1" onclick="saveMix();closePreview()">✦ Сохранить</button>
+    </div>`;
+  document.getElementById('previewModal').classList.add('open');
+}
+function closePreview() { document.getElementById('previewModal').classList.remove('open'); }
+
+function saveMix() {
+  if (lab.tobaccos.length === 0) { showToast('Добавь хотя бы один табак'); return; }
+  showToast('✦ Микс сохранён!');
+}
+
+// ── FEED ──
+function renderFeed() {
+  // Stories
+  const stories = document.getElementById('storiesRow');
+  const users = [{name:'smoke_vibe',emoji:'🧔'},{name:'kalyan_pro',emoji:'👨‍🍳'},{name:'hookah_art',emoji:'🎨'},{name:'mix_lab',emoji:'🔬'},{name:'кальян24',emoji:'🌿'},{name:'vape_king',emoji:'👑'}];
+  stories.innerHTML = users.map((u, i) => `
+    <div class="story">
+      <div class="story-ring ${i > 3 ? 'seen' : ''}">
+        <div class="story-avatar">${u.emoji}</div>
+      </div>
+      <div class="story-name">${u.name}</div>
+    </div>`).join('');
+
+  // Posts
+  const feed = document.getElementById('feedList');
+  feed.innerHTML = MOCK_POSTS.map(post => {
+    const {mix} = post;
+    const total = mix.tobaccos.reduce((s,t) => s+t.pct, 0);
+    const liked = likedPosts.includes(post.id);
+    const saved = savedPosts.includes(post.id);
+
+    // Mini bowl SVG
+    const cx = 36, cy = 36, outerR = 32, innerR = 11;
+    let svgH = `<circle cx="${cx}" cy="${cy}" r="${outerR}" fill="#161320"/>`;
+    let angle = -90;
+    mix.tobaccos.forEach(t => {
+      const sweep = (t.pct / total) * 360;
+      const path = arcSectorPath(cx, cy, outerR, innerR, angle, angle + sweep - 1.5);
+      svgH += `<path d="${path}" fill="${t.color}" opacity="0.9"/>`;
+      angle += sweep;
+    });
+    svgH += `<circle cx="${cx}" cy="${cy}" r="${innerR}" fill="#161320"/>`;
+
+    return `<div class="card feed-post">
+      <div class="post-header">
+        <div class="post-avatar">${post.avatar}</div>
+        <div class="post-meta">
+          <div class="post-username">${post.user}</div>
+          <div class="post-time">${post.time}</div>
+        </div>
+        <div class="post-more">···</div>
+      </div>
+      <div class="mix-card">
+        <div class="mix-card-header">
+          <div class="mix-card-name">${mix.name}</div>
+          <div class="mix-card-desc">${mix.desc}</div>
+          <div class="mix-card-tags">
+            <span class="mix-tag">${mix.bowl}</span>
+            <span class="mix-tag">${mix.method}</span>
+            <span class="mix-tag">${mix.coal}</span>
+          </div>
+        </div>
+        <div class="mix-card-bowl-vis">
+          <div class="mix-bowl-svg-wrap">
+            <svg width="72" height="72" viewBox="0 0 72 72" style="filter:drop-shadow(0 0 10px rgba(0,0,0,0.4))">${svgH}</svg>
+          </div>
+          <div class="mix-tobaccos">
+            ${mix.tobaccos.map(t => `
+              <div class="mix-tob-row">
+                <div class="mix-tob-dot" style="background:${t.color}"></div>
+                <span class="mix-tob-name">${t.name} <span style="color:var(--text3)">${t.brand}</span></span>
+                <span class="mix-tob-pct">${t.pct}%</span>
+              </div>`).join('')}
+          </div>
+        </div>
+        <div class="mix-card-footer">
+          <span>💪 крепость ${mix.strength}/5</span>
+          <span>☕ ${mix.bowl}</span>
+        </div>
+      </div>
+      <div class="post-actions">
+        <button class="action-btn ${liked ? 'liked' : ''}" id="like-${post.id}" onclick="toggleLike(${post.id},this)">
+          ${liked ? '❤️' : '🤍'} ${post.likes + (liked ? 1 : 0)}
+        </button>
+        <button class="action-btn" onclick="">💬 ${post.comments}</button>
+        <button class="action-btn ${saved ? 'saved' : ''}" id="save-${post.id}" onclick="toggleSave(${post.id},this)" style="margin-left:auto">
+          ${saved ? '🔖' : '📎'} ${saved ? 'Сохранено' : 'Сохранить'}
+        </button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function toggleLike(id, btn) {
+  const idx = likedPosts.indexOf(id);
+  if (idx >= 0) likedPosts.splice(idx, 1); else likedPosts.push(id);
+  localStorage.setItem('hl_liked', JSON.stringify(likedPosts));
+  renderFeed();
+}
+function toggleSave(id, btn) {
+  const idx = savedPosts.indexOf(id);
+  if (idx >= 0) savedPosts.splice(idx, 1); else savedPosts.push(id);
+  localStorage.setItem('hl_saved', JSON.stringify(savedPosts));
+  renderFeed();
+}
+
+// ── PROFILE ──
+function renderProfile() {
+  const el = document.getElementById('profileContent');
+  if (!currentUser) {
+    el.innerHTML = `
+      <div class="top-bar"><span class="logo">HookahLab</span></div>
+      <div class="auth-cta">
+        <div style="font-size:3rem;margin-bottom:16px">🪔</div>
+        <h2>Войди в HookahLab</h2>
+        <p>Сохраняй миксы, делись с друзьями, отслеживай свои табаки</p>
+        <div class="auth-btn-row">
+          <button class="btn-gold" onclick="openAuth()">Создать аккаунт</button>
+          <button class="btn-ghost" onclick="openAuth()">Уже есть аккаунт</button>
+        </div>
+      </div>`;
+    return;
+  }
+  el.innerHTML = `
+    <div class="profile-cover">
+      <svg class="profile-cover-art" viewBox="0 0 480 140" xmlns="http://www.w3.org/2000/svg">
+        <defs><radialGradient id="g1" cx="50%" cy="50%"><stop offset="0%" stop-color="#9d6fff" stop-opacity="0.6"/><stop offset="100%" stop-color="transparent"/></radialGradient></defs>
+        <circle cx="240" cy="70" r="120" fill="url(#g1)"/>
+        <circle cx="80" cy="30" r="60" fill="#e8a23b" opacity="0.15"/>
+        <circle cx="400" cy="110" r="80" fill="#3dd6ac" opacity="0.1"/>
+      </svg>
+    </div>
+    <div class="profile-info">
+      <div class="profile-avatar">🧔</div>
+      <div class="profile-name">${currentUser.username}</div>
+      <div class="profile-handle">@${currentUser.username.toLowerCase().replace(/\s/g,'_')}</div>
+      <div class="profile-bio">Кальянщик со стажем. Люблю фруктовые и свежие миксы 🌿</div>
+      <div class="profile-stats">
+        <div class="stat-item"><div class="stat-num">12</div><div class="stat-label">Миксов</div></div>
+        <div class="stat-item"><div class="stat-num">84</div><div class="stat-label">Подписчиков</div></div>
+        <div class="stat-item"><div class="stat-num">47</div><div class="stat-label">Подписок</div></div>
+      </div>
+      <button class="profile-edit-btn">Редактировать профиль</button>
+    </div>
+
+    <div class="profile-section">
+      <div class="section-title">Мой сетап <span class="section-add" onclick="editSetup()">+ изменить</span></div>
+      <div class="setup-card">
+        <div class="setup-row"><div class="setup-icon">🪔</div><div class="setup-info"><div class="setup-label">Кальян</div><div class="setup-val ${!currentUser.setup?.hookah ? 'empty' : ''}">${currentUser.setup?.hookah || 'Не указан'}</div></div></div>
+        <div class="setup-row"><div class="setup-icon">☕</div><div class="setup-info"><div class="setup-label">Чаша</div><div class="setup-val ${!currentUser.setup?.bowl ? 'empty' : ''}">${currentUser.setup?.bowl || 'Не указана'}</div></div></div>
+        <div class="setup-row"><div class="setup-icon">🪨</div><div class="setup-info"><div class="setup-label">Угли</div><div class="setup-val ${!currentUser.setup?.coal ? 'empty' : ''}">${currentUser.setup?.coal || 'Не указаны'}</div></div></div>
+      </div>
+    </div>
+
+    <div class="profile-section">
+      <div class="section-title">Мои табаки <span class="section-add" onclick="addMyTobacco()">+ добавить</span></div>
+      <div class="tob-cabinet" id="myCabinet">
+        ${(currentUser.tobaccos||[]).length === 0
+          ? '<div style="font-size:0.82rem;color:var(--text3)">Добавь свои табаки, чтобы генерировать миксы из них</div>'
+          : (currentUser.tobaccos||[]).map((t,i) => `
+            <div class="tob-chip">
+              <div class="tob-chip-dot" style="background:${COLORS[i%COLORS.length]}"></div>
+              ${t.name}
+              <span class="tob-chip-remove" onclick="removeMyTobacco(${i})">✕</span>
+            </div>`).join('')}
+      </div>
+    </div>
+
+    <div class="profile-section">
+      <div class="section-title">Миксы</div>
+      <div class="mix-grid" id="myMixGrid">
+        ${renderMiniGrid()}
+      </div>
+    </div>`;
+}
+
+function renderMiniGrid() {
+  if (!currentUser) return '';
+  const mixes = currentUser.mixes || [];
+  if (mixes.length === 0) return '<div style="grid-column:1/-1;padding:24px;text-align:center;color:var(--text3);font-size:0.82rem">Создай свой первый микс в Лаборатории</div>';
+  return mixes.map(m => {
+    const cx = 50, cy = 50, outerR = 44, innerR = 15;
+    let svgH = `<circle cx="${cx}" cy="${cy}" r="${outerR}" fill="#1a1728"/>`;
+    let angle = -90;
+    (m.tobaccos||[]).forEach(t => {
+      const sweep = (t.pct / 100) * 360;
+      const path = arcSectorPath(cx, cy, outerR, innerR, angle, angle + sweep - 1);
+      svgH += `<path d="${path}" fill="${t.color}" opacity="0.9"/>`;
+      angle += sweep;
+    });
+    svgH += `<circle cx="${cx}" cy="${cy}" r="${innerR}" fill="#1a1728"/>`;
+    return `<div class="mix-grid-item" style="background:#1a1728">
+      <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">${svgH}</svg>
+      <div class="mix-grid-overlay"><div class="mix-grid-name">${m.name}</div></div>
+    </div>`;
+  }).join('');
+}
+
+function editSetup() {
+  // Simple prompts for now
+  const hookah = prompt('Твой кальян:', currentUser.setup?.hookah || '');
+  if (hookah !== null) {
+    currentUser.setup = currentUser.setup || {};
+    currentUser.setup.hookah = hookah;
+    localStorage.setItem('hl_user', JSON.stringify(currentUser));
+    renderProfile();
+  }
+}
+
+function addMyTobacco() {
+  openTobaccoSearch();
+  // Override: after picking, add to myTobaccos
+}
+
+function removeMyTobacco(i) {
+  currentUser.tobaccos.splice(i, 1);
+  localStorage.setItem('hl_user', JSON.stringify(currentUser));
+  renderProfile();
+}
+
+// ── AUTH ──
+function openAuth() { document.getElementById('authModal').classList.add('open'); }
+function closeAuth() { document.getElementById('authModal').classList.remove('open'); }
+function switchAuthTab(tab, el) {
+  document.querySelectorAll('.auth-tab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('authLoginForm').style.display = tab === 'login' ? 'block' : 'none';
+  document.getElementById('authRegForm').style.display = tab === 'register' ? 'block' : 'none';
+}
+function fakeLogin() {
+  currentUser = { username: 'HookahMaster', setup: {}, tobaccos: [], mixes: [] };
+  localStorage.setItem('hl_user', JSON.stringify(currentUser));
+  closeAuth();
+  showToast('👋 Добро пожаловать!');
+  renderProfile();
+}
+function fakeRegister() {
+  const username = document.getElementById('regUsername').value || 'HookahUser';
+  currentUser = { username, setup: {}, tobaccos: [], mixes: [] };
+  localStorage.setItem('hl_user', JSON.stringify(currentUser));
+  closeAuth();
+  showToast('✦ Аккаунт создан!');
+  renderProfile();
+}
+
+// ── TOAST ──
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+// ── INIT ──
+renderFeed();
+renderBowl();
+renderProfile();
+</script>
+</body>
+</html>
