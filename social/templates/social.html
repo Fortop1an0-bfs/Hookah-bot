@@ -435,75 +435,83 @@ html,body{min-height:100vh;background:var(--bg);color:var(--text);font-family:'S
   <div id="labPage" class="page">
     <div class="page-inner">
       <div class="top-bar">
-        <h1 style="background:linear-gradient(135deg,var(--gold),var(--purple));-webkit-background-clip:text;-webkit-text-fill-color:transparent;font-size:1.3rem;font-weight:700;letter-spacing:-0.4px">Лаборатория</h1>
+        <span class="top-bar-title">⚗️ Лаборатория</span>
+        <button class="lab-btn lab-btn-ai" style="flex:0 0 auto;padding:9px 14px;font-size:0.82rem" onclick="openAI()">🤖 ИИ-генератор</button>
       </div>
-      <div class="top-bar"><span class="top-bar-title">⚗️ Лаборатория</span></div>
-      <div class="lab-wrap">
+      <div style="padding:24px 32px">
         <input class="lab-name-input" id="labMixName" placeholder="Название микса..." maxlength="50">
+        <div class="lab-layout">
 
-        <div class="lab-bowl-area">
-          <div class="bowl-vis-wrap">
-            <div class="bowl-svg-container">
-              <svg id="bowlSvg" viewBox="0 0 172 172" xmlns="http://www.w3.org/2000/svg"></svg>
-              <div class="bowl-empty-label" id="bowlEmptyLabel">Добавь<br>табак</div>
-            </div>
-            <div class="bowl-size-toggle">
-              <button class="bowl-size-btn active" onclick="setBowlSize(20,this)">Убивашка</button>
-              <button class="bowl-size-btn" onclick="setBowlSize(15,this)">Фанел</button>
-              <button class="bowl-size-btn" onclick="setBowlSize(10,this)">Сифон</button>
-            </div>
-          </div>
-          <div class="pack-methods">
-            <button class="pack-btn active" data-method="секторами" onclick="setPackMethod('секторами',this)">
-              <span class="pack-btn-icon">🥧</span>
-              <div><div class="pack-btn-name">Секторами</div><div class="pack-btn-hint">каждый в свой сектор</div></div>
-            </button>
-            <button class="pack-btn" data-method="слоями" onclick="setPackMethod('слоями',this)">
-              <span class="pack-btn-icon">📑</span>
-              <div><div class="pack-btn-name">Слоями</div><div class="pack-btn-hint">нежный вниз, стойкий наверх</div></div>
-            </button>
-            <button class="pack-btn" data-method="компот" onclick="setPackMethod('компот',this)">
-              <span class="pack-btn-icon">🔀</span>
-              <div><div class="pack-btn-name">Компот</div><div class="pack-btn-hint">всё перемешать</div></div>
-            </button>
-            <button class="pack-btn" data-method="центр+края" onclick="setPackMethod('центр+края',this)">
-              <span class="pack-btn-icon">🎯</span>
-              <div><div class="pack-btn-name">Центр+края</div><div class="pack-btn-hint">акцент в центр</div></div>
-            </button>
-          </div>
-        </div><!-- /lab-bowl-area -->
-        </div><!-- /lab-left -->
-        <div class="lab-right">
-          <div class="lab-slabel">Состав</div>
-          <div class="pct-remaining" id="pctRem"><span id="pctRemTxt">100% свободно</span><div class="pct-gauge"><div class="pct-gauge-fill" id="pctGauge" style="width:0%"></div></div></div>
-          <div class="tob-list" id="tobList"></div>
-          <button class="add-tob-btn" onclick="openTobSearch(false)">+ Добавить табак</button>
-        </div>
-
-        <div style="margin-top:18px">
-          <div class="lab-slabel">Детали</div>
-          <div class="lab-details">
-            <div class="det-card"><div class="det-label">☕ Чаша</div><div class="det-val" id="labBowlLbl">Убивашка</div></div>
-            <div class="det-card"><div class="det-label">🪨 Угли</div><div class="det-val" id="labCoalLbl">—</div></div>
-            <div class="det-card" style="grid-column:1/-1">
-              <div class="det-label">💪 Крепость</div>
-              <div class="str-pips" id="strPips">
-                <div class="str-pip" id="sp0"></div><div class="str-pip" id="sp1"></div>
-                <div class="str-pip" id="sp2"></div><div class="str-pip" id="sp3"></div>
-                <div class="str-pip" id="sp4"></div>
+          <!-- LEFT: bowl + pack method -->
+          <div class="lab-left">
+            <div class="lab-bowl-area">
+              <div class="bowl-vis-wrap">
+                <div class="bowl-svg-container">
+                  <svg id="bowlSvg" viewBox="0 0 172 172" xmlns="http://www.w3.org/2000/svg"></svg>
+                  <div class="bowl-empty-label" id="bowlEmptyLabel">Добавь<br>табак</div>
+                </div>
+                <div class="bowl-size-toggle">
+                  <button class="bowl-size-btn active" onclick="setBowlSize(20,this)">Убивашка</button>
+                  <button class="bowl-size-btn" onclick="setBowlSize(15,this)">Фанел</button>
+                  <button class="bowl-size-btn" onclick="setBowlSize(10,this)">Сифон</button>
+                </div>
               </div>
-              <div style="font-size:0.73rem;color:var(--text3);margin-top:5px" id="strLbl">—</div>
+              <div class="pack-methods">
+                <button class="pack-btn active" data-method="секторами" onclick="setPackMethod('секторами',this)">
+                  <span class="pack-btn-icon">🥧</span>
+                  <div><div class="pack-btn-name">Секторами</div><div class="pack-btn-hint">каждый в свой сектор</div></div>
+                </button>
+                <button class="pack-btn" data-method="слоями" onclick="setPackMethod('слоями',this)">
+                  <span class="pack-btn-icon">📑</span>
+                  <div><div class="pack-btn-name">Слоями</div><div class="pack-btn-hint">нежный вниз, стойкий наверх</div></div>
+                </button>
+                <button class="pack-btn" data-method="компот" onclick="setPackMethod('компот',this)">
+                  <span class="pack-btn-icon">🔀</span>
+                  <div><div class="pack-btn-name">Компот</div><div class="pack-btn-hint">всё перемешать</div></div>
+                </button>
+                <button class="pack-btn" data-method="центр+края" onclick="setPackMethod('центр+края',this)">
+                  <span class="pack-btn-icon">🎯</span>
+                  <div><div class="pack-btn-name">Центр+края</div><div class="pack-btn-hint">акцент в центр</div></div>
+                </button>
+              </div>
             </div>
-          </div>
-        </div>
 
-        <div class="lab-save-row">
-          <button class="lab-btn lab-btn-ai" onclick="openAI()" style="flex:0 0 auto;padding:13px 14px">🤖</button>
-          <button class="lab-btn lab-btn-secondary" onclick="previewCard()">👁 Превью</button>
-          <button class="lab-btn lab-btn-primary" onclick="saveMix()">✦ Сохранить</button>
-        </div>
-        </div><!-- /lab-right -->
-      </div></div><!-- /lab-layout -->
+            <div class="lab-slabel" style="margin-top:16px">Детали</div>
+            <div class="lab-details">
+              <div class="det-card"><div class="det-label">☕ Чаша</div><div class="det-val" id="labBowlLbl">Убивашка</div></div>
+              <div class="det-card"><div class="det-label">🪨 Угли</div><div class="det-val" id="labCoalLbl">—</div></div>
+              <div class="det-card" style="grid-column:1/-1">
+                <div class="det-label">💪 Крепость</div>
+                <div class="str-pips" id="strPips">
+                  <div class="str-pip" id="sp0"></div><div class="str-pip" id="sp1"></div>
+                  <div class="str-pip" id="sp2"></div><div class="str-pip" id="sp3"></div>
+                  <div class="str-pip" id="sp4"></div>
+                </div>
+                <div style="font-size:0.73rem;color:var(--text3);margin-top:5px" id="strLbl">—</div>
+              </div>
+            </div>
+          </div><!-- /lab-left -->
+
+          <!-- RIGHT: tobacco list + save -->
+          <div class="lab-right">
+            <div class="lab-slabel">Состав</div>
+            <div class="pct-remaining" id="pctRem">
+              <span id="pctRemTxt">100% свободно</span>
+              <div class="pct-gauge"><div class="pct-gauge-fill" id="pctGauge" style="width:0%"></div></div>
+            </div>
+            <div class="tob-list" id="tobList"></div>
+            <button class="add-tob-btn" onclick="openTobSearch(false)">+ Добавить табак</button>
+
+            <div style="margin-top:20px">
+              <div class="lab-save-row">
+                <button class="lab-btn lab-btn-secondary" onclick="previewCard()">👁 Превью</button>
+                <button class="lab-btn lab-btn-primary" onclick="saveMix()">✦ Сохранить</button>
+              </div>
+            </div>
+          </div><!-- /lab-right -->
+
+        </div><!-- /lab-layout -->
+      </div>
     </div>
   </div>
 
@@ -1268,6 +1276,10 @@ function buildProfileHTML(d) {
   </div>`).join('');
 
   return `
+    <div class="top-bar"><span class="top-bar-title">👤 Профиль</span><div style="display:flex;gap:8px"><button class="p-edit-btn" style="margin:0;padding:7px 14px;width:auto" onclick="openSetupModal()">⚙️ Сетап</button><button class="p-edit-btn" style="margin:0;padding:7px 14px;width:auto" onclick="doLogout()">Выйти</button></div></div>
+    <div style="padding:24px 32px"><div class="profile-layout">
+    <div class="profile-left">
+    <div class="profile-card">
     <div class="profile-cover">
       <svg class="profile-cover-art" viewBox="0 0 480 140" xmlns="http://www.w3.org/2000/svg">
         <circle cx="240" cy="70" r="120" fill="#9d6fff" opacity="0.3"/>
@@ -1286,10 +1298,7 @@ function buildProfileHTML(d) {
         <div><div class="stat-n">${d.stats.followers}</div><div class="stat-l">Подписчиков</div></div>
         <div><div class="stat-n">${d.stats.following}</div><div class="stat-l">Подписок</div></div>
       </div>
-      <div style="display:flex;gap:8px">
-        <button class="p-edit-btn" style="flex:1" onclick="openSetupModal()">Мой сетап</button>
-        <button class="p-edit-btn" style="flex:0 0 auto;padding:9px 14px" onclick="doLogout()">Выйти</button>
-      </div>
+
     </div>
     <div class="p-section">
       <div class="p-section-title">Сетап <span class="p-section-add" onclick="openSetupModal()">изменить</span></div>
@@ -1303,10 +1312,14 @@ function buildProfileHTML(d) {
       <div class="p-section-title">Мои табаки <span class="p-section-add" onclick="openTobSearch(true)">+ добавить</span></div>
       <div class="tob-cabinet">${tobs||'<div style="font-size:0.8rem;color:var(--text3)">Добавь свои табаки — ИИ сгенерирует миксы из них</div>'}</div>
     </div>
+    </div></div><!-- /profile-card /profile-left -->
+    <div class="profile-right">
     <div class="p-section">
-      <div class="p-section-title">Миксы</div>
+      <div class="p-section-title">Миксы <span style="color:var(--text3);font-weight:400">${d.stats.mixes} шт.</span></div>
       <div class="mix-grid">${mixGrid}</div>
-    </div>`;
+    </div>
+    </div><!-- /profile-right -->
+    </div></div><!-- /profile-layout -->`;
 }
 
 function loadMixToLab(m) {
