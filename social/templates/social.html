@@ -146,15 +146,16 @@ html,body{min-height:100vh;background:var(--bg);color:var(--text);font-family:'S
 .mcx-tags{display:flex;gap:5px;margin-top:9px;flex-wrap:wrap;align-items:center}
 .mcx-tag{font-size:0.62rem;padding:3px 10px;border-radius:50px;background:rgba(255,255,255,0.06);color:rgba(255,255,255,0.45)}
 .mcx-tag.pack{background:rgba(157,111,255,0.1);color:var(--purple);border:1px solid rgba(157,111,255,0.18)}
-.mcx-body{padding:16px 18px;display:flex;gap:18px;align-items:center;min-height:210px}
+.mcx-body{padding:16px 14px;display:flex;gap:14px;align-items:center;min-height:240px}
 .mcx-tobaccos{flex:1;display:flex;flex-direction:column;gap:7px;min-width:0}
 .mcx-tob{display:flex;align-items:center;gap:7px;font-size:0.76rem}
 .mcx-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0;box-shadow:0 0 5px currentColor}
 .mcx-tob-info{flex:1;min-width:0}
-.mcx-tob-name{font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.mcx-tob-brand{font-size:0.63rem;color:rgba(255,255,255,0.28);margin-top:1px}
-.mcx-tob-grams{font-family:'JetBrains Mono',monospace;font-size:0.73rem;color:var(--gold);min-width:28px;text-align:right;flex-shrink:0}
-.mcx-tob-pct{font-family:'JetBrains Mono',monospace;font-size:0.73rem;color:rgba(255,255,255,0.45);min-width:30px;text-align:right;font-weight:600;flex-shrink:0}
+.mcx-tob-name-row{display:flex;align-items:baseline;gap:6px;min-width:0}
+.mcx-tob-name{font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.mcx-tob-grams{font-family:'JetBrains Mono',monospace;font-size:0.7rem;color:var(--gold);flex-shrink:0;white-space:nowrap}
+.mcx-tob-brand{font-size:0.62rem;color:rgba(255,255,255,0.28);margin-top:1px}
+.mcx-tob-pct{font-family:'JetBrains Mono',monospace;font-size:0.75rem;color:rgba(255,255,255,0.5);min-width:32px;text-align:right;font-weight:700;flex-shrink:0}
 .mcx-svg-wrap{flex-shrink:0;filter:drop-shadow(0 0 28px rgba(157,111,255,0.35))}
 .mcx-footer{padding:10px 20px;border-top:1px solid rgba(255,255,255,0.05);display:flex;align-items:center;gap:10px;font-size:0.72rem;color:rgba(255,255,255,0.3)}
 .mcx-str-pip{width:8px;height:8px;border-radius:50%;display:inline-block;margin-right:1px}
@@ -1383,15 +1384,17 @@ async function loadFeed() {
 function renderPost(p, opts={}) {
   const total = p.items.reduce((s,i)=>s+i.percentage,0)||100;
   const colors = p.items.map((_,i)=>COLORS[i%COLORS.length]);
-  const svgHtml = buildMiniSvg(p.items.map((it,i)=>({...it,color:colors[i]})), total, 168, 84, 84, 70, 26, p.pack_method||'секторами');
+  const svgHtml = buildMiniSvg(p.items.map((it,i)=>({...it,color:colors[i]})), total, 200, 100, 100, 84, 30, p.pack_method||'секторами');
   const bowlG = opts.bowlGrams || 20;
   const tobs = p.items.map((it,i)=>`<div class="mcx-tob">
     <div class="mcx-dot" style="background:${colors[i]};color:${colors[i]}"></div>
     <div class="mcx-tob-info">
-      <div class="mcx-tob-name">${it.tobacco_name}</div>
+      <div class="mcx-tob-name-row">
+        <span class="mcx-tob-name">${it.tobacco_name}</span>
+        <span class="mcx-tob-grams">${Math.round(it.percentage*bowlG/100)}г</span>
+      </div>
       <div class="mcx-tob-brand">${it.brand}</div>
     </div>
-    <span class="mcx-tob-grams">${Math.round(it.percentage*bowlG/100)}г</span>
     <span class="mcx-tob-pct">${it.percentage}%</span>
   </div>`).join('');
   const colorBar = p.items.map((it,i)=>`<div style="flex:${it.percentage};background:${colors[i]}"></div>`).join('');
