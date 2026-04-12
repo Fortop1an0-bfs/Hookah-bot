@@ -1392,10 +1392,10 @@ function renderPost(p, opts={}) {
       <div class="mcx-tob-name-row">
         <span class="mcx-tob-name">${it.tobacco_name}</span>
         <span class="mcx-tob-grams">${Math.round(it.percentage*bowlG/100)}г</span>
+        <span class="mcx-tob-pct">${it.percentage}%</span>
       </div>
       <div class="mcx-tob-brand">${it.brand}</div>
     </div>
-    <span class="mcx-tob-pct">${it.percentage}%</span>
   </div>`).join('');
   const colorBar = p.items.map((it,i)=>`<div style="flex:${it.percentage};background:${colors[i]}"></div>`).join('');
   const avg = p.items.reduce((s,it)=>s+(STR_MAP[it.strength?.toLowerCase()]||3)*it.percentage,0)/total;
