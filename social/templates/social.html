@@ -111,7 +111,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Space 
 /* ── FEED PAGE LAYOUT ── */
 .feed-layout{display:grid;grid-template-columns:minmax(0,1fr) 320px;gap:24px;padding:24px 28px;max-width:960px;width:100%;margin:0 auto}
 .feed-main{}
-.feed-sidebar{position:sticky;top:24px;align-self:start;max-height:calc(100vh - 48px);overflow-y:auto;scrollbar-width:none}
+.feed-sidebar{position:sticky;top:0;align-self:start;max-height:100vh;overflow-y:auto;scrollbar-width:none}
 .feed-sidebar::-webkit-scrollbar{display:none}
 
 /* Stories */
@@ -2158,6 +2158,16 @@ renderBowl();
 loadFeed();
 loadNotifCount();
 loadTopMixes();
+
+// Колёсико работает везде — перебрасываем на content-wrap
+document.addEventListener('wheel', function(e) {
+  const cw = document.querySelector('.content-wrap');
+  if (!cw) return;
+  if (!e.target.closest('.content-wrap') && !e.target.closest('.modal-overlay') && !e.target.closest('.modal-sheet')) {
+    cw.scrollTop += e.deltaY;
+    e.preventDefault();
+  }
+}, { passive: false });
 renderHistoryWidget();
 if(document.getElementById("catalogPage")) loadCatalog(0);
 </script>
