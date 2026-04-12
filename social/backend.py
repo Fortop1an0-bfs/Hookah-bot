@@ -64,6 +64,7 @@ CREATE TABLE IF NOT EXISTS hl_user_setup (
     user_id     INT PRIMARY KEY REFERENCES hl_users(id) ON DELETE CASCADE,
     hookah      TEXT DEFAULT '',
     bowl        TEXT DEFAULT '',
+    bowl_type   TEXT DEFAULT '',
     coal        TEXT DEFAULT '',
     foil        TEXT DEFAULT '',
     flask_shape TEXT DEFAULT '',
@@ -256,7 +257,7 @@ async def update_me(request: Request, user=Depends(req_user)):
                 d.get("bio"), d.get("avatar"), user["id"])
         # map "notes" → "foil" for backward compat
         if "notes" in d: d["foil"] = d.pop("notes")
-        setup_fields = {k: d[k] for k in ("hookah","bowl","coal","foil","flask_shape","flask_color") if k in d}
+        setup_fields = {k: d[k] for k in ("hookah","bowl","bowl_type","coal","foil","flask_shape","flask_color") if k in d}
         if setup_fields:
             sets = ", ".join(f"{k}=${i+2}" for i, k in enumerate(setup_fields))
             vals = list(setup_fields.values())

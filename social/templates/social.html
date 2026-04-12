@@ -431,6 +431,11 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Space 
 .equip-result-info b{display:block;font-size:0.8rem;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .equip-result-info span{font-size:0.72rem;color:var(--text3)}
 .equip-no-result{padding:10px;text-align:center;font-size:0.78rem;color:var(--text3)}
+/* Tobacco gram chips */
+.tob-gram-chips{display:flex;flex-wrap:wrap;gap:8px}
+.tob-gram-chips span{padding:10px 20px;background:var(--bg3);border:1.5px solid var(--border);border-radius:50px;font-size:0.9rem;font-weight:600;cursor:pointer;transition:all 0.15s;user-select:none}
+.tob-gram-chips span:hover{border-color:var(--purple);color:var(--text)}
+.tob-gram-chips span.active{background:rgba(157,111,255,0.15);border-color:var(--purple);color:var(--purple)}
 
 .toast{position:fixed;bottom:28px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--bg3);border:1px solid var(--border2);color:var(--text);padding:11px 22px;border-radius:50px;font-size:0.84rem;font-weight:500;z-index:500;opacity:0;transition:all 0.3s;pointer-events:none;white-space:nowrap;max-width:340px;text-align:center;box-shadow:0 8px 32px rgba(0,0,0,0.4)}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
@@ -766,10 +771,32 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Space 
 <div class="modal-overlay" id="tobModal" onclick="if(event.target===this)closeTobSearch()">
   <div class="modal-sheet">
     <div class="modal-handle"></div>
-    <div class="modal-header"><h3>Добавить табак</h3><button class="modal-close" onclick="closeTobSearch()">✕</button></div>
+    <div class="modal-header">
+      <h3 id="tobModalTitle">Добавить табак</h3>
+      <button class="modal-close" onclick="closeTobSearch()">✕</button>
+    </div>
     <div class="modal-body">
-      <div class="search-wrap"><span class="search-ico">🔍</span><input class="search-inp" id="tobSearchInp" placeholder="Поиск по названию или бренду..." oninput="searchTobaccos(this.value)"></div>
-      <div class="search-res" id="tobResults"><div class="loading" style="padding:20px 0"><div class="spinner"></div>Начни вводить...</div></div>
+      <!-- Step 1: search -->
+      <div id="tobStep1">
+        <div class="search-wrap"><span class="search-ico">🔍</span><input class="search-inp" id="tobSearchInp" placeholder="Поиск по названию или бренду..." oninput="searchTobaccos(this.value)"></div>
+        <div class="search-res" id="tobResults"><div class="loading" style="padding:20px 0"><div class="spinner"></div>Начни вводить...</div></div>
+      </div>
+      <!-- Step 2: choose grams -->
+      <div id="tobStep2" style="display:none">
+        <div id="tobPickedInfo" style="display:flex;align-items:center;gap:12px;padding:12px;background:var(--bg3);border-radius:12px;margin-bottom:18px">
+          <div id="tobPickedIco" style="font-size:1.8rem;width:44px;text-align:center"></div>
+          <div>
+            <div id="tobPickedName" style="font-weight:700;font-size:0.95rem"></div>
+            <div id="tobPickedBrand" style="font-size:0.78rem;color:var(--text3)"></div>
+          </div>
+        </div>
+        <div class="setup-field-sublabel" style="margin-bottom:10px;text-transform:uppercase;letter-spacing:0.4px;font-size:0.68rem;color:var(--text3)">Сколько грамм у тебя?</div>
+        <div class="tob-gram-chips" id="tobGramChips"></div>
+        <div style="margin-top:16px;display:flex;gap:8px">
+          <button class="btn-ghost" style="flex:0 0 auto;padding:11px 16px" onclick="_tobStep(1)">← Назад</button>
+          <button class="btn-gold" id="tobAddBtn" onclick="confirmAddTobacco()" style="flex:1">Добавить в кабинет</button>
+        </div>
+      </div>
     </div>
   </div>
 </div>
@@ -895,11 +922,23 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Space 
         <label class="setup-field-label">🏺 Чаша</label>
         <div style="display:flex;gap:10px;align-items:flex-start">
           <div style="flex:1">
-            <input class="form-input" id="setupBowl" placeholder="Начни вводить название..."
+            <input class="form-input" id="setupBowl" placeholder="Бренд/название (напр. Oblako Phunnel M)..."
               oninput="searchEquip('bowl','setupBowl','bowl-preview','bowl-results')">
             <div class="equip-results" id="bowl-results"></div>
           </div>
           <div class="equip-photo-wrap" id="bowl-preview"></div>
+        </div>
+        <div class="setup-field-sub">
+          <label class="setup-field-sublabel">Форма чаши</label>
+          <div class="setup-chips" id="chips-bowl-type">
+            <span onclick="pickChip('setupBowlType',this)">Убивашка</span>
+            <span onclick="pickChip('setupBowlType',this)">Фанел</span>
+            <span onclick="pickChip('setupBowlType',this)">Обратный фанел</span>
+            <span onclick="pickChip('setupBowlType',this)">Triton</span>
+            <span onclick="pickChip('setupBowlType',this)">Сифон</span>
+            <span onclick="pickChip('setupBowlType',this)">Стандарт</span>
+          </div>
+          <input type="hidden" id="setupBowlType">
         </div>
       </div>
 
@@ -1295,6 +1334,8 @@ function openTobSearch(cabinetMode=false) {
 function closeTobSearch() {
   document.getElementById('tobModal').classList.remove('open');
   window._cabinetMode = false;
+  _tobPicked = null;
+  _tobStep(1);
 }
 
 function searchTobaccos(q) {
@@ -1325,23 +1366,90 @@ function searchTobaccos(q) {
   }, 350);
 }
 
+let _tobPicked = null;
 function pickTobacco(r) {
   if (window._cabinetMode) {
-    api('/api/cabinet/tobaccos', 'POST', {ali_id: r.id, name: r.name, brand: r.brand, line: r.line||'', weight: r.weight||''}).then(()=>{
-      showToast('Добавлено в кабинет!');
-      closeTobSearch();
-      renderProfile();
-    }).catch(()=>{});
+    // Show gram selection step
+    _tobPicked = r;
+    _tobStep(2);
     return;
   }
+  // Lab mode - add directly
   addTobacco({
     ali_id: r.id,
-    name: r.name,
+    name: r.name.replace(/^Табак для кальяна\s*/i,''),
     brand: r.brand,
     strength: r.strength_user || r.strength_official || 'средний',
     price: r.price || 0,
     weight: r.weight || '',
   });
+}
+
+function _tobStep(step) {
+  document.getElementById('tobStep1').style.display = step===1 ? '' : 'none';
+  document.getElementById('tobStep2').style.display = step===2 ? '' : 'none';
+  if (step===2 && _tobPicked) {
+    const r = _tobPicked;
+    const cleanName = r.name.replace(/^Табак для кальяна\s*/i,'');
+    const icon = Object.entries(BRAND_ICONS).find(([k])=>r.brand?.includes(k))?.[1]||'🌿';
+    document.getElementById('tobPickedIco').textContent  = icon;
+    document.getElementById('tobPickedName').textContent = cleanName;
+    document.getElementById('tobPickedBrand').textContent = r.brand + (r.line ? ' · '+r.line : '');
+    document.getElementById('tobModalTitle').textContent  = 'Выбери расфасовку';
+    // Build gram chips: use available weights from data, or standard sizes
+    const GRAM_OPTS = ['25г','50г','100г','250г','500г'];
+    // Check if product has specific weight from DB
+    const dbWeight = (r.weight||'').trim();
+    // Show all standard sizes, highlight the DB one if matches
+    const chips = document.getElementById('tobGramChips');
+    chips.innerHTML = GRAM_OPTS.map(g => {
+      const active = dbWeight && dbWeight.toLowerCase().includes(g.replace('г','')) ? ' class="active"' : '';
+      return `<span${active} onclick="selectGram(this,'${g}')">${g}</span>`;
+    }).join('');
+    // Pre-select DB weight if it matches
+    if (dbWeight) {
+      const num = parseInt(dbWeight);
+      if (num) {
+        const matchG = num+'г';
+        chips.querySelectorAll('span').forEach(s=>s.classList.toggle('active',s.textContent===matchG));
+      }
+    }
+  } else {
+    document.getElementById('tobModalTitle').textContent = 'Добавить табак';
+  }
+}
+
+function selectGram(el, val) {
+  document.querySelectorAll('#tobGramChips span').forEach(s=>s.classList.remove('active'));
+  el.classList.add('active');
+}
+
+async function confirmAddTobacco() {
+  if (!_tobPicked) return;
+  const activeGram = document.querySelector('#tobGramChips span.active');
+  const weight = activeGram ? activeGram.textContent : '';
+  const r = _tobPicked;
+  const btn = document.getElementById('tobAddBtn');
+  btn.disabled = true;
+  btn.textContent = '...';
+  try {
+    if (!token) { openAuth(); return; }
+    await api('/api/cabinet/tobaccos','POST',{
+      ali_id: r.id,
+      name:   r.name.replace(/^Табак для кальяна\s*/i,''),
+      brand:  r.brand,
+      line:   r.line||'',
+      weight: weight,
+    });
+    showToast('✅ '+r.brand+' добавлен в кабинет!');
+    closeTobSearch();
+    renderProfile();
+  } catch(e) {
+    showToast('Ошибка: '+e.message);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Добавить в кабинет';
+  }
 }
 
 // ── SAVE MIX ──
@@ -1847,7 +1955,7 @@ function buildProfileHTML(d) {
       <div class="p-widget">
         <div class="p-widget-title">Сетап <span class="p-widget-add" onclick="openSetupModal()">изменить</span></div>
         ${buildSetupRow('🔱','hookah','Кальян',d.setup?.hookah,d.setup?.flask_shape,d.setup?.flask_color)}
-        ${buildSetupRow('🏺','bowl','Чаша',d.setup?.bowl)}
+        ${buildSetupRow('🏺','bowl','Чаша',d.setup?.bowl,d.setup?.bowl_type)}
         ${buildSetupRow('🔥','coal','Угли',d.setup?.coal)}
         ${buildSetupRow('🌸','hmd','Калауд / ХМД',d.setup?.foil)}
       </div>
@@ -1906,6 +2014,7 @@ function openSetupModal() {
     document.getElementById('setupFoil').value      = s.foil||s.notes||'';
     document.getElementById('setupFlaskShape').value= s.flask_shape||'';
     document.getElementById('setupFlaskColor').value= s.flask_color||'';
+    document.getElementById('setupBowlType').value  = s.bowl_type||'';
     // restore previews for saved values
     ['hookah','bowl','coal','foil'].forEach(t=>{
       const map = {hookah:'hookah',bowl:'bowl',coal:'coal',foil:'hmd'};
@@ -1998,7 +2107,12 @@ function pickChipEquip(inputId, previewId, resultsId, el) {
 }
 
 function syncChips() {
-  [['setupFlaskShape','chips-flask-shape'],['setupFlaskColor','chips-flask-color'],['setupFoil','chips-foil']].forEach(([inp,chips]) => {
+  [
+    ['setupFlaskShape','chips-flask-shape'],
+    ['setupFlaskColor','chips-flask-color'],
+    ['setupBowlType','chips-bowl-type'],
+    ['setupFoil','chips-foil'],
+  ].forEach(([inp,chips]) => {
     const val = document.getElementById(inp)?.value?.trim().toLowerCase();
     document.querySelectorAll('#'+chips+' span').forEach(s => {
       s.classList.toggle('active', s.textContent.trim().toLowerCase() === val);
@@ -2011,6 +2125,7 @@ async function saveSetupModal() {
     await api('/api/me','PATCH',{
       hookah:      document.getElementById('setupHookah').value.trim(),
       bowl:        document.getElementById('setupBowl').value.trim(),
+      bowl_type:   document.getElementById('setupBowlType').value.trim(),
       coal:        document.getElementById('setupCoal').value.trim(),
       foil:        document.getElementById('setupFoil').value.trim(),
       flask_shape: document.getElementById('setupFlaskShape').value.trim(),
