@@ -8,8 +8,8 @@
 <style>
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 :root{
-  --bg:#0e0c14;--bg2:#161320;--bg3:#1e1b2c;--bg4:#272438;--bg5:#302d44;
-  --border:rgba(255,255,255,0.07);--border2:rgba(255,255,255,0.13);
+  --bg:#07060d;--bg2:#100e1c;--bg3:#181526;--bg4:#221f34;--bg5:#2e2a42;
+  --border:rgba(255,255,255,0.08);--border2:rgba(255,255,255,0.15);
   --text:#f0edf8;--text2:#8a879f;--text3:#4a4862;
   --gold:#e8a23b;--gold2:#ffd280;--purple:#9d6fff;--purple2:#7c4fd6;
   --teal:#3dd6ac;--red:#f06b6b;--green:#4ade80;--pink:#f472b6;
@@ -109,7 +109,7 @@ html,body{min-height:100vh;background:var(--bg);color:var(--text);font-family:'S
 .nav-item.active::before{content:'';position:absolute;top:-10px;left:50%;transform:translateX(-50%);width:32px;height:3px;background:linear-gradient(90deg,var(--gold),var(--purple));border-radius:0 0 6px 6px;box-shadow:0 0 12px rgba(232,162,59,0.4)}
 
 /* ── FEED PAGE LAYOUT ── */
-.feed-layout{display:grid;grid-template-columns:1fr 340px;gap:28px;padding:24px 32px;max-width:1100px}
+.feed-layout{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:28px;padding:24px 32px;max-width:1400px;width:100%;margin:0 auto}
 .feed-main{}
 .feed-sidebar{}
 
@@ -131,38 +131,44 @@ html,body{min-height:100vh;background:var(--bg);color:var(--text);font-family:'S
 .card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;margin-bottom:16px}
 
 /* ── FEED POST ── */
-.feed-post{margin:0 0 16px}
-.post-header{display:flex;align-items:center;gap:10px;padding:14px 16px 10px}
-.post-avatar{width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,var(--purple2),var(--gold));display:flex;align-items:center;justify-content:center;font-size:1.1rem;flex-shrink:0;box-shadow:0 2px 10px rgba(157,111,255,0.2)}
+.feed-post{margin:0 0 20px;border-radius:22px;overflow:hidden;border:1px solid rgba(255,255,255,0.11);background:linear-gradient(155deg,#1d1a2f 0%,#16132a 60%,#111025 100%);transition:all 0.25s;box-shadow:0 4px 24px rgba(0,0,0,0.5)}
+.feed-post:hover{border-color:rgba(157,111,255,0.35);box-shadow:0 8px 40px rgba(157,111,255,0.12),0 0 0 1px rgba(157,111,255,0.08)}
+.post-header{display:flex;align-items:center;gap:12px;padding:16px 20px 12px}
+.post-avatar{width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,var(--purple2),var(--gold));display:flex;align-items:center;justify-content:center;font-size:1.2rem;flex-shrink:0;box-shadow:0 0 0 2px rgba(157,111,255,0.25),0 4px 16px rgba(0,0,0,0.5)}
 .post-username{font-size:0.92rem;font-weight:700;letter-spacing:-0.2px}
-.post-time{font-size:0.7rem;color:var(--text3)}
+.post-time{font-size:0.68rem;color:var(--text3);margin-top:1px}
 
-/* Mix card */
-.mix-card-inner{margin:0 16px;background:var(--bg3);border-radius:16px;border:1px solid var(--border);overflow:hidden}
-.mcx-head{padding:14px 16px 10px;background:linear-gradient(135deg,rgba(157,111,255,0.16),rgba(61,214,172,0.07))}
-.mcx-name{font-size:1.1rem;font-weight:700;letter-spacing:-0.3px}
-.mcx-desc{font-size:0.78rem;color:var(--text2);margin-top:3px;line-height:1.4}
-.mcx-tags{display:flex;gap:5px;margin-top:8px;flex-wrap:wrap;align-items:center}
-.mcx-tag{font-size:0.63rem;padding:3px 10px;border-radius:50px;background:rgba(255,255,255,0.07);color:var(--text2)}
-.mcx-tag.pack{background:rgba(157,111,255,0.12);color:var(--purple);border:1px solid rgba(157,111,255,0.18)}
-.mcx-body{padding:13px 16px;display:flex;gap:16px;align-items:center}
-.mcx-tobaccos{flex:1;display:flex;flex-direction:column;gap:6px}
+/* Mix card inner */
+.mix-card-inner{margin:0 16px;border-radius:16px;border:1px solid rgba(255,255,255,0.06);overflow:hidden;background:rgba(0,0,0,0.3)}
+.mcx-head{padding:16px 20px 13px;background:linear-gradient(135deg,rgba(157,111,255,0.16) 0%,rgba(61,214,172,0.06) 100%);border-bottom:1px solid rgba(255,255,255,0.06)}
+.mcx-name{font-size:1.2rem;font-weight:800;letter-spacing:-0.4px}
+.mcx-desc{font-size:0.77rem;color:rgba(255,255,255,0.4);margin-top:4px;line-height:1.5}
+.mcx-tags{display:flex;gap:5px;margin-top:9px;flex-wrap:wrap;align-items:center}
+.mcx-tag{font-size:0.62rem;padding:3px 10px;border-radius:50px;background:rgba(255,255,255,0.06);color:rgba(255,255,255,0.45)}
+.mcx-tag.pack{background:rgba(157,111,255,0.1);color:var(--purple);border:1px solid rgba(157,111,255,0.18)}
+.mcx-body{padding:16px 18px;display:flex;gap:18px;align-items:center;min-height:210px}
+.mcx-tobaccos{flex:1;display:flex;flex-direction:column;gap:7px;min-width:0}
 .mcx-tob{display:flex;align-items:center;gap:7px;font-size:0.76rem}
-.mcx-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
-.mcx-tob-name{flex:1;color:var(--text)}
-.mcx-tob-pct{font-family:'JetBrains Mono',monospace;font-size:0.7rem;color:var(--text3)}
-.mcx-footer{padding:10px 16px;border-top:1px solid var(--border);display:flex;align-items:center;gap:10px;font-size:0.72rem;color:var(--text3)}
+.mcx-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0;box-shadow:0 0 5px currentColor}
+.mcx-tob-info{flex:1;min-width:0}
+.mcx-tob-name{font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mcx-tob-brand{font-size:0.63rem;color:rgba(255,255,255,0.28);margin-top:1px}
+.mcx-tob-grams{font-family:'JetBrains Mono',monospace;font-size:0.73rem;color:var(--gold);min-width:28px;text-align:right;flex-shrink:0}
+.mcx-tob-pct{font-family:'JetBrains Mono',monospace;font-size:0.73rem;color:rgba(255,255,255,0.45);min-width:30px;text-align:right;font-weight:600;flex-shrink:0}
+.mcx-svg-wrap{flex-shrink:0;filter:drop-shadow(0 0 28px rgba(157,111,255,0.35))}
+.mcx-footer{padding:10px 20px;border-top:1px solid rgba(255,255,255,0.05);display:flex;align-items:center;gap:10px;font-size:0.72rem;color:rgba(255,255,255,0.3)}
 .mcx-str-pip{width:8px;height:8px;border-radius:50%;display:inline-block;margin-right:1px}
+.mcx-colorbar{height:5px;display:flex}
 
 /* Post actions */
-.post-actions{display:flex;gap:7px;padding:10px 16px 14px}
-.act-btn{display:flex;align-items:center;gap:6px;padding:7px 15px;border-radius:50px;background:var(--bg3);border:1px solid var(--border);color:var(--text2);font-size:0.8rem;font-weight:500;cursor:pointer;transition:all 0.2s;font-family:inherit}
-.act-btn:hover{background:var(--bg4)}
-.act-btn.liked{background:rgba(244,114,182,0.1);border-color:rgba(244,114,182,0.3);color:var(--pink)}
-.act-btn.saved{background:rgba(157,111,255,0.12);border-color:rgba(157,111,255,0.3);color:var(--purple)}
+.post-actions{display:flex;gap:8px;padding:14px 20px 16px;align-items:center}
+.act-btn{display:flex;align-items:center;gap:6px;padding:8px 16px;border-radius:50px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.09);color:rgba(255,255,255,0.5);font-size:0.8rem;font-weight:600;cursor:pointer;transition:all 0.2s;font-family:inherit}
+.act-btn:hover{background:rgba(255,255,255,0.11);color:var(--text);border-color:rgba(255,255,255,0.18)}
+.act-btn.liked{background:rgba(244,114,182,0.12);border-color:rgba(244,114,182,0.35);color:var(--pink)}
+.act-btn.saved{background:rgba(157,111,255,0.12);border-color:rgba(157,111,255,0.35);color:var(--purple)}
 
 /* ── LAB PAGE ── */
-.lab-layout{display:grid;grid-template-columns:380px 1fr;gap:28px;padding:24px 32px;max-width:1100px;align-items:start}
+.lab-layout{display:grid;grid-template-columns:380px 1fr;gap:28px;padding:24px 32px;max-width:1400px;width:100%;margin:0 auto;align-items:start}
 .lab-left{position:sticky;top:80px}
 .lab-right{}
 
@@ -231,47 +237,104 @@ html,body{min-height:100vh;background:var(--bg);color:var(--text);font-family:'S
 .lab-btn-ai:hover{box-shadow:0 0 24px rgba(61,214,172,0.18);transform:translateY(-1px)}
 
 /* ── PROFILE PAGE ── */
-.profile-layout{display:grid;grid-template-columns:300px 1fr;gap:28px;padding:24px 32px;max-width:1100px;align-items:start}
+.profile-layout{display:grid;grid-template-columns:300px 1fr;gap:28px;padding:24px 32px;max-width:1400px;width:100%;margin:0 auto;align-items:start}
 .profile-left{position:sticky;top:80px}
 .profile-right{}
 
-.profile-card{background:var(--bg2);border:1px solid var(--border);border-radius:20px;overflow:hidden;margin-bottom:16px}
-.profile-cover{height:110px;background:linear-gradient(135deg,#140d2a 0%,#0c1825 50%,#140d2a 100%);position:relative;overflow:hidden}
-.profile-cover-art{position:absolute;inset:0;opacity:0.3}
-.profile-cover::after{content:'';position:absolute;inset:0;background:linear-gradient(to bottom,transparent 30%,var(--bg2))}
-.profile-info-inner{padding:0 18px 16px;position:relative;margin-top:-36px}
-.p-avatar{width:72px;height:72px;border-radius:50%;background:linear-gradient(135deg,var(--purple2),var(--gold));border:3px solid var(--bg2);display:flex;align-items:center;justify-content:center;font-size:1.8rem;margin-bottom:10px;box-shadow:0 4px 20px rgba(157,111,255,0.3)}
-.p-name{font-size:1.2rem;font-weight:700;letter-spacing:-0.4px}
-.p-handle{font-size:0.78rem;color:var(--text3);margin-bottom:7px}
-.p-bio{font-size:0.83rem;color:var(--text2);line-height:1.5;margin-bottom:11px}
-.p-stats{display:flex;gap:20px;margin-bottom:12px}
-.stat-n{font-size:1.05rem;font-weight:700}
-.stat-l{font-size:0.63rem;color:var(--text3)}
-.p-edit-btn{width:100%;padding:9px;background:var(--bg3);border:1px solid var(--border2);border-radius:50px;color:var(--text);font-family:inherit;font-size:0.86rem;font-weight:600;cursor:pointer;transition:all 0.2s;margin-bottom:10px}
-.p-edit-btn:hover{background:var(--bg4)}
+/* Hero */
+.p-hero{background:var(--bg2);border-bottom:1px solid var(--border);margin-bottom:0;position:relative}
+.p-hero-banner{height:180px;background:linear-gradient(135deg,#1a0a3d 0%,#0d1f3c 40%,#1a1230 70%,#0d2a1e 100%);position:relative;overflow:hidden}
+.p-hero-banner svg{position:absolute;inset:0;width:100%;height:100%}
+.p-hero-banner::after{content:'';position:absolute;inset:0;background:linear-gradient(to bottom,transparent 50%,rgba(12,10,20,0.85))}
+.p-hero-body{max-width:1400px;margin:0 auto;padding:0 32px 28px;display:flex;align-items:flex-end;gap:22px;margin-top:-56px;position:relative}
+.p-hero-ava{width:110px;height:110px;border-radius:50%;background:linear-gradient(135deg,var(--purple2),var(--gold));border:4px solid var(--bg2);display:flex;align-items:center;justify-content:center;font-size:2.8rem;flex-shrink:0;box-shadow:0 0 0 6px rgba(157,111,255,0.15),0 8px 32px rgba(157,111,255,0.35)}
+.p-hero-info{flex:1;min-width:0;padding-bottom:4px}
+.p-hero-name{font-size:1.6rem;font-weight:800;letter-spacing:-0.6px;line-height:1.1;margin-bottom:3px}
+.p-hero-handle{font-size:0.82rem;color:var(--text3);margin-bottom:8px}
+.p-hero-bio{font-size:0.86rem;color:var(--text2);line-height:1.5;margin-bottom:12px;max-width:480px}
+.p-hero-stats{display:flex;gap:28px}
+.p-stat{text-align:center}
+.p-stat-n{font-size:1.15rem;font-weight:700;line-height:1}
+.p-stat-l{font-size:0.62rem;color:var(--text3);margin-top:2px}
+.p-hero-actions{display:flex;flex-direction:column;gap:8px;padding-bottom:8px;flex-shrink:0}
+.p-action-btn{padding:9px 18px;background:var(--bg3);border:1px solid var(--border2);border-radius:50px;color:var(--text);font-family:inherit;font-size:0.82rem;font-weight:600;cursor:pointer;transition:all 0.2s;white-space:nowrap}
+.p-action-btn:hover{background:var(--bg4);border-color:var(--purple)}
+.p-action-btn.primary{background:linear-gradient(135deg,var(--purple2),var(--purple));border-color:transparent;color:#fff}
+.p-action-btn.danger{color:var(--text3)}
 
-.p-section{margin-bottom:20px}
-.p-section-title{font-size:0.74rem;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:0.7px;margin-bottom:10px;display:flex;align-items:center;justify-content:space-between}
-.p-section-add{font-size:0.73rem;color:var(--purple);cursor:pointer;font-weight:600;text-transform:none;letter-spacing:0}
+/* Profile content */
+.p-content{max-width:1400px;margin:0 auto;padding:24px 32px;display:grid;grid-template-columns:1fr 280px;gap:24px;align-items:start}
 
-.setup-card{background:var(--bg2);border:1px solid var(--border);border-radius:16px;padding:14px;display:flex;flex-direction:column;gap:10px}
-.setup-row{display:flex;align-items:center;gap:10px}
-.setup-ico{font-size:1.1rem;width:32px;text-align:center;flex-shrink:0}
+/* Mix cards */
+.p-mix-cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:14px}
+.p-mix-card{background:var(--bg2);border:1px solid var(--border);border-radius:16px;overflow:hidden;cursor:pointer;transition:all 0.2s}
+.p-mix-card:hover{border-color:var(--purple);transform:translateY(-2px);box-shadow:0 8px 24px rgba(157,111,255,0.15)}
+.p-mix-card-vis{height:120px;background:var(--bg3);display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden}
+.p-mix-card-body{padding:12px 14px}
+.p-mix-card-name{font-size:0.9rem;font-weight:700;margin-bottom:5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.p-mix-card-tobs{font-size:0.72rem;color:var(--text3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:8px}
+.p-mix-card-meta{display:flex;align-items:center;gap:10px;font-size:0.72rem;color:var(--text3)}
+
+/* Sidebar */
+.p-sidebar{}
+.p-widget{background:var(--bg2);border:1px solid var(--border);border-radius:16px;padding:16px;margin-bottom:14px}
+.p-widget-title{font-size:0.72rem;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:0.7px;margin-bottom:12px;display:flex;align-items:center;justify-content:space-between}
+.p-widget-add{font-size:0.72rem;color:var(--purple);cursor:pointer;font-weight:600;text-transform:none;letter-spacing:0}
+.setup-row{display:flex;align-items:center;gap:10px;padding:6px 0;border-bottom:1px solid var(--border)}
+.setup-row:last-child{border-bottom:none;padding-bottom:0}
+.setup-ico{font-size:1.1rem;width:28px;text-align:center;flex-shrink:0}
 .setup-lbl{font-size:0.61rem;color:var(--text3);text-transform:uppercase;letter-spacing:0.4px}
-.setup-v{font-size:0.86rem;font-weight:500}
+.setup-v{font-size:0.84rem;font-weight:500}
 .setup-v.empty{color:var(--text3);font-style:italic;font-weight:400}
-
-.tob-cabinet{display:flex;flex-wrap:wrap;gap:7px}
-.tob-chip{padding:5px 12px;background:var(--bg3);border:1px solid var(--border);border-radius:50px;font-size:0.74rem;display:flex;align-items:center;gap:5px;cursor:pointer;transition:all 0.2s}
+.tob-cabinet{display:flex;flex-wrap:wrap;gap:6px}
+.tob-chip{padding:4px 10px;background:var(--bg3);border:1px solid var(--border);border-radius:50px;font-size:0.72rem;display:flex;align-items:center;gap:5px;cursor:pointer;transition:all 0.2s}
 .tob-chip:hover{border-color:var(--purple)}
 .tob-chip-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
 
-/* Mix grid */
+/* Mix grid (keep for compat) */
 .mix-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:3px}
 .mix-grid-item{aspect-ratio:1;background:var(--bg3);position:relative;cursor:pointer;overflow:hidden;border-radius:4px}
 .mix-grid-item svg{width:100%;height:100%}
 .mix-grid-overlay{position:absolute;inset:0;display:flex;flex-direction:column;justify-content:flex-end;padding:6px;background:linear-gradient(to top,rgba(0,0,0,0.7) 0%,transparent 55%)}
 .mix-grid-name{font-size:0.62rem;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+/* old compat */
+.p-section{margin-bottom:20px}
+.p-section-title{font-size:0.74rem;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:0.7px;margin-bottom:10px;display:flex;align-items:center;justify-content:space-between}
+.p-section-add{font-size:0.73rem;color:var(--purple);cursor:pointer;font-weight:600;text-transform:none;letter-spacing:0}
+.p-edit-btn{padding:9px 18px;background:var(--bg3);border:1px solid var(--border2);border-radius:50px;color:var(--text);font-family:inherit;font-size:0.86rem;font-weight:600;cursor:pointer;transition:all 0.2s}
+.p-edit-btn:hover{background:var(--bg4)}
+.p-avatar{width:72px;height:72px;border-radius:50%;background:linear-gradient(135deg,var(--purple2),var(--gold));border:3px solid var(--bg2);display:flex;align-items:center;justify-content:center;font-size:1.8rem;margin-bottom:10px;box-shadow:0 4px 20px rgba(157,111,255,0.3)}
+
+/* ── HOOKAH MIX CARD ── */
+.hk-feed{display:flex;flex-direction:column;align-items:center;gap:0}
+.hk-card{background:#09080f;border:1px solid rgba(255,255,255,0.09);border-radius:18px;overflow:hidden;width:100%;max-width:520px}
+.hk-card-header{padding:18px 18px 12px;border-bottom:1px solid rgba(255,255,255,0.06)}
+.hk-card-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px}
+.hk-card-label{font-size:0.55rem;letter-spacing:2.5px;color:rgba(255,255,255,0.25);text-transform:uppercase}
+.hk-card-gwrap{text-align:right}
+.hk-card-gnum{font-size:2.4rem;font-weight:800;color:rgba(255,255,255,0.06);line-height:1}
+.hk-card-gunit{font-size:0.5rem;letter-spacing:1.5px;color:rgba(255,255,255,0.15);text-transform:uppercase}
+.hk-card-title{font-size:1.55rem;font-weight:800;letter-spacing:-0.5px;line-height:1.05;margin-bottom:5px}
+.hk-card-desc{font-size:0.75rem;color:rgba(255,255,255,0.4);line-height:1.5}
+.hk-tob-row{display:flex;align-items:center;padding:10px 18px;border-bottom:1px solid rgba(255,255,255,0.04);gap:12px;position:relative}
+.hk-tob-accent{position:absolute;left:0;top:0;bottom:0;width:3px}
+.hk-tob-pct{font-size:1.6rem;font-weight:800;min-width:58px;line-height:1;font-variant-numeric:tabular-nums}
+.hk-tob-pct-sign{font-size:0.55rem;color:rgba(255,255,255,0.3);font-weight:400;margin-left:1px}
+.hk-tob-info{flex:1;min-width:0}
+.hk-tob-name{font-size:0.88rem;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hk-tob-brand{font-size:0.68rem;color:rgba(255,255,255,0.35);font-family:'JetBrains Mono',monospace}
+.hk-tob-grams{font-size:0.8rem;color:rgba(255,255,255,0.5);font-family:'JetBrains Mono',monospace;flex-shrink:0}
+.hk-color-bar{height:8px;display:flex}
+.hk-meta{display:grid;grid-template-columns:1fr 1fr}
+.hk-meta-item{padding:10px 18px}
+.hk-meta-item:first-child{border-right:1px solid rgba(255,255,255,0.05)}
+.hk-meta-lbl{font-size:0.55rem;color:rgba(255,255,255,0.3);text-transform:uppercase;letter-spacing:1px;margin-bottom:3px}
+.hk-meta-val{font-size:0.82rem;font-weight:600;color:rgba(255,255,255,0.7)}
+.hk-actions{display:grid;grid-template-columns:1fr 1fr;border-top:1px solid rgba(255,255,255,0.06)}
+.hk-btn{padding:14px;background:transparent;border:none;color:rgba(255,255,255,0.45);font-family:inherit;font-size:0.72rem;font-weight:700;letter-spacing:1.5px;cursor:pointer;text-transform:uppercase;transition:all 0.18s}
+.hk-btn:first-child{border-right:1px solid rgba(255,255,255,0.06)}
+.hk-btn:hover{background:rgba(255,255,255,0.04);color:#fff}
 
 /* ── AUTH ── */
 .auth-cta{padding:40px 24px;text-align:center}
@@ -360,6 +423,10 @@ html,body{min-height:100vh;background:var(--bg);color:var(--text);font-family:'S
   .lab-left{position:static}
   .profile-layout{grid-template-columns:1fr;padding:12px 0 32px}
   .profile-left{position:static}
+  .p-hero-body{flex-wrap:wrap;margin-top:-40px;padding:0 16px 20px;gap:14px}
+  .p-hero-ava{width:80px;height:80px;font-size:2rem}
+  .p-hero-actions{flex-direction:row;flex-wrap:wrap}
+  .p-content{grid-template-columns:1fr;padding:16px}
   .lab-bowl-area{flex-direction:row;align-items:flex-start;padding:16px}
   .pack-methods{grid-template-columns:1fr}
 }
@@ -370,7 +437,7 @@ html,body{min-height:100vh;background:var(--bg);color:var(--text);font-family:'S
 }
 
 /* ── CATALOG ── */
-.catalog-layout{padding:24px 32px;max-width:1100px}
+.catalog-layout{padding:24px 32px;max-width:1400px;width:100%;margin:0 auto}
 .catalog-filters{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:20px;align-items:center}
 .filter-inp{padding:9px 14px;background:var(--bg3);border:1px solid var(--border);border-radius:50px;color:var(--text);font-family:inherit;font-size:0.85rem;outline:none;transition:border-color 0.2s;min-width:180px}
 .filter-inp:focus{border-color:var(--purple)}
@@ -1258,6 +1325,11 @@ function buildMiniSvg(tobs, total, size, cx, cy, outerR, innerR, method='сек�
     tobs.forEach(t => {
       const sw=(t.percentage/Math.max(total,100))*360;
       h+=`<path d="${arcPath(cx,cy,outerR*scale,innerR,a,a+sw-1.5)}" fill="${t.color}" opacity="0.9"/>`;
+      if (sw > 22) {
+        const mid = polar(cx, cy, (outerR*scale + innerR)/2, a + sw/2);
+        const fs = size >= 120 ? 9 : 7;
+        h+=`<text x="${mid.x}" y="${mid.y}" text-anchor="middle" dominant-baseline="middle" font-size="${fs}" font-weight="700" fill="rgba(255,255,255,0.85)" font-family="JetBrains Mono,monospace">${t.percentage}%</text>`;
+      }
       a+=sw;
     });
   }
@@ -1266,69 +1338,107 @@ function buildMiniSvg(tobs, total, size, cx, cy, outerR, innerR, method='сек�
 }
 
 // ── FEED ──
+function renderCommunityPost(m) {
+  const src = m.source || 'Сообщество';
+  const emojiMatch = src.match(/\p{Emoji}/u);
+  const avatar = emojiMatch ? emojiMatch[0] : '📋';
+  const username = src.replace(/\p{Emoji}/gu,'').trim().toLowerCase().replace(/[\s\-]+/g,'_').replace(/[^\w_]/g,'') || 'community';
+  const colors = m.items.map((_,i) => COLORS[i % COLORS.length]);
+  const labData = JSON.stringify({
+    name: m.title, pack_method: 'секторами',
+    items: m.items.map((it,i) => ({tobacco_name:it.tobacco_name, brand:it.brand, percentage:it.percentage, color:colors[i], strength:'средний'}))
+  }).replace(/"/g,'&quot;');
+  return renderPost({
+    id: m.id,
+    avatar, username,
+    created_at: m.created_at,
+    name: m.title,
+    description: m.summary,
+    pack_method: 'секторами',
+    items: m.items.map((it,i) => ({...it, strength:'средний', color:colors[i]})),
+    i_liked:false, i_saved:false, likes:0,
+  }, {
+    communityActions: true,
+    bowlGrams: 20,
+    labOnclick: `loadMixToLab(${labData});navigate('lab',document.getElementById('snav-lab'))`,
+  });
+}
+
 async function loadFeed() {
   const el = document.getElementById('feedList');
   try {
     const posts = await api('/api/feed?limit=20');
-    if (!posts.length) { el.innerHTML = mockFeed(); return; }
-    el.innerHTML = posts.map(p => renderPost(p)).join('');
-  } catch(e) {
-    el.innerHTML = mockFeed();
-  }
+    if (posts.length) { el.innerHTML = posts.map(p => renderPost(p)).join(''); return; }
+  } catch(e) {}
+  try {
+    const mixes = await api('/api/community-mixes?limit=12');
+    if (mixes.length) {
+      el.innerHTML = '<div style="padding:4px 0 14px;font-size:0.72rem;color:var(--text3);text-transform:uppercase;letter-spacing:0.8px">Миксы сообщества</div>' + mixes.map(m => renderCommunityPost(m)).join('');
+      return;
+    }
+  } catch(e) {}
+  el.innerHTML = mockFeed();
 }
 
-function renderPost(p) {
+function renderPost(p, opts={}) {
   const total = p.items.reduce((s,i)=>s+i.percentage,0)||100;
   const colors = p.items.map((_,i)=>COLORS[i%COLORS.length]);
-  const svgHtml = buildMiniSvg(
-    p.items.map((it,i)=>({...it,color:colors[i]})),
-    total, 72, 36, 36, 31, 11, p.pack_method
-  );
+  const svgHtml = buildMiniSvg(p.items.map((it,i)=>({...it,color:colors[i]})), total, 168, 84, 84, 70, 26, p.pack_method||'секторами');
+  const bowlG = opts.bowlGrams || 20;
   const tobs = p.items.map((it,i)=>`<div class="mcx-tob">
-    <div class="mcx-dot" style="background:${colors[i]};box-shadow:0 0 4px ${colors[i]}66"></div>
-    <span class="mcx-tob-name">${it.tobacco_name}</span>
-    <span style="color:var(--text3);font-size:0.67rem;margin:0 2px">${it.brand}</span>
+    <div class="mcx-dot" style="background:${colors[i]};color:${colors[i]}"></div>
+    <div class="mcx-tob-info">
+      <div class="mcx-tob-name">${it.tobacco_name}</div>
+      <div class="mcx-tob-brand">${it.brand}</div>
+    </div>
+    <span class="mcx-tob-grams">${Math.round(it.percentage*bowlG/100)}г</span>
     <span class="mcx-tob-pct">${it.percentage}%</span>
   </div>`).join('');
-
-  // Strength pips in footer
+  const colorBar = p.items.map((it,i)=>`<div style="flex:${it.percentage};background:${colors[i]}"></div>`).join('');
   const avg = p.items.reduce((s,it)=>s+(STR_MAP[it.strength?.toLowerCase()]||3)*it.percentage,0)/total;
   const strCol = avg<2?'#4ade80':avg<3.5?'#e8a23b':'#f06b6b';
   const strFilled = Math.round(avg);
-  const pips = Array(5).fill(0).map((_,i)=>`<span class="mcx-str-pip" style="background:${i<strFilled?strCol:'var(--bg5)'}"></span>`).join('');
+  const pips = Array(5).fill(0).map((_,i)=>`<span class="mcx-str-pip" style="background:${i<strFilled?strCol:'rgba(255,255,255,0.1)'}"></span>`).join('');
   const packIcon = PACK_ICONS[p.pack_method]||'🫕';
 
-  return `<div class="card feed-post">
+  const actions = opts.communityActions
+    ? `<button class="act-btn" onclick="${opts.labOnclick}">⚗️ Открыть в лабе</button>
+       <button class="act-btn" style="margin-left:auto" onclick="showToast('🔗 Ссылка скопирована!')">🔗 Поделиться</button>`
+    : `<button class="act-btn${p.i_liked?' liked':''}" id="lbtn${p.id}" onclick="toggleLike(${p.id},this)">
+        ${p.i_liked?'❤️':'🤍'} <span id="lcnt${p.id}">${p.likes||0}</span>
+       </button>
+       <button class="act-btn" onclick="toggleComments(this,${p.id})">💬</button>
+       <button class="act-btn" onclick="openRateModal(${p.id},'${(p.name||'').replace(/'/g,"&apos;")}')">⭐</button>
+       <button class="act-btn${p.i_saved?' saved':''}" id="sbtn${p.id}" onclick="toggleSave(${p.id},this)" style="margin-left:auto">
+         ${p.i_saved?'🔖 Сохранено':'📎 Сохранить'}
+       </button>`;
+
+  return `<div class="feed-post">
     <div class="post-header">
       <div class="post-avatar">${p.avatar||'🧔'}</div>
-      <div style="flex:1"><div class="post-username" onclick="openUserModal('${p.username}')" style="cursor:pointer">@${p.username}</div><div class="post-time">${timeAgo(p.created_at)}</div></div>
-      <div style="color:var(--text3);cursor:pointer;padding:4px 8px;font-size:1.1rem">···</div>
+      <div style="flex:1">
+        <div class="post-username" onclick="openUserModal('${p.username}')" style="cursor:pointer">@${p.username}</div>
+        <div class="post-time">${timeAgo(p.created_at)}</div>
+      </div>
     </div>
     <div class="mix-card-inner">
       <div class="mcx-head">
-        <div class="mcx-name">${p.name}</div>
+        <div class="mcx-name">${p.name||p.title||''}</div>
         ${p.description?`<div class="mcx-desc">${p.description}</div>`:''}
-        <div class="mcx-tags">
-          <span class="mcx-tag">${p.bowl_type}</span>
-          <span class="mcx-tag pack">${packIcon} ${p.pack_method}</span>
+        ${!opts.communityActions?`<div class="mcx-tags">
+          ${p.bowl_type?`<span class="mcx-tag">☕ ${p.bowl_type}</span>`:''}
+          <span class="mcx-tag pack">${packIcon} ${p.pack_method||'секторами'}</span>
           ${p.coal_tip&&p.coal_tip!=='—'?`<span class="mcx-tag">🪨 ${p.coal_tip}</span>`:''}
-        </div>
+        </div>`:''}
       </div>
-      <div class="mcx-body">${svgHtml}<div class="mcx-tobaccos">${tobs}</div></div>
+      <div class="mcx-body"><div class="mcx-tobaccos">${tobs}</div><div class="mcx-svg-wrap">${svgHtml}</div></div>
+      <div class="mcx-colorbar">${colorBar}</div>
       <div class="mcx-footer">
-        <span style="display:flex;align-items:center;gap:5px">${pips}<span style="margin-left:2px">${avg<2?'Лёгкий':avg<3.5?'Средний':'Крепкий'}</span></span>
+        <span style="display:flex;align-items:center;gap:4px">${pips}<span style="margin-left:4px;color:var(--text2)">${avg<2?'Лёгкий':avg<3.5?'Средний':'Крепкий'}</span></span>
+        ${opts.communityActions?`<span style="margin-left:auto;opacity:0.4;font-size:0.66rem">${bowlG}г · чаша</span>`:''}
       </div>
     </div>
-    <div class="post-actions">
-      <button class="act-btn${p.i_liked?' liked':''}" id="lbtn${p.id}" onclick="toggleLike(${p.id},this)">
-        ${p.i_liked?'❤️':'🤍'} <span id="lcnt${p.id}">${p.likes||0}</span>
-      </button>
-      <button class="act-btn" onclick="toggleComments(this,${p.id})">💬</button>
-      <button class="act-btn" onclick="openRateModal(${p.id},'${(p.name||'').replace(/'/g,'&apos;')}')">⭐</button>
-      <button class="act-btn${p.i_saved?' saved':''}" id="sbtn${p.id}" onclick="toggleSave(${p.id},this)" style="margin-left:auto">
-        ${p.i_saved?'🔖 Сохранено':'📎 Сохранить'}
-      </button>
-    </div>
+    <div class="post-actions">${actions}</div>
   </div>`;
 }
 
@@ -1476,67 +1586,94 @@ async function renderProfile() {
 }
 
 function buildProfileHTML(d) {
-  const mixGrid = d.mixes.length
+  const handle = d.username.toLowerCase().replace(/\s+/g,'_');
+
+  const mixCards = d.mixes.length
     ? d.mixes.map(m => {
         const total = m.items.reduce((s,i)=>s+i.percentage,0)||100;
-        const svgContent = buildMiniSvg(m.items.map((it,i)=>({...it,color:COLORS[i%COLORS.length]})), total, 100, 50, 50, 44, 16, m.pack_method);
-        return `<div class="mix-grid-item" onclick="loadMixToLab(${JSON.stringify(m).replace(/"/g,'&quot;')})">
-          ${svgContent.replace('style="flex-shrink:0"','style="width:100%;height:100%;flex-shrink:0"')}
-          <div class="mix-grid-overlay"><div class="mix-grid-name">${m.name}</div></div>
+        const svg = buildMiniSvg(m.items.map((it,i)=>({...it,color:COLORS[i%COLORS.length]})), total, 80, 40, 40, 34, 13, m.pack_method);
+        const tobNames = m.items.map(i=>i.tobacco_name||i.name).join(', ');
+        const strLabel = {легкий:'🟢',средний:'🟡',крепкий:'🔴',убийца:'💀'}[m.strength]||'';
+        return `<div class="p-mix-card" onclick="loadMixToLab(${JSON.stringify(m).replace(/"/g,'&quot;')})">
+          <div class="p-mix-card-vis">${svg}
+            <div style="position:absolute;inset:0;background:radial-gradient(ellipse at center,transparent 40%,rgba(0,0,0,0.4))"></div>
+          </div>
+          <div class="p-mix-card-body">
+            <div class="p-mix-card-name">${m.name}</div>
+            <div class="p-mix-card-tobs">${tobNames||'—'}</div>
+            <div class="p-mix-card-meta">
+              <span>${strLabel} ${m.strength||''}</span>
+              <span style="margin-left:auto">⚗️ ${m.pack_method||''}</span>
+            </div>
+          </div>
         </div>`;
       }).join('')
-    : '<div style="grid-column:1/-1;padding:24px;text-align:center;color:var(--text3);font-size:0.8rem">Создай первый микс в Лаборатории ⚗️</div>';
+    : `<div style="grid-column:1/-1;padding:48px 24px;text-align:center;color:var(--text3)">
+        <div style="font-size:2.5rem;margin-bottom:12px">⚗️</div>
+        <div style="font-size:0.95rem;font-weight:600;margin-bottom:6px">Миксов пока нет</div>
+        <div style="font-size:0.8rem">Создай первый микс в Лаборатории</div>
+      </div>`;
 
   const tobs = d.tobaccos.map((t,i)=>`<div class="tob-chip">
     <div class="tob-chip-dot" style="background:${COLORS[i%COLORS.length]}"></div>${t.name}
-    <span style="color:var(--text3);cursor:pointer;font-size:0.65rem" onclick="removeTobFromCabinet(${t.id})">✕</span>
+    <span style="color:var(--text3);cursor:pointer;font-size:0.65rem;margin-left:2px" onclick="removeTobFromCabinet(${t.id})">✕</span>
   </div>`).join('');
 
   return `
-    <div class="top-bar"><span class="top-bar-title">👤 Профиль</span><div style="display:flex;gap:8px"><button class="p-edit-btn" style="margin:0;padding:7px 14px;width:auto" onclick="openEditProfile()">✏️ Профиль</button><button class="p-edit-btn" style="margin:0;padding:7px 14px;width:auto" onclick="openSetupModal()">⚙️ Сетап</button><button class="p-edit-btn" style="margin:0;padding:7px 14px;width:auto" onclick="doLogout()">Выйти</button></div></div>
-    <div style="padding:24px 32px"><div class="profile-layout">
-    <div class="profile-left">
-    <div class="profile-card">
-    <div class="profile-cover">
-      <svg class="profile-cover-art" viewBox="0 0 480 140" xmlns="http://www.w3.org/2000/svg">
-        <circle cx="240" cy="70" r="120" fill="#9d6fff" opacity="0.3"/>
-        <circle cx="60" cy="20" r="60" fill="#e8a23b" opacity="0.15"/>
-        <circle cx="420" cy="110" r="80" fill="#3dd6ac" opacity="0.1"/>
-        <circle cx="380" cy="20" r="40" fill="#f472b6" opacity="0.12"/>
+  <div class="p-hero">
+    <div class="p-hero-banner">
+      <svg viewBox="0 0 1200 180" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <radialGradient id="pg1" cx="20%" cy="50%"><stop offset="0%" stop-color="#9d6fff" stop-opacity="0.45"/><stop offset="100%" stop-color="transparent"/></radialGradient>
+          <radialGradient id="pg2" cx="80%" cy="30%"><stop offset="0%" stop-color="#e8a23b" stop-opacity="0.3"/><stop offset="100%" stop-color="transparent"/></radialGradient>
+          <radialGradient id="pg3" cx="60%" cy="80%"><stop offset="0%" stop-color="#3dd6ac" stop-opacity="0.2"/><stop offset="100%" stop-color="transparent"/></radialGradient>
+        </defs>
+        <rect width="1200" height="180" fill="url(#pg1)"/>
+        <rect width="1200" height="180" fill="url(#pg2)"/>
+        <rect width="1200" height="180" fill="url(#pg3)"/>
+        <circle cx="600" cy="90" r="300" fill="#9d6fff" opacity="0.06"/>
+        <circle cx="200" cy="20" r="140" fill="#e8a23b" opacity="0.08"/>
+        <circle cx="950" cy="150" r="180" fill="#3dd6ac" opacity="0.06"/>
+        <ellipse cx="400" cy="180" rx="500" ry="80" fill="#9d6fff" opacity="0.05"/>
       </svg>
     </div>
-    <div class="profile-info">
-      <div class="p-avatar">${d.avatar||'🧔'}</div>
-      <div class="p-name">${d.username}</div>
-      <div class="p-handle">@${d.username.toLowerCase().replace(/\s+/g,'_')}</div>
-      ${d.bio?`<div class="p-bio">${d.bio}</div>`:''}
-      <div class="p-stats">
-        <div><div class="stat-n">${d.stats.mixes}</div><div class="stat-l">Миксов</div></div>
-        <div><div class="stat-n">${d.stats.followers}</div><div class="stat-l">Подписчиков</div></div>
-        <div><div class="stat-n">${d.stats.following}</div><div class="stat-l">Подписок</div></div>
+    <div class="p-hero-body">
+      <div class="p-hero-ava">${d.avatar||'🧔'}</div>
+      <div class="p-hero-info">
+        <div class="p-hero-name">${d.username}</div>
+        <div class="p-hero-handle">@${handle}</div>
+        ${d.bio?`<div class="p-hero-bio">${d.bio}</div>`:''}
+        <div class="p-hero-stats">
+          <div class="p-stat"><div class="p-stat-n">${d.stats.mixes}</div><div class="p-stat-l">Миксов</div></div>
+          <div class="p-stat"><div class="p-stat-n">${d.stats.followers}</div><div class="p-stat-l">Подписчиков</div></div>
+          <div class="p-stat"><div class="p-stat-n">${d.stats.following}</div><div class="p-stat-l">Подписок</div></div>
+        </div>
       </div>
-
+      <div class="p-hero-actions">
+        <button class="p-action-btn primary" onclick="openEditProfile()">✏️ Редактировать</button>
+        <button class="p-action-btn" onclick="openSetupModal()">⚙️ Мой сетап</button>
+        <button class="p-action-btn danger" onclick="doLogout()">Выйти</button>
+      </div>
     </div>
-    <div class="p-section">
-      <div class="p-section-title">Сетап <span class="p-section-add" onclick="openSetupModal()">изменить</span></div>
-      <div class="setup-card">
+  </div>
+  <div class="p-content">
+    <div>
+      <div class="p-section-title" style="margin-bottom:16px">Миксы <span style="color:var(--text3);font-weight:400;font-size:0.8rem">${d.stats.mixes} шт.</span></div>
+      <div class="p-mix-cards">${mixCards}</div>
+    </div>
+    <div class="p-sidebar">
+      <div class="p-widget">
+        <div class="p-widget-title">Сетап <span class="p-widget-add" onclick="openSetupModal()">изменить</span></div>
         <div class="setup-row"><div class="setup-ico">🪔</div><div><div class="setup-lbl">Кальян</div><div class="setup-v${!d.setup?.hookah?' empty':''}">${d.setup?.hookah||'Не указан'}</div></div></div>
         <div class="setup-row"><div class="setup-ico">☕</div><div><div class="setup-lbl">Чаша</div><div class="setup-v${!d.setup?.bowl?' empty':''}">${d.setup?.bowl||'Не указана'}</div></div></div>
         <div class="setup-row"><div class="setup-ico">🪨</div><div><div class="setup-lbl">Угли</div><div class="setup-v${!d.setup?.coal?' empty':''}">${d.setup?.coal||'Не указаны'}</div></div></div>
       </div>
+      <div class="p-widget">
+        <div class="p-widget-title">Мои табаки <span class="p-widget-add" onclick="openTobSearch(true)">+ добавить</span></div>
+        <div class="tob-cabinet">${tobs||'<div style="font-size:0.78rem;color:var(--text3);line-height:1.5">Добавь свои табаки — ИИ сгенерирует миксы из них</div>'}</div>
+      </div>
     </div>
-    <div class="p-section">
-      <div class="p-section-title">Мои табаки <span class="p-section-add" onclick="openTobSearch(true)">+ добавить</span></div>
-      <div class="tob-cabinet">${tobs||'<div style="font-size:0.8rem;color:var(--text3)">Добавь свои табаки — ИИ сгенерирует миксы из них</div>'}</div>
-    </div>
-    </div></div><!-- /profile-card /profile-left -->
-    <div class="profile-right">
-    <div class="p-section">
-      <div class="p-section-title">Миксы <span style="color:var(--text3);font-weight:400">${d.stats.mixes} шт.</span></div>
-      <div class="mix-grid">${mixGrid}</div>
-    </div>
-    </div><!-- /profile-right -->
-    </div></div><!-- /profile-layout -->`;
+  </div>`;
 }
 
 function loadMixToLab(m) {
@@ -1971,9 +2108,31 @@ async function loadTopMixes() {
   const el = document.getElementById('topMixesWidget');
   if (!el) return;
   try {
-    const rows = await api('/api/catalog/top-mixes?period=week&limit=5');
-    if (!rows.length) { el.style.display='none'; return; }
-    el.innerHTML = '<div class="feed-widget-title">🏆 Топ миксов недели</div>' +
+    let rows = await api('/api/catalog/top-mixes?period=week&limit=5');
+    if (!rows.length) rows = await api('/api/catalog/top-mixes?period=all&limit=5');
+    if (!rows.length) {
+      try {
+        const comm = await api('/api/community-mixes?limit=5');
+        if (comm.length) {
+          el.innerHTML = '<div class="feed-widget-title">🏆 Топ миксов</div>' +
+            comm.map(m => {
+              const total = m.items.reduce((s,i)=>s+i.percentage,0)||100;
+              const svg = buildMiniSvg(m.items.map((it,i)=>({...it,color:COLORS[i%COLORS.length]})),total,52,26,26,22,8,'секторами');
+              const labData = JSON.stringify({name:m.title,pack_method:'секторами',items:m.items.map((it,i)=>({tobacco_name:it.tobacco_name,brand:it.brand,percentage:it.percentage,color:COLORS[i%COLORS.length]}))}).replace(/"/g,'&quot;');
+              return `<div class="search-item" style="padding:7px 8px" onclick="loadMixToLab(${labData})">${svg}
+                <div style="flex:1;min-width:0">
+                  <div style="font-size:0.82rem;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${m.title}</div>
+                  <div style="font-size:0.7rem;color:var(--text3)">${m.items.length} компонентов</div>
+                </div></div>`;
+            }).join('');
+          return;
+        }
+      } catch(e) {}
+      el.innerHTML = '<div class="feed-widget-title">🏆 Топ миксов</div><div style="font-size:0.78rem;color:var(--text3);padding:8px 0">Пока нет публичных миксов. Создай первый!</div>';
+      return;
+    }
+    const label = rows[0]._period === 'week' ? 'недели' : 'всех времён';
+    el.innerHTML = '<div class="feed-widget-title">🏆 Топ миксов ' + label + '</div>' +
       rows.map(m=>{
         const total=m.items.reduce((s,i)=>s+i.percentage,0)||100;
         const svg=buildMiniSvg(m.items.map((it,i)=>({...it,color:COLORS[i%COLORS.length]})),total,52,26,26,22,8,m.pack_method);
