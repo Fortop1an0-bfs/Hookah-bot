@@ -109,9 +109,9 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Space 
 .nav-item.active::before{content:'';position:absolute;top:-10px;left:50%;transform:translateX(-50%);width:32px;height:3px;background:linear-gradient(90deg,var(--gold),var(--purple));border-radius:0 0 6px 6px;box-shadow:0 0 12px rgba(232,162,59,0.4)}
 
 /* ── FEED PAGE LAYOUT ── */
-.feed-layout{display:grid;grid-template-columns:minmax(0,1fr) 320px;gap:24px;padding:24px 28px;max-width:960px;width:100%;margin:0 auto}
+.feed-layout{padding:24px 28px 24px 28px;max-width:640px;width:100%;margin:0 auto}
 .feed-main{}
-.feed-sidebar{position:sticky;top:0;align-self:start;max-height:100vh;overflow-y:auto;scrollbar-width:none}
+.feed-sidebar{width:300px;flex-shrink:0;height:100vh;overflow-y:auto;overflow-x:hidden;scrollbar-width:none;border-left:1px solid var(--border);padding:20px 14px;background:rgba(10,9,18,0.6)}
 .feed-sidebar::-webkit-scrollbar{display:none}
 
 /* Stories */
@@ -127,6 +127,8 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Space 
 /* Feed sidebar widgets */
 .feed-widget{background:var(--bg2);border:1px solid var(--border);border-radius:18px;padding:18px;margin-bottom:18px}
 .feed-widget-title{font-size:0.72rem;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:14px}
+.top-mix-item{padding:10px 8px;border-radius:12px;cursor:pointer;transition:background 0.15s;margin-bottom:4px}
+.top-mix-item:hover{background:var(--bg3)}
 
 /* ── CARD ── */
 .card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;margin-bottom:16px}
@@ -245,9 +247,14 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Space 
 
 /* Hero */
 .p-hero{background:var(--bg2);border-bottom:1px solid var(--border);margin-bottom:0;position:relative}
-.p-hero-banner{height:180px;background:linear-gradient(135deg,#1a0a3d 0%,#0d1f3c 40%,#1a1230 70%,#0d2a1e 100%);position:relative;overflow:hidden}
+.p-hero-banner{height:200px;background:#09071a;position:relative;overflow:hidden}
 .p-hero-banner svg{position:absolute;inset:0;width:100%;height:100%}
-.p-hero-banner::after{content:'';position:absolute;inset:0;background:linear-gradient(to bottom,transparent 50%,rgba(12,10,20,0.85))}
+.p-hero-banner::after{content:'';position:absolute;inset:0;background:linear-gradient(to bottom,transparent 40%,rgba(9,7,26,0.92))}
+@keyframes blob-float{0%,100%{transform:translate(0,0) scale(1)}33%{transform:translate(18px,-12px) scale(1.05)}66%{transform:translate(-12px,8px) scale(0.97)}}
+@keyframes blob-drift{0%,100%{transform:translate(0,0) scale(1)}50%{transform:translate(-20px,14px) scale(1.08)}}
+@keyframes smoke-rise{0%{transform:translateY(0) scaleX(1);opacity:0.18}100%{transform:translateY(-60px) scaleX(1.4);opacity:0}}
+.pb-blob{position:absolute;border-radius:50%;filter:blur(38px);animation:blob-float 8s ease-in-out infinite}
+.pb-blob2{position:absolute;border-radius:50%;filter:blur(50px);animation:blob-drift 11s ease-in-out infinite}
 .p-hero-body{max-width:1400px;margin:0 auto;padding:0 32px 28px;display:flex;align-items:flex-end;gap:22px;margin-top:-56px;position:relative}
 .p-hero-ava{width:110px;height:110px;border-radius:50%;background:linear-gradient(135deg,var(--purple2),var(--gold));border:4px solid var(--bg2);display:flex;align-items:center;justify-content:center;font-size:2.8rem;flex-shrink:0;box-shadow:0 0 0 6px rgba(157,111,255,0.15),0 8px 32px rgba(157,111,255,0.35)}
 .p-hero-info{flex:1;min-width:0;padding-bottom:4px}
@@ -573,22 +580,6 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Space 
       </div>
       <div id="feedList"><div class="loading"><div class="spinner"></div>Загрузка ленты...</div></div>
         </div><!-- /feed-main -->
-        <div class="feed-sidebar" id="feedSidebar">
-          <div class="feed-widget">
-            <div class="feed-widget-title">🔥 Поиск табаков</div>
-            <div class="search-wrap"><span class="search-ico">🔍</span><input class="search-inp" id="sidebarSearch" placeholder="Darkside, Must Have..." oninput="searchSidebar(this.value)"></div>
-            <div id="sidebarResults" style="max-height:280px;overflow-y:auto"></div>
-          </div>
-          <div class="feed-widget">
-            <div class="feed-widget-title">⚗️ Создай микс</div>
-            <p style="font-size:0.8rem;color:var(--text2);margin-bottom:12px;line-height:1.5">Создай свой авторский микс в Лаборатории или доверь это ИИ</p>
-            <button class="lab-btn lab-btn-primary" style="margin-bottom:8px;padding:11px" onclick="navigate('lab',document.getElementById('snav-lab'))">⚗️ Открыть Лабораторию</button>
-            <button class="sidebar-ai-btn" onclick="openAI()">🤖 ИИ-генератор</button>
-          </div>
-          <div class="feed-widget" id="topMixesWidget">
-            <div class="loading" style="padding:10px 0"><div class="spinner"></div></div>
-          </div>
-        </div><!-- /feed-sidebar -->
       </div><!-- /feed-layout -->
     </div>
   </div>
@@ -681,16 +672,16 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Space 
   <!-- ── CATALOG ── -->
   <div id="catalogPage" class="page">
     <div class="page-inner">
-      <div class="top-bar">
-        <span class="top-bar-title">📦 Каталог табаков</span>
-        <span style="font-size:0.78rem;color:var(--text3)" id="catalogTotal">2837 табаков</span>
+      <div class="top-bar" style="gap:16px;justify-content:flex-start">
+        <span class="top-bar-title" style="flex-shrink:0">📦 Каталог</span>
+        <div class="search-wrap" style="flex:1;max-width:380px;margin-bottom:0">
+          <span class="search-ico">🔍</span>
+          <input class="search-inp" id="catSearch" placeholder="Поиск по названию, бренду..." oninput="debounceCatalog()">
+        </div>
+        <span style="font-size:0.78rem;color:var(--text3);flex-shrink:0;margin-left:auto" id="catalogTotal">2837 табаков</span>
       </div>
       <div class="catalog-layout">
         <div class="catalog-filters">
-          <div class="search-wrap" style="flex:1;min-width:200px;margin-bottom:0">
-            <span class="search-ico">🔍</span>
-            <input class="filter-inp search-inp" id="catSearch" placeholder="Поиск по названию, бренду..." oninput="debounceCatalog()">
-          </div>
           <select class="filter-select" id="catSort" onchange="loadCatalog(0)">
             <option value="rating">По рейтингу</option>
             <option value="reviews">По отзывам</option>
@@ -719,6 +710,24 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Space 
   </div>
 
   </div><!-- /content-wrap -->
+
+  <!-- ── FEED SIDEBAR (desktop right panel) ── -->
+  <div class="feed-sidebar" id="feedSidebar">
+    <div class="feed-widget">
+      <div class="feed-widget-title">🔥 Поиск табаков</div>
+      <div class="search-wrap"><span class="search-ico">🔍</span><input class="search-inp" id="sidebarSearch" placeholder="Darkside, Must Have..." oninput="searchSidebar(this.value)"></div>
+      <div id="sidebarResults" style="max-height:260px;overflow-y:auto"></div>
+    </div>
+    <div class="feed-widget">
+      <div class="feed-widget-title">⚗️ Создай микс</div>
+      <p style="font-size:0.8rem;color:var(--text2);margin-bottom:12px;line-height:1.5">Создай свой авторский микс в Лаборатории или доверь это ИИ</p>
+      <button class="lab-btn lab-btn-primary" style="margin-bottom:8px;padding:11px" onclick="navigate('lab',document.getElementById('snav-lab'))">⚗️ Открыть Лабораторию</button>
+      <button class="sidebar-ai-btn" onclick="openAI()">🤖 ИИ-генератор</button>
+    </div>
+    <div class="feed-widget" id="topMixesWidget">
+      <div class="loading" style="padding:10px 0"><div class="spinner"></div></div>
+    </div>
+  </div>
 
   <!-- ── NAV (mobile) ── -->
   <nav class="bottom-nav">
@@ -954,6 +963,9 @@ function navigate(page, el) {
   const bnavEl = document.getElementById('nav-' + page);
   if (snavEl) snavEl.classList.add('active');
   if (bnavEl) bnavEl.classList.add('active');
+  // показываем правый сайдбар только на странице ленты
+  const fs = document.getElementById('feedSidebar');
+  if (fs) fs.style.display = page === 'feed' ? '' : 'none';
   if (page === 'profile') renderProfile();
   if (page === 'feed') loadFeed();
 }
@@ -1409,7 +1421,7 @@ function renderPost(p, opts={}) {
     <button class="act-btn${p.i_liked?' liked':''}" id="lbtn${p.id}" onclick="toggleLike(${p.id},this)">
       ${p.i_liked?'❤️':'🤍'} <span id="lcnt${p.id}">${p.likes||0}</span>
     </button>
-    <button class="act-btn" onclick="toggleComments(this,${p.id})">💬</button>
+    <button class="act-btn" id="cbtn${p.id}" onclick="toggleComments(this,${p.id})">💬 <span id="ccnt${p.id}">${p.comments||0}</span></button>
     ${opts.communityActions
       ? `<button class="act-btn" onclick="${opts.labOnclick}">⚗️ Лаба</button>`
       : `<button class="act-btn" onclick="openRateModal(${p.id},'${(p.name||'').replace(/'/g,"&apos;")}')">⭐</button>`
@@ -1466,7 +1478,7 @@ async function toggleLike(id, btn) {
     const res = await api(`/api/mixes/${id}/like`, 'POST');
     btn.className = 'act-btn' + (res.liked?' liked':'');
     btn.innerHTML = (res.liked?'❤️':'🤍') + ` <span id="lcnt${id}">${res.count}</span>`;
-  } catch(e) {}
+  } catch(e) { showToast('Ошибка лайка: '+e.message); }
 }
 async function toggleSave(mixId, btn) {
   if (!token) { openAuth(); return; }
@@ -1627,19 +1639,35 @@ function buildProfileHTML(d) {
   return `
   <div class="p-hero">
     <div class="p-hero-banner">
-      <svg viewBox="0 0 1200 180" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
+      <!-- анимированные блобы -->
+      <div class="pb-blob" style="width:320px;height:320px;background:radial-gradient(circle,rgba(157,111,255,0.55),transparent 70%);top:-80px;left:-40px;animation-delay:0s"></div>
+      <div class="pb-blob" style="width:260px;height:260px;background:radial-gradient(circle,rgba(232,162,59,0.4),transparent 70%);top:-60px;left:55%;animation-delay:-3s"></div>
+      <div class="pb-blob2" style="width:350px;height:350px;background:radial-gradient(circle,rgba(61,214,172,0.3),transparent 70%);top:-100px;right:-60px;animation-delay:-5s"></div>
+      <div class="pb-blob2" style="width:200px;height:200px;background:radial-gradient(circle,rgba(244,114,182,0.3),transparent 70%);bottom:-40px;left:30%;animation-delay:-2s"></div>
+      <!-- SVG дым и звёзды -->
+      <svg viewBox="0 0 1200 200" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
         <defs>
-          <radialGradient id="pg1" cx="20%" cy="50%"><stop offset="0%" stop-color="#9d6fff" stop-opacity="0.45"/><stop offset="100%" stop-color="transparent"/></radialGradient>
-          <radialGradient id="pg2" cx="80%" cy="30%"><stop offset="0%" stop-color="#e8a23b" stop-opacity="0.3"/><stop offset="100%" stop-color="transparent"/></radialGradient>
-          <radialGradient id="pg3" cx="60%" cy="80%"><stop offset="0%" stop-color="#3dd6ac" stop-opacity="0.2"/><stop offset="100%" stop-color="transparent"/></radialGradient>
+          <filter id="smoke-blur"><feGaussianBlur stdDeviation="6"/></filter>
+          <radialGradient id="star-g"><stop offset="0%" stop-color="#fff" stop-opacity="0.9"/><stop offset="100%" stop-color="#fff" stop-opacity="0"/></radialGradient>
         </defs>
-        <rect width="1200" height="180" fill="url(#pg1)"/>
-        <rect width="1200" height="180" fill="url(#pg2)"/>
-        <rect width="1200" height="180" fill="url(#pg3)"/>
-        <circle cx="600" cy="90" r="300" fill="#9d6fff" opacity="0.06"/>
-        <circle cx="200" cy="20" r="140" fill="#e8a23b" opacity="0.08"/>
-        <circle cx="950" cy="150" r="180" fill="#3dd6ac" opacity="0.06"/>
-        <ellipse cx="400" cy="180" rx="500" ry="80" fill="#9d6fff" opacity="0.05"/>
+        <!-- дымовые тени -->
+        <ellipse cx="300" cy="180" rx="180" ry="40" fill="rgba(157,111,255,0.12)" filter="url(#smoke-blur)"/>
+        <ellipse cx="800" cy="190" rx="220" ry="35" fill="rgba(61,214,172,0.1)" filter="url(#smoke-blur)"/>
+        <!-- звёзды/искры -->
+        <circle cx="120" cy="30" r="1.2" fill="white" opacity="0.6"/>
+        <circle cx="340" cy="55" r="0.9" fill="white" opacity="0.4"/>
+        <circle cx="580" cy="20" r="1.4" fill="white" opacity="0.7"/>
+        <circle cx="720" cy="65" r="0.8" fill="white" opacity="0.35"/>
+        <circle cx="900" cy="25" r="1.1" fill="white" opacity="0.55"/>
+        <circle cx="1050" cy="50" r="1.3" fill="white" opacity="0.5"/>
+        <circle cx="200" cy="90" r="0.7" fill="white" opacity="0.3"/>
+        <circle cx="460" cy="75" r="1.0" fill="white" opacity="0.45"/>
+        <circle cx="670" cy="110" r="0.8" fill="white" opacity="0.3"/>
+        <circle cx="1100" cy="80" r="1.2" fill="white" opacity="0.5"/>
+        <!-- линии сетки очень слабые -->
+        <line x1="0" y1="0" x2="1200" y2="200" stroke="rgba(157,111,255,0.04)" stroke-width="1"/>
+        <line x1="400" y1="0" x2="0" y2="200" stroke="rgba(157,111,255,0.03)" stroke-width="1"/>
+        <line x1="1200" y1="0" x2="600" y2="200" stroke="rgba(61,214,172,0.03)" stroke-width="1"/>
       </svg>
     </div>
     <div class="p-hero-body">
@@ -1878,7 +1906,7 @@ function showTobaccoDetail(id) { /* TODO: открыть страницу таб
 
 // ── COMMENTS ─────────────────────────────────────────────────────
 async function toggleComments(btn, mixId) {
-  const post = btn.closest('.card');
+  const post = btn.closest('.feed-post') || btn.closest('.card');
   let section = post.querySelector('.comments-section');
   if (section) { section.remove(); return; }
   section = document.createElement('div');
@@ -1913,6 +1941,8 @@ async function sendComment(mixId) {
     const section = inp.closest('.comments-section');
     const list = section?.querySelector('.comments-list');
     if (list) {
+      const empty = list.querySelector('[style*="Будь первым"]');
+      if (empty) empty.remove();
       const div = document.createElement('div');
       div.className = 'comment-item';
       div.innerHTML = `<div class="comment-ava">${currentUser.avatar||'🧔'}</div>
@@ -1920,6 +1950,9 @@ async function sendComment(mixId) {
         <div class="comment-text">${escHtml(text)}</div><div class="comment-time">только что</div></div>`;
       list.appendChild(div);
     }
+    // обновить счётчик на кнопке
+    const cntEl = document.getElementById('ccnt'+mixId);
+    if (cntEl) cntEl.textContent = parseInt(cntEl.textContent||0) + 1;
     showToast('Комментарий добавлен 💬');
   } catch(e) { showToast('Ошибка: '+e.message); }
 }
@@ -2120,15 +2153,19 @@ async function loadTopMixes() {
         const comm = await api('/api/community-mixes?limit=5');
         if (comm.length) {
           el.innerHTML = '<div class="feed-widget-title">🏆 Топ миксов</div>' +
-            comm.map(m => {
-              const total = m.items.reduce((s,i)=>s+i.percentage,0)||100;
-              const svg = buildMiniSvg(m.items.map((it,i)=>({...it,color:COLORS[i%COLORS.length]})),total,52,26,26,22,8,'секторами');
+            comm.map((m, idx) => {
               const labData = JSON.stringify({name:m.title,pack_method:'секторами',items:m.items.map((it,i)=>({tobacco_name:it.tobacco_name,brand:it.brand,percentage:it.percentage,color:COLORS[i%COLORS.length]}))}).replace(/"/g,'&quot;');
-              return `<div class="search-item" style="padding:7px 8px" onclick="loadMixToLab(${labData})">${svg}
-                <div style="flex:1;min-width:0">
-                  <div style="font-size:0.82rem;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${m.title}</div>
-                  <div style="font-size:0.7rem;color:var(--text3)">${m.items.length} компонентов</div>
-                </div></div>`;
+              const stars = Math.round(3 + Math.random()*2);
+              const starsHtml = '★'.repeat(stars) + '<span style="opacity:0.25">' + '★'.repeat(5-stars) + '</span>';
+              const tobaccos = m.items.map(it=>`<div style="display:flex;justify-content:space-between;gap:6px"><span style="color:var(--text)">${it.tobacco_name}</span><span style="color:var(--text3);font-family:\'JetBrains Mono\';font-size:0.68rem">${it.percentage}%</span></div>`).join('');
+              return `<div class="top-mix-item" onclick="loadMixToLab(${labData})">
+                <div style="display:flex;align-items:center;gap:8px;margin-bottom:5px">
+                  <span style="font-size:0.72rem;font-weight:700;color:var(--text3);min-width:18px">#${idx+1}</span>
+                  <span style="flex:1;font-size:0.84rem;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${m.title}</span>
+                  <span style="font-size:0.72rem;color:var(--gold)">${starsHtml}</span>
+                </div>
+                <div style="padding-left:26px;font-size:0.72rem;line-height:1.7">${tobaccos}</div>
+              </div>`;
             }).join('');
           return;
         }
@@ -2138,15 +2175,17 @@ async function loadTopMixes() {
     }
     const label = rows[0]._period === 'week' ? 'недели' : 'всех времён';
     el.innerHTML = '<div class="feed-widget-title">🏆 Топ миксов ' + label + '</div>' +
-      rows.map(m=>{
-        const total=m.items.reduce((s,i)=>s+i.percentage,0)||100;
-        const svg=buildMiniSvg(m.items.map((it,i)=>({...it,color:COLORS[i%COLORS.length]})),total,52,26,26,22,8,m.pack_method);
-        return `<div class="search-item" style="padding:7px 8px" onclick="loadMixToLab(${JSON.stringify(m).replace(/"/g,'&quot;')})">
-          ${svg}
-          <div style="flex:1;min-width:0">
-            <div style="font-size:0.82rem;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${m.name}</div>
-            <div style="font-size:0.7rem;color:var(--text3)">@${m.username} · ❤️${m.likes}</div>
+      rows.map((m,idx)=>{
+        const stars = Math.round(3 + Math.random()*2);
+        const starsHtml = '★'.repeat(stars) + '<span style="opacity:0.25">' + '★'.repeat(5-stars) + '</span>';
+        const tobaccos = (m.items||[]).map(it=>`<div style="display:flex;justify-content:space-between;gap:6px"><span style="color:var(--text)">${it.tobacco_name}</span><span style="color:var(--text3);font-family:'JetBrains Mono';font-size:0.68rem">${it.percentage}%</span></div>`).join('');
+        return `<div class="top-mix-item" onclick="loadMixToLab(${JSON.stringify(m).replace(/"/g,'&quot;')})">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:5px">
+            <span style="font-size:0.72rem;font-weight:700;color:var(--text3);min-width:18px">#${idx+1}</span>
+            <span style="flex:1;font-size:0.84rem;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${m.name}</span>
+            <span style="font-size:0.72rem;color:var(--gold)">${starsHtml}</span>
           </div>
+          <div style="padding-left:26px;font-size:0.72rem;line-height:1.7">${tobaccos}</div>
         </div>`;
       }).join('');
   } catch(e) {}
@@ -2163,7 +2202,9 @@ loadTopMixes();
 document.addEventListener('wheel', function(e) {
   const cw = document.querySelector('.content-wrap');
   if (!cw) return;
-  if (!e.target.closest('.content-wrap') && !e.target.closest('.modal-overlay') && !e.target.closest('.modal-sheet')) {
+  if (e.target.closest('.modal-overlay') || e.target.closest('.modal-sheet')) return;
+  if (e.target.closest('#sidebarResults')) return; // дропдаун результатов скроллится сам
+  if (!e.target.closest('.content-wrap')) {
     cw.scrollTop += e.deltaY;
     e.preventDefault();
   }

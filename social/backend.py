@@ -30,6 +30,13 @@ async def startup():
     pool = await asyncpg.create_pool(DB_DSN, min_size=2, max_size=10)
     async with pool.acquire() as conn:
         await conn.execute(SCHEMA_SQL)
+        # Убираем FK-ограничения чтобы лайки/комменты работали на всех миксах
+        for sql in [
+            "ALTER TABLE hl_likes DROP CONSTRAINT IF EXISTS hl_likes_mix_id_fkey",
+            "ALTER TABLE hl_saves DROP CONSTRAINT IF EXISTS hl_saves_mix_id_fkey",
+            "ALTER TABLE hl_comments DROP CONSTRAINT IF EXISTS hl_comments_mix_id_fkey",
+        ]:
+            await conn.execute(sql)
 
 @app.on_event("shutdown")
 async def shutdown():
@@ -412,11 +419,14 @@ async def toggle_like(mix_id: int, user=Depends(req_user)):
         if liked:
             owner = await conn.fetchval("SELECT user_id FROM hl_mixes WHERE id=$1", mix_id)
             if owner and owner != user["id"]:
-                await conn.execute("""
-                    INSERT INTO hl_notifications (user_id,type,from_user_id,mix_id)
-                    VALUES ($1,'like',$2,$3)
-                """, owner, user["id"], mix_id)
-    return {"liked": liked, "count": count}
+                try:
+                    await conn.execute("""
+                        INSERT INTO hl_notifications (user_id,type,from_user_id,mix_id)
+                        VALUES ($1,'like',$2,$3)
+                    """, owner, user["id"], mix_id)
+                except Exception:
+                    pass
+    return {"liked": liked, "count": int(count)}
 
 @app.post("/api/mixes/{mix_id}/save")
 async def toggle_save(mix_id: int, user=Depends(req_user)):
@@ -442,7 +452,8 @@ async def get_feed(offset: int = 0, limit: int = 20):
                    m.pack_method, m.coal_tip, m.strength, m.created_at, m.is_llm,
                    u.username, u.avatar,
                    (SELECT COUNT(*) FROM hl_likes l WHERE l.mix_id=m.id) as likes,
-                   (SELECT COUNT(*) FROM hl_saves s WHERE s.mix_id=m.id) as saves
+                   (SELECT COUNT(*) FROM hl_saves s WHERE s.mix_id=m.id) as saves,
+                   (SELECT COUNT(*) FROM hl_comments c WHERE c.mix_id=m.id) as comments
             FROM hl_mixes m
             JOIN hl_users u ON u.id=m.user_id
             WHERE m.is_public=TRUE
@@ -552,10 +563,13 @@ async def add_comment(mix_id: int, request: Request, user=Depends(req_user)):
         """, mix_id, user["id"], text)
         owner = await conn.fetchval("SELECT user_id FROM hl_mixes WHERE id=$1", mix_id)
         if owner and owner != user["id"]:
-            await conn.execute("""
-                INSERT INTO hl_notifications (user_id,type,from_user_id,mix_id)
-                VALUES ($1,'comment',$2,$3)
-            """, owner, user["id"], mix_id)
+            try:
+                await conn.execute("""
+                    INSERT INTO hl_notifications (user_id,type,from_user_id,mix_id)
+                    VALUES ($1,'comment',$2,$3)
+                """, owner, user["id"], mix_id)
+            except Exception:
+                pass
     return {"id": cid, "ok": True}
 
 @app.delete("/api/comments/{comment_id}")
@@ -674,25 +688,71 @@ async def get_catalog(
         """, q, brand, in_stock, min_rating)
         return {"items": [dict(r) for r in rows], "total": total}
 
+@app.get("/api/community-mixes")
+async def get_community_mixes(limit: int = 20):
+    async with pool.acquire() as conn:
+        mixes = await conn.fetch("""
+            SELECT id, title, tobaccos_summary, source_channel, origin_date
+            FROM mixes
+            WHERE title IS NOT NULL AND title != ''
+            ORDER BY id
+            LIMIT $1
+        """, limit)
+        result = []
+        for m in mixes:
+            items = await conn.fetch("""
+                SELECT tobacco_name, brand, pack_grams, percentage
+                FROM mix_items WHERE mix_id=$1 ORDER BY sort_order, id
+            """, m["id"])
+            if not items:
+                continue
+            result.append({
+                "id": m["id"],
+                "title": m["title"],
+                "summary": m["tobaccos_summary"],
+                "source": m["source_channel"],
+                "created_at": m["origin_date"].isoformat() if m["origin_date"] else None,
+                "items": [dict(i) for i in items],
+            })
+        return result
+
 @app.get("/api/catalog/top-mixes")
 async def get_top_mixes(period: str = "week", limit: int = 10):
-    days = 7 if period == "week" else 30
     async with pool.acquire() as conn:
-        rows = await conn.fetch("""
-            SELECT m.id, m.name, m.pack_method, m.bowl_type, m.strength,
-                   u.username, u.avatar,
-                   COUNT(DISTINCT l.user_id) as likes,
-                   COALESCE(ROUND(AVG(r.rating),1),0) as avg_rating
-            FROM hl_mixes m
-            JOIN hl_users u ON u.id=m.user_id
-            LEFT JOIN hl_likes l ON l.mix_id=m.id
-            LEFT JOIN hl_mix_ratings r ON r.mix_id=m.id
-            WHERE m.is_public=TRUE
-              AND m.created_at > NOW() - INTERVAL '1 day' * $1
-            GROUP BY m.id, u.username, u.avatar
-            ORDER BY likes DESC, avg_rating DESC
-            LIMIT $2
-        """, days, limit)
+        if period == "all":
+            rows = await conn.fetch("""
+                SELECT m.id, m.name, m.pack_method, m.bowl_type, m.strength,
+                       u.username, u.avatar,
+                       COUNT(DISTINCT l.user_id) as likes,
+                       COALESCE(ROUND(AVG(r.rating),1),0) as avg_rating
+                FROM hl_mixes m
+                JOIN hl_users u ON u.id=m.user_id
+                LEFT JOIN hl_posts p ON p.mix_id=m.id
+                LEFT JOIN hl_likes l ON l.post_id=p.id
+                LEFT JOIN hl_mix_ratings r ON r.mix_id=m.id
+                WHERE m.is_public=TRUE
+                GROUP BY m.id, u.username, u.avatar
+                ORDER BY likes DESC, avg_rating DESC
+                LIMIT $1
+            """, limit)
+        else:
+            days = 7 if period == "week" else 30
+            rows = await conn.fetch("""
+                SELECT m.id, m.name, m.pack_method, m.bowl_type, m.strength,
+                       u.username, u.avatar,
+                       COUNT(DISTINCT l.user_id) as likes,
+                       COALESCE(ROUND(AVG(r.rating),1),0) as avg_rating
+                FROM hl_mixes m
+                JOIN hl_users u ON u.id=m.user_id
+                LEFT JOIN hl_posts p ON p.mix_id=m.id
+                LEFT JOIN hl_likes l ON l.post_id=p.id
+                LEFT JOIN hl_mix_ratings r ON r.mix_id=m.id
+                WHERE m.is_public=TRUE
+                  AND m.created_at > NOW() - ($1 * INTERVAL '1 day')
+                GROUP BY m.id, u.username, u.avatar
+                ORDER BY likes DESC, avg_rating DESC
+                LIMIT $2
+            """, days, limit)
         result = []
         for row in rows:
             async with pool.acquire() as conn2:
