@@ -35,7 +35,7 @@ html,body{min-height:100vh;background:var(--bg);color:var(--text);font-family:'S
   -webkit-background-clip:text;-webkit-text-fill-color:transparent;
   flex-shrink:0;
 }
-.sidebar-nav{display:flex;flex-direction:column;gap:3px;padding:0 12px;flex:1}
+.sidebar-nav{display:flex;flex-direction:column;gap:3px;padding:0 12px;flex:1;justify-content:center}
 .snav-item{
   display:flex;align-items:center;gap:12px;padding:11px 14px;
   border-radius:12px;cursor:pointer;transition:all 0.2s;
@@ -934,10 +934,10 @@ function updateFeedTopBar() {
   const el = document.getElementById('feedTopRight');
   const sb = document.getElementById('sidebarAuthArea');
   if (currentUser) {
-    el.innerHTML = `<button class="icon-btn user-btn" onclick="navigate('profile',document.getElementById('snav-profile'))">${currentUser.avatar||'🧔'} ${currentUser.username}</button>`;
+    el.innerHTML = '';
     if(sb) sb.innerHTML = `<div class="sidebar-user-chip" onclick="navigate('profile',document.getElementById('snav-profile'))"><div class="sidebar-user-ava">${currentUser.avatar||'🧔'}</div><div class="sidebar-user-name">${currentUser.username}</div><span style="font-size:0.65rem;color:var(--text3)">→</span></div>`;
   } else {
-    el.innerHTML = `<button class="icon-btn" onclick="openAuth()">Войти</button>`;
+    el.innerHTML = '';
     if(sb) sb.innerHTML = `<button class="sidebar-login-btn" onclick="openAuth()">Войти / Регистрация</button>`;
   }
 }
