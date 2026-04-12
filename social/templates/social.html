@@ -110,7 +110,8 @@ html,body{min-height:100vh;background:var(--bg);color:var(--text);font-family:'S
 /* ── FEED PAGE LAYOUT ── */
 .feed-layout{display:grid;grid-template-columns:minmax(0,1fr) 320px;gap:24px;padding:24px 28px;max-width:960px;width:100%;margin:0 auto}
 .feed-main{}
-.feed-sidebar{}
+.feed-sidebar{position:sticky;top:24px;align-self:start;max-height:calc(100vh - 48px);overflow-y:auto;scrollbar-width:none}
+.feed-sidebar::-webkit-scrollbar{display:none}
 
 /* Stories */
 .stories{display:flex;gap:14px;margin-bottom:20px;overflow-x:auto;scrollbar-width:none;padding-bottom:4px}
@@ -1403,17 +1404,18 @@ function renderPost(p, opts={}) {
   const pips = Array(5).fill(0).map((_,i)=>`<span class="mcx-str-pip" style="background:${i<strFilled?strCol:'rgba(255,255,255,0.1)'}"></span>`).join('');
   const packIcon = PACK_ICONS[p.pack_method]||'🫕';
 
-  const actions = opts.communityActions
-    ? `<button class="act-btn" onclick="${opts.labOnclick}">⚗️ Открыть в лабе</button>
-       <button class="act-btn" style="margin-left:auto" onclick="showToast('🔗 Ссылка скопирована!')">🔗 Поделиться</button>`
-    : `<button class="act-btn${p.i_liked?' liked':''}" id="lbtn${p.id}" onclick="toggleLike(${p.id},this)">
-        ${p.i_liked?'❤️':'🤍'} <span id="lcnt${p.id}">${p.likes||0}</span>
-       </button>
-       <button class="act-btn" onclick="toggleComments(this,${p.id})">💬</button>
-       <button class="act-btn" onclick="openRateModal(${p.id},'${(p.name||'').replace(/'/g,"&apos;")}')">⭐</button>
-       <button class="act-btn${p.i_saved?' saved':''}" id="sbtn${p.id}" onclick="toggleSave(${p.id},this)" style="margin-left:auto">
-         ${p.i_saved?'🔖 Сохранено':'📎 Сохранить'}
-       </button>`;
+  const actions = `
+    <button class="act-btn${p.i_liked?' liked':''}" id="lbtn${p.id}" onclick="toggleLike(${p.id},this)">
+      ${p.i_liked?'❤️':'🤍'} <span id="lcnt${p.id}">${p.likes||0}</span>
+    </button>
+    <button class="act-btn" onclick="toggleComments(this,${p.id})">💬</button>
+    ${opts.communityActions
+      ? `<button class="act-btn" onclick="${opts.labOnclick}">⚗️ Лаба</button>`
+      : `<button class="act-btn" onclick="openRateModal(${p.id},'${(p.name||'').replace(/'/g,"&apos;")}')">⭐</button>`
+    }
+    <button class="act-btn${p.i_saved?' saved':''}" id="sbtn${p.id}" onclick="toggleSave(${p.id},this)" style="margin-left:auto">
+      ${p.i_saved?'🔖':'📎'}
+    </button>`;
 
   return `<div class="feed-post">
     <div class="post-header">
