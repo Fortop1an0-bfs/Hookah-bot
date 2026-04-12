@@ -110,6 +110,29 @@ CREATE TABLE IF NOT EXISTS hl_follows (
     following_id INT REFERENCES hl_users(id) ON DELETE CASCADE,
     PRIMARY KEY (follower_id, following_id)
 );
+CREATE TABLE IF NOT EXISTS hl_comments (
+    id          SERIAL PRIMARY KEY,
+    mix_id      INT REFERENCES hl_mixes(id) ON DELETE CASCADE,
+    user_id     INT REFERENCES hl_users(id) ON DELETE CASCADE,
+    text        TEXT NOT NULL,
+    created_at  TIMESTAMPTZ DEFAULT NOW()
+);
+CREATE TABLE IF NOT EXISTS hl_notifications (
+    id           SERIAL PRIMARY KEY,
+    user_id      INT REFERENCES hl_users(id) ON DELETE CASCADE,
+    type         TEXT NOT NULL,
+    from_user_id INT REFERENCES hl_users(id) ON DELETE CASCADE,
+    mix_id       INT REFERENCES hl_mixes(id) ON DELETE SET NULL,
+    read         BOOLEAN DEFAULT FALSE,
+    created_at   TIMESTAMPTZ DEFAULT NOW()
+);
+CREATE TABLE IF NOT EXISTS hl_mix_ratings (
+    user_id     INT REFERENCES hl_users(id) ON DELETE CASCADE,
+    mix_id      INT REFERENCES hl_mixes(id) ON DELETE CASCADE,
+    rating      INT NOT NULL CHECK(rating BETWEEN 1 AND 5),
+    created_at  TIMESTAMPTZ DEFAULT NOW(),
+    PRIMARY KEY (user_id, mix_id)
+);
 """
 
 # ── HELPERS ──────────────────────────────────────────────────────────────────
@@ -141,9 +164,11 @@ async def _mix_items(conn, mix_id: int):
     return [dict(r) for r in rows]
 
 async def _mix_stats(conn, mix_id: int):
-    likes = await conn.fetchval("SELECT COUNT(*) FROM hl_likes WHERE mix_id=$1", mix_id)
-    saves = await conn.fetchval("SELECT COUNT(*) FROM hl_saves WHERE mix_id=$1", mix_id)
-    return {"likes": likes, "saves": saves}
+    likes    = await conn.fetchval("SELECT COUNT(*) FROM hl_likes WHERE mix_id=$1", mix_id)
+    saves    = await conn.fetchval("SELECT COUNT(*) FROM hl_saves WHERE mix_id=$1", mix_id)
+    comments = await conn.fetchval("SELECT COUNT(*) FROM hl_comments WHERE mix_id=$1", mix_id)
+    avg_r    = await conn.fetchval("SELECT ROUND(AVG(rating),1) FROM hl_mix_ratings WHERE mix_id=$1", mix_id)
+    return {"likes": likes, "saves": saves, "comments": comments, "avg_rating": float(avg_r) if avg_r else None}
 
 # ── SERVE ────────────────────────────────────────────────────────────────────
 
@@ -384,6 +409,13 @@ async def toggle_like(mix_id: int, user=Depends(req_user)):
             await conn.execute("INSERT INTO hl_likes (user_id,mix_id) VALUES ($1,$2)", user["id"], mix_id)
             liked = True
         count = await conn.fetchval("SELECT COUNT(*) FROM hl_likes WHERE mix_id=$1", mix_id)
+        if liked:
+            owner = await conn.fetchval("SELECT user_id FROM hl_mixes WHERE id=$1", mix_id)
+            if owner and owner != user["id"]:
+                await conn.execute("""
+                    INSERT INTO hl_notifications (user_id,type,from_user_id,mix_id)
+                    VALUES ($1,'like',$2,$3)
+                """, owner, user["id"], mix_id)
     return {"liked": liked, "count": count}
 
 @app.post("/api/mixes/{mix_id}/save")
@@ -485,7 +517,188 @@ async def toggle_follow(username: str, user=Depends(req_user)):
         await conn.execute(
             "INSERT INTO hl_follows (follower_id,following_id) VALUES ($1,$2)",
             user["id"], target["id"])
+        await conn.execute("""
+            INSERT INTO hl_notifications (user_id,type,from_user_id)
+            VALUES ($1,'follow',$2)
+        """, target["id"], user["id"])
         return {"following": True}
+
+
+# ── COMMENTS ─────────────────────────────────────────────────────────────────
+
+@app.get("/api/mixes/{mix_id}/comments")
+async def get_comments(mix_id: int):
+    async with pool.acquire() as conn:
+        rows = await conn.fetch("""
+            SELECT c.id, c.text, c.created_at,
+                   u.username, u.avatar
+            FROM hl_comments c
+            JOIN hl_users u ON u.id=c.user_id
+            WHERE c.mix_id=$1
+            ORDER BY c.created_at ASC
+        """, mix_id)
+        return [dict(r) for r in rows]
+
+@app.post("/api/mixes/{mix_id}/comments")
+async def add_comment(mix_id: int, request: Request, user=Depends(req_user)):
+    d = await request.json()
+    text = (d.get("text") or "").strip()
+    if not text or len(text) > 500:
+        raise HTTPException(400, "Текст 1–500 символов")
+    async with pool.acquire() as conn:
+        cid = await conn.fetchval("""
+            INSERT INTO hl_comments (mix_id, user_id, text)
+            VALUES ($1,$2,$3) RETURNING id
+        """, mix_id, user["id"], text)
+        owner = await conn.fetchval("SELECT user_id FROM hl_mixes WHERE id=$1", mix_id)
+        if owner and owner != user["id"]:
+            await conn.execute("""
+                INSERT INTO hl_notifications (user_id,type,from_user_id,mix_id)
+                VALUES ($1,'comment',$2,$3)
+            """, owner, user["id"], mix_id)
+    return {"id": cid, "ok": True}
+
+@app.delete("/api/comments/{comment_id}")
+async def delete_comment(comment_id: int, user=Depends(req_user)):
+    async with pool.acquire() as conn:
+        c = await conn.fetchrow("SELECT user_id FROM hl_comments WHERE id=$1", comment_id)
+        if not c or c["user_id"] != user["id"]:
+            raise HTTPException(403, "Нет доступа")
+        await conn.execute("DELETE FROM hl_comments WHERE id=$1", comment_id)
+    return {"ok": True}
+
+# ── NOTIFICATIONS ─────────────────────────────────────────────────────────────
+
+@app.get("/api/notifications")
+async def get_notifications(user=Depends(req_user), limit: int = 30):
+    async with pool.acquire() as conn:
+        rows = await conn.fetch("""
+            SELECT n.id, n.type, n.read, n.created_at,
+                   n.mix_id,
+                   u.username as from_username, u.avatar as from_avatar,
+                   m.name as mix_name
+            FROM hl_notifications n
+            JOIN hl_users u ON u.id=n.from_user_id
+            LEFT JOIN hl_mixes m ON m.id=n.mix_id
+            WHERE n.user_id=$1
+            ORDER BY n.created_at DESC
+            LIMIT $2
+        """, user["id"], limit)
+        unread = await conn.fetchval(
+            "SELECT COUNT(*) FROM hl_notifications WHERE user_id=$1 AND read=FALSE", user["id"])
+        return {"items": [dict(r) for r in rows], "unread": unread}
+
+@app.post("/api/notifications/read-all")
+async def mark_notifications_read(user=Depends(req_user)):
+    async with pool.acquire() as conn:
+        await conn.execute(
+            "UPDATE hl_notifications SET read=TRUE WHERE user_id=$1", user["id"])
+    return {"ok": True}
+
+# ── USER SEARCH ───────────────────────────────────────────────────────────────
+
+@app.get("/api/search/users")
+async def search_users(q: str = "", limit: int = 20):
+    if len(q) < 2:
+        return []
+    async with pool.acquire() as conn:
+        rows = await conn.fetch("""
+            SELECT u.id, u.username, u.avatar, u.bio,
+                   (SELECT COUNT(*) FROM hl_mixes m WHERE m.user_id=u.id) as mixes_count,
+                   (SELECT COUNT(*) FROM hl_follows f WHERE f.following_id=u.id) as followers
+            FROM hl_users u
+            WHERE u.username ILIKE '%' || $1 || '%'
+            ORDER BY followers DESC, mixes_count DESC
+            LIMIT $2
+        """, q, limit)
+        return [dict(r) for r in rows]
+
+# ── MIX RATING ────────────────────────────────────────────────────────────────
+
+@app.post("/api/mixes/{mix_id}/rate")
+async def rate_mix(mix_id: int, request: Request, user=Depends(req_user)):
+    d = await request.json()
+    rating = int(d.get("rating", 0))
+    if not 1 <= rating <= 5:
+        raise HTTPException(400, "Оценка от 1 до 5")
+    async with pool.acquire() as conn:
+        await conn.execute("""
+            INSERT INTO hl_mix_ratings (user_id, mix_id, rating)
+            VALUES ($1,$2,$3)
+            ON CONFLICT (user_id, mix_id) DO UPDATE SET rating=$3, created_at=NOW()
+        """, user["id"], mix_id, rating)
+        avg = await conn.fetchval(
+            "SELECT ROUND(AVG(rating),1) FROM hl_mix_ratings WHERE mix_id=$1", mix_id)
+    return {"avg_rating": float(avg) if avg else None, "ok": True}
+
+# ── CATALOG ───────────────────────────────────────────────────────────────────
+
+@app.get("/api/catalog")
+async def get_catalog(
+    q: str = "", brand: str = "", strength: str = "",
+    in_stock: bool = False, min_rating: float = 0,
+    sort: str = "rating", offset: int = 0, limit: int = 40
+):
+    async with pool.acquire() as conn:
+        rows = await conn.fetch("""
+            SELECT a.id, a.name, a.brand_name as brand, a.line, a.weight,
+                   a.price, a.has_discount, a.price_before_discount,
+                   a.in_stock, a.stores_count, a.total_amount,
+                   a.image_url, a.is_bestseller,
+                   ht.avg_rating, ht.strength_user, ht.strength_official,
+                   ht.flavor_tags, ht.total_reviews, ht.url_path as htr_url
+            FROM scraper.ali_products a
+            LEFT JOIN scraper.htr_tobaccos ht ON
+                NULLIF(regexp_replace(a.htreviews_id,'[^0-9]','','g'),'')::int = ht.htreviews_id
+            WHERE ($1 = '' OR a.name ILIKE '%'||$1||'%' OR a.brand_name ILIKE '%'||$1||'%')
+              AND ($2 = '' OR a.brand_name ILIKE '%'||$2||'%')
+              AND (NOT $3 OR a.in_stock = TRUE)
+              AND ($4 = 0 OR ht.avg_rating >= $4)
+              AND ($5 = '' OR ht.strength_user ILIKE '%'||$5||'%' OR ht.strength_official ILIKE '%'||$5||'%')
+            ORDER BY
+                CASE WHEN $6='rating'    THEN COALESCE(ht.avg_rating,0) END DESC NULLS LAST,
+                CASE WHEN $6='price_asc' THEN a.price END ASC NULLS LAST,
+                CASE WHEN $6='price_desc' THEN a.price END DESC NULLS LAST,
+                CASE WHEN $6='reviews'   THEN COALESCE(ht.total_reviews,0) END DESC NULLS LAST,
+                a.is_bestseller DESC, a.brand_name, a.name
+            LIMIT $7 OFFSET $8
+        """, q, brand, in_stock, min_rating, strength, sort, limit, offset)
+        total = await conn.fetchval("""
+            SELECT COUNT(*) FROM scraper.ali_products a
+            LEFT JOIN scraper.htr_tobaccos ht ON
+                NULLIF(regexp_replace(a.htreviews_id,'[^0-9]','','g'),'')::int = ht.htreviews_id
+            WHERE ($1='' OR a.name ILIKE '%'||$1||'%' OR a.brand_name ILIKE '%'||$1||'%')
+              AND ($2='' OR a.brand_name ILIKE '%'||$2||'%')
+              AND (NOT $3 OR a.in_stock=TRUE)
+              AND ($4=0 OR ht.avg_rating>=$4)
+        """, q, brand, in_stock, min_rating)
+        return {"items": [dict(r) for r in rows], "total": total}
+
+@app.get("/api/catalog/top-mixes")
+async def get_top_mixes(period: str = "week", limit: int = 10):
+    days = 7 if period == "week" else 30
+    async with pool.acquire() as conn:
+        rows = await conn.fetch("""
+            SELECT m.id, m.name, m.pack_method, m.bowl_type, m.strength,
+                   u.username, u.avatar,
+                   COUNT(DISTINCT l.user_id) as likes,
+                   COALESCE(ROUND(AVG(r.rating),1),0) as avg_rating
+            FROM hl_mixes m
+            JOIN hl_users u ON u.id=m.user_id
+            LEFT JOIN hl_likes l ON l.mix_id=m.id
+            LEFT JOIN hl_mix_ratings r ON r.mix_id=m.id
+            WHERE m.is_public=TRUE
+              AND m.created_at > NOW() - INTERVAL '1 day' * $1
+            GROUP BY m.id, u.username, u.avatar
+            ORDER BY likes DESC, avg_rating DESC
+            LIMIT $2
+        """, days, limit)
+        result = []
+        for row in rows:
+            async with pool.acquire() as conn2:
+                items = await _mix_items(conn2, row["id"])
+            result.append({**dict(row), "items": items})
+        return result
 
 # ── LLM ──────────────────────────────────────────────────────────────────────
 
@@ -498,20 +711,33 @@ async def llm_generate(request: Request):
 
     # Берём топ-80 табаков из наличия для контекста
     async with pool.acquire() as conn:
-        rows = await conn.fetch("""
-            SELECT a.id, a.brand_name, a.name,
-                   COALESCE(a.line,'') as line,
-                   COALESCE(a.weight,'') as weight,
-                   a.price,
-                   COALESCE(ht.strength_user, ht.strength_official, '') as strength,
-                   COALESCE(array_to_string(ht.flavor_tags,', '),'') as tags
-            FROM scraper.ali_products a
-            LEFT JOIN scraper.htr_tobaccos ht ON
-                NULLIF(regexp_replace(a.htreviews_id,'[^0-9]','','g'),'')::int = ht.htreviews_id
-            WHERE a.in_stock = TRUE
-            ORDER BY ht.avg_rating DESC NULLS LAST, a.is_bestseller DESC
-            LIMIT 100
-        """)
+        cabinet_ids = d.get("cabinet_ids") or []
+        if cabinet_ids:
+            rows = await conn.fetch("""
+                SELECT a.id, a.brand_name, a.name,
+                       COALESCE(a.line,'') as line, COALESCE(a.weight,'') as weight,
+                       a.price,
+                       COALESCE(ht.strength_user, ht.strength_official, '') as strength,
+                       COALESCE(array_to_string(ht.flavor_tags,', '),'') as tags
+                FROM scraper.ali_products a
+                LEFT JOIN scraper.htr_tobaccos ht ON
+                    NULLIF(regexp_replace(a.htreviews_id,'[^0-9]','','g'),'')::int = ht.htreviews_id
+                WHERE a.id = ANY($1::int[])
+            """, cabinet_ids)
+        else:
+            rows = await conn.fetch("""
+                SELECT a.id, a.brand_name, a.name,
+                       COALESCE(a.line,'') as line, COALESCE(a.weight,'') as weight,
+                       a.price,
+                       COALESCE(ht.strength_user, ht.strength_official, '') as strength,
+                       COALESCE(array_to_string(ht.flavor_tags,', '),'') as tags
+                FROM scraper.ali_products a
+                LEFT JOIN scraper.htr_tobaccos ht ON
+                    NULLIF(regexp_replace(a.htreviews_id,'[^0-9]','','g'),'')::int = ht.htreviews_id
+                WHERE a.in_stock = TRUE
+                ORDER BY ht.avg_rating DESC NULLS LAST, a.is_bestseller DESC
+                LIMIT 100
+            """)
         tobaccos_ctx = "\n".join(
             f"ID:{r['id']} | {r['brand_name']} {r['name']} | {r['strength']} | {r['tags']} | {r['price']}р"
             for r in rows

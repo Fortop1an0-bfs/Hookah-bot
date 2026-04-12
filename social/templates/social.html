@@ -368,6 +368,92 @@ html,body{min-height:100vh;background:var(--bg);color:var(--text);font-family:'S
   .feed-layout,.lab-layout,.profile-layout{padding:8px 0}
   .top-bar{padding:12px 16px 10px}
 }
+
+/* ── CATALOG ── */
+.catalog-layout{padding:24px 32px;max-width:1100px}
+.catalog-filters{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:20px;align-items:center}
+.filter-inp{padding:9px 14px;background:var(--bg3);border:1px solid var(--border);border-radius:50px;color:var(--text);font-family:inherit;font-size:0.85rem;outline:none;transition:border-color 0.2s;min-width:180px}
+.filter-inp:focus{border-color:var(--purple)}
+.filter-select{padding:9px 14px;background:var(--bg3);border:1px solid var(--border);border-radius:50px;color:var(--text);font-family:inherit;font-size:0.85rem;outline:none;cursor:pointer;appearance:none;min-width:140px}
+.filter-toggle{padding:8px 16px;background:var(--bg3);border:1px solid var(--border);border-radius:50px;color:var(--text2);font-family:inherit;font-size:0.82rem;cursor:pointer;transition:all 0.2s;font-weight:500}
+.filter-toggle.active{background:rgba(157,111,255,0.12);border-color:var(--purple);color:var(--purple)}
+.catalog-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px}
+.tob-card{background:var(--bg2);border:1px solid var(--border);border-radius:16px;padding:16px;transition:all 0.2s;cursor:pointer;position:relative}
+.tob-card:hover{border-color:var(--border2);transform:translateY(-2px);box-shadow:0 8px 24px rgba(0,0,0,0.3)}
+.tob-card-brand{font-size:0.68rem;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px}
+.tob-card-name{font-size:0.9rem;font-weight:600;margin-bottom:8px;line-height:1.35}
+.tob-card-tags{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:10px;min-height:22px}
+.tob-card-tag{font-size:0.62rem;padding:2px 8px;border-radius:50px;background:rgba(157,111,255,0.1);color:var(--purple)}
+.tob-card-footer{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.tob-card-price{font-size:1rem;font-weight:700;color:var(--gold)}
+.tob-card-price-old{font-size:0.73rem;color:var(--text3);text-decoration:line-through}
+.tob-card-rating{font-size:0.78rem;color:var(--gold);display:flex;align-items:center;gap:3px}
+.tob-card-strength{font-size:0.68rem;padding:3px 8px;border-radius:50px;background:var(--bg4);color:var(--text2)}
+.tob-card-stock{position:absolute;top:12px;right:12px;width:8px;height:8px;border-radius:50%}
+.tob-card-add{padding:6px 13px;background:rgba(157,111,255,0.1);border:1px solid rgba(157,111,255,0.25);border-radius:50px;color:var(--purple);font-size:0.75rem;font-weight:600;cursor:pointer;transition:all 0.2s;font-family:inherit}
+.tob-card-add:hover{background:rgba(157,111,255,0.2)}
+.catalog-load-more{width:100%;padding:13px;margin-top:16px;background:var(--bg3);border:1px solid var(--border);border-radius:14px;color:var(--text2);font-family:inherit;font-size:0.88rem;font-weight:600;cursor:pointer;transition:all 0.2s}
+.catalog-load-more:hover{background:var(--bg4)}
+
+/* ── COMMENTS ── */
+.comments-section{padding:0 16px 14px;border-top:1px solid var(--border)}
+.comments-list{display:flex;flex-direction:column;gap:10px;padding:12px 0 8px}
+.comment-item{display:flex;gap:9px;align-items:flex-start}
+.comment-ava{width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,var(--purple2),var(--gold));display:flex;align-items:center;justify-content:center;font-size:0.8rem;flex-shrink:0}
+.comment-body{flex:1;background:var(--bg3);border-radius:12px;padding:8px 12px}
+.comment-user{font-size:0.72rem;font-weight:600;color:var(--purple);margin-bottom:2px}
+.comment-text{font-size:0.82rem;line-height:1.45;color:var(--text)}
+.comment-time{font-size:0.65rem;color:var(--text3);margin-top:3px}
+.comment-input-row{display:flex;gap:8px;align-items:center;margin-top:8px}
+.comment-inp{flex:1;padding:9px 13px;background:var(--bg3);border:1px solid var(--border);border-radius:50px;color:var(--text);font-family:inherit;font-size:0.84rem;outline:none;transition:border-color 0.2s}
+.comment-inp:focus{border-color:var(--purple)}
+.comment-send{padding:9px 16px;background:linear-gradient(135deg,var(--purple2),var(--purple));border:none;border-radius:50px;color:#fff;font-family:inherit;font-size:0.82rem;font-weight:600;cursor:pointer;transition:all 0.2s;white-space:nowrap}
+.comment-send:hover{transform:translateY(-1px);box-shadow:0 4px 12px rgba(157,111,255,0.3)}
+
+/* ── NOTIFICATIONS ── */
+.notif-bell{position:relative;cursor:pointer}
+.notif-badge{position:absolute;top:-5px;right:-5px;background:var(--red);color:#fff;font-size:0.6rem;font-weight:700;width:16px;height:16px;border-radius:50%;display:flex;align-items:center;justify-content:center;line-height:1}
+.notif-item{display:flex;gap:10px;align-items:flex-start;padding:11px 14px;border-radius:12px;transition:background 0.15s;cursor:pointer}
+.notif-item:hover{background:var(--bg3)}
+.notif-item.unread{background:rgba(157,111,255,0.06)}
+.notif-ava{width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,var(--purple2),var(--gold));display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0}
+.notif-text{flex:1;font-size:0.82rem;line-height:1.4;color:var(--text2)}
+.notif-text b{color:var(--text);font-weight:600}
+.notif-time{font-size:0.68rem;color:var(--text3);margin-top:2px}
+
+/* ── USER SEARCH ── */
+.user-card{display:flex;align-items:center;gap:12px;padding:11px 14px;border-radius:12px;cursor:pointer;transition:background 0.15s}
+.user-card:hover{background:var(--bg3)}
+.user-card-ava{width:42px;height:42px;border-radius:50%;background:linear-gradient(135deg,var(--purple2),var(--gold));display:flex;align-items:center;justify-content:center;font-size:1.2rem;flex-shrink:0;box-shadow:0 2px 8px rgba(157,111,255,0.2)}
+.user-card-name{font-size:0.9rem;font-weight:700}
+.user-card-bio{font-size:0.74rem;color:var(--text3)}
+.user-card-stats{margin-left:auto;text-align:right;font-size:0.72rem;color:var(--text3)}
+
+/* ── HISTORY ── */
+.history-item{display:flex;align-items:center;gap:10px;padding:8px 12px;border-radius:12px;cursor:pointer;transition:background 0.15s;background:var(--bg3);border:1px solid var(--border);margin-bottom:7px}
+.history-item:hover{border-color:var(--purple)}
+.history-name{flex:1;font-size:0.86rem;font-weight:600}
+.history-meta{font-size:0.7rem;color:var(--text3)}
+.history-load{padding:5px 12px;background:rgba(157,111,255,0.1);border:1px solid rgba(157,111,255,0.2);border-radius:50px;color:var(--purple);font-size:0.73rem;font-weight:600;cursor:pointer;white-space:nowrap;font-family:inherit}
+
+/* ── STAR RATING ── */
+.star-rating{display:flex;gap:3px;cursor:pointer}
+.star{font-size:1.1rem;color:var(--bg5);transition:color 0.15s}
+.star.on{color:var(--gold)}
+.star:hover,.star:hover~.star{color:var(--bg5)}
+.stars-wrap:hover .star{color:var(--gold)}
+.stars-wrap .star:hover~.star{color:var(--bg5)}
+
+/* ── PRICE TAG ── */
+.price-tag{font-size:0.72rem;color:var(--teal);font-family:'JetBrains Mono',monospace;font-weight:500}
+
+@media(max-width:900px){
+  .catalog-layout{padding:12px 16px}
+  .catalog-grid{grid-template-columns:1fr 1fr}
+}
+@media(max-width:500px){
+  .catalog-grid{grid-template-columns:1fr}
+}
 </style>
 </head>
 <body>
@@ -383,13 +469,17 @@ html,body{min-height:100vh;background:var(--bg);color:var(--text);font-family:'S
       <div class="snav-item" id="snav-lab" onclick="navigate('lab',this)">
         <span class="snav-icon">⚗️</span><span>Лаборатория</span>
       </div>
+      <div class="snav-item" id="snav-catalog" onclick="navigate('catalog',this)">
+        <span class="snav-icon">📦</span><span>Каталог</span>
+      </div>
       <div class="snav-item" id="snav-profile" onclick="navigate('profile',this)">
         <span class="snav-icon">👤</span><span>Профиль</span>
       </div>
     </div>
     <div class="sidebar-user" id="sidebarUser">
       <button class="sidebar-ai-btn" onclick="openAI()">🤖 ИИ-генератор</button>
-      <div id="sidebarAuthArea"></div>
+      <div class="notif-bell" id="notifBell" onclick="openNotifications()" style="margin-bottom:10px;display:none"><button class="icon-btn" style="width:100%;justify-content:space-between"><span>🔔 Уведомления</span><span id="notifCount" class="notif-badge" style="position:static;margin-left:auto"></span></button></div>
+    <div id="sidebarAuthArea"></div>
     </div>
   </nav>
 
@@ -425,6 +515,9 @@ html,body{min-height:100vh;background:var(--bg);color:var(--text);font-family:'S
             <p style="font-size:0.8rem;color:var(--text2);margin-bottom:12px;line-height:1.5">Создай свой авторский микс в Лаборатории или доверь это ИИ</p>
             <button class="lab-btn lab-btn-primary" style="margin-bottom:8px;padding:11px" onclick="navigate('lab',document.getElementById('snav-lab'))">⚗️ Открыть Лабораторию</button>
             <button class="sidebar-ai-btn" onclick="openAI()">🤖 ИИ-генератор</button>
+          </div>
+          <div class="feed-widget" id="topMixesWidget">
+            <div class="loading" style="padding:10px 0"><div class="spinner"></div></div>
           </div>
         </div><!-- /feed-sidebar -->
       </div><!-- /feed-layout -->
@@ -501,6 +594,7 @@ html,body{min-height:100vh;background:var(--bg);color:var(--text);font-family:'S
             </div>
             <div class="tob-list" id="tobList"></div>
             <button class="add-tob-btn" onclick="openTobSearch(false)">+ Добавить табак</button>
+            <div id="historyWidget" style="margin-top:16px;display:none"></div>
 
             <div style="margin-top:20px">
               <div class="lab-save-row">
@@ -511,6 +605,41 @@ html,body{min-height:100vh;background:var(--bg);color:var(--text);font-family:'S
           </div><!-- /lab-right -->
 
         </div><!-- /lab-layout -->
+      </div>
+    </div>
+  </div>
+
+  <!-- ── CATALOG ── -->
+  <div id="catalogPage" class="page">
+    <div class="page-inner">
+      <div class="top-bar">
+        <span class="top-bar-title">📦 Каталог табаков</span>
+        <span style="font-size:0.78rem;color:var(--text3)" id="catalogTotal">2837 табаков</span>
+      </div>
+      <div class="catalog-layout">
+        <div class="catalog-filters">
+          <div class="search-wrap" style="flex:1;min-width:200px;margin-bottom:0">
+            <span class="search-ico">🔍</span>
+            <input class="filter-inp search-inp" id="catSearch" placeholder="Поиск по названию, бренду..." oninput="debounceCatalog()">
+          </div>
+          <select class="filter-select" id="catSort" onchange="loadCatalog(0)">
+            <option value="rating">По рейтингу</option>
+            <option value="reviews">По отзывам</option>
+            <option value="price_asc">Дешевле</option>
+            <option value="price_desc">Дороже</option>
+          </select>
+          <select class="filter-select" id="catStrength" onchange="loadCatalog(0)">
+            <option value="">Любая крепость</option>
+            <option value="лёгк">Лёгкая</option>
+            <option value="средн">Средняя</option>
+            <option value="крепк">Крепкая</option>
+          </select>
+          <button class="filter-toggle" id="catInStock" onclick="toggleCatInStock()">В наличии</button>
+        </div>
+        <div class="catalog-grid" id="catalogGrid">
+          <div class="loading"><div class="spinner"></div>Загрузка...</div>
+        </div>
+        <button class="catalog-load-more" id="catalogMore" style="display:none" onclick="loadCatalogMore()">Показать ещё</button>
       </div>
     </div>
   </div>
@@ -526,6 +655,7 @@ html,body{min-height:100vh;background:var(--bg);color:var(--text);font-family:'S
   <nav class="bottom-nav">
     <div class="nav-item active" id="nav-feed" onclick="navigate('feed',this)"><span class="nav-icon">🌿</span><span class="nav-label">Лента</span></div>
     <div class="nav-item" id="nav-lab" onclick="navigate('lab',this)"><span class="nav-icon">⚗️</span><span class="nav-label">Лаборатория</span></div>
+    <div class="nav-item" id="nav-catalog" onclick="navigate('catalog',this)"><span class="nav-icon">📦</span><span class="nav-label">Каталог</span></div>
     <div class="nav-item" id="nav-profile" onclick="navigate('profile',this)"><span class="nav-icon">👤</span><span class="nav-label">Профиль</span></div>
   </nav>
 </div>
@@ -619,6 +749,88 @@ html,body{min-height:100vh;background:var(--bg);color:var(--text);font-family:'S
       <div class="setup-field"><label class="setup-field-label">🪨 Угли</label><input class="form-input" id="setupCoal" placeholder="Coco Nara, Carbopol, Ubercoal..."></div>
       <div class="setup-field"><label class="setup-field-label">📋 Фольга / Сетка</label><input class="form-input" id="setupFoil" placeholder="Стандартная фольга, сетка..."></div>
       <button class="btn-gold" style="margin-top:6px" onclick="saveSetupModal()">Сохранить</button>
+    </div>
+  </div>
+</div>
+
+
+<!-- Notifications modal -->
+<div class="modal-overlay" id="notifModal" onclick="if(event.target===this)closeNotifications()">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-header">
+      <h3>🔔 Уведомления</h3>
+      <div style="display:flex;gap:8px;align-items:center">
+        <button class="icon-btn" onclick="markAllRead()" style="font-size:0.75rem">Прочитать все</button>
+        <button class="modal-close" onclick="closeNotifications()">✕</button>
+      </div>
+    </div>
+    <div class="modal-body" id="notifList">
+      <div class="loading"><div class="spinner"></div>Загрузка...</div>
+    </div>
+  </div>
+</div>
+
+<!-- User profile modal -->
+<div class="modal-overlay" id="userModal" onclick="if(event.target===this)closeUserModal()">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-header"><h3 id="userModalTitle">Профиль</h3><button class="modal-close" onclick="closeUserModal()">✕</button></div>
+    <div class="modal-body" id="userModalBody"></div>
+  </div>
+</div>
+
+<!-- Edit profile modal -->
+<div class="modal-overlay" id="editProfileModal" onclick="if(event.target===this)closeEditProfile()">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-header"><h3>✏️ Редактировать профиль</h3><button class="modal-close" onclick="closeEditProfile()">✕</button></div>
+    <div class="modal-body">
+      <div class="form-field">
+        <label class="form-label">Аватар (эмодзи)</label>
+        <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:8px" id="avatarPicker">
+          <span style="font-size:1.6rem;cursor:pointer;padding:4px;border-radius:8px;transition:background 0.15s" onclick="selectAvatar(this)" data-emoji="🧔">🧔</span>
+          <span style="font-size:1.6rem;cursor:pointer;padding:4px;border-radius:8px;transition:background 0.15s" onclick="selectAvatar(this)" data-emoji="👨‍🍳">👨‍🍳</span>
+          <span style="font-size:1.6rem;cursor:pointer;padding:4px;border-radius:8px;transition:background 0.15s" onclick="selectAvatar(this)" data-emoji="🎨">🎨</span>
+          <span style="font-size:1.6rem;cursor:pointer;padding:4px;border-radius:8px;transition:background 0.15s" onclick="selectAvatar(this)" data-emoji="👑">👑</span>
+          <span style="font-size:1.6rem;cursor:pointer;padding:4px;border-radius:8px;transition:background 0.15s" onclick="selectAvatar(this)" data-emoji="🔬">🔬</span>
+          <span style="font-size:1.6rem;cursor:pointer;padding:4px;border-radius:8px;transition:background 0.15s" onclick="selectAvatar(this)" data-emoji="🌿">🌿</span>
+          <span style="font-size:1.6rem;cursor:pointer;padding:4px;border-radius:8px;transition:background 0.15s" onclick="selectAvatar(this)" data-emoji="💀">💀</span>
+          <span style="font-size:1.6rem;cursor:pointer;padding:4px;border-radius:8px;transition:background 0.15s" onclick="selectAvatar(this)" data-emoji="🦊">🦊</span>
+          <span style="font-size:1.6rem;cursor:pointer;padding:4px;border-radius:8px;transition:background 0.15s" onclick="selectAvatar(this)" data-emoji="🐉">🐉</span>
+          <span style="font-size:1.6rem;cursor:pointer;padding:4px;border-radius:8px;transition:background 0.15s" onclick="selectAvatar(this)" data-emoji="🎭">🎭</span>
+          <span style="font-size:1.6rem;cursor:pointer;padding:4px;border-radius:8px;transition:background 0.15s" onclick="selectAvatar(this)" data-emoji="⚗️">⚗️</span>
+          <span style="font-size:1.6rem;cursor:pointer;padding:4px;border-radius:8px;transition:background 0.15s" onclick="selectAvatar(this)" data-emoji="🌙">🌙</span>
+        </div>
+      </div>
+      <div class="form-field">
+        <label class="form-label">Никнейм</label>
+        <input class="form-input" id="editUsername" placeholder="hookah_master">
+      </div>
+      <div class="form-field">
+        <label class="form-label">О себе</label>
+        <textarea class="form-input" id="editBio" placeholder="Расскажи о себе..." style="height:80px;resize:none"></textarea>
+      </div>
+      <button class="btn-gold" onclick="saveEditProfile()">Сохранить</button>
+    </div>
+  </div>
+</div>
+
+<!-- Mix rating modal -->
+<div class="modal-overlay" id="rateModal" onclick="if(event.target===this)closeRateModal()">
+  <div class="modal-sheet" style="max-width:360px">
+    <div class="modal-handle"></div>
+    <div class="modal-header"><h3>⭐ Оцени сессию</h3><button class="modal-close" onclick="closeRateModal()">✕</button></div>
+    <div class="modal-body" style="text-align:center;padding:24px">
+      <div style="font-size:0.9rem;color:var(--text2);margin-bottom:20px" id="rateModalName"></div>
+      <div class="stars-wrap" id="rateStars" style="display:flex;justify-content:center;gap:10px;margin-bottom:24px">
+        <span class="star" onclick="setRateStar(1)">★</span>
+        <span class="star" onclick="setRateStar(2)">★</span>
+        <span class="star" onclick="setRateStar(3)">★</span>
+        <span class="star" onclick="setRateStar(4)">★</span>
+        <span class="star" onclick="setRateStar(5)">★</span>
+      </div>
+      <button class="btn-gold" onclick="submitRating()">Отправить оценку</button>
     </div>
   </div>
 </div>
@@ -814,7 +1026,7 @@ function renderTobList() {
       <div class="tob-item-top">
         <div class="tob-cdot" style="background:${t.color};box-shadow:0 0 6px ${t.color}66"></div>
         <div style="flex:1"><div class="tob-name">${t.name}</div><div class="tob-brand">${t.brand}${t.strength?' · '+t.strength:''}</div></div>
-        <div class="tob-grams" id="tg${i}">${g}г</div>
+        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:2px"><div class="tob-grams" id="tg${i}">${g}г</div>${t.price?`<div class="price-tag">${Math.round(t.price*t.percentage/100/t.total_weight||0)}₽</div>`:''}</div>
         <button class="tob-rm" onclick="removeTob(${i})">✕</button>
       </div>
       <div class="tob-pct-row">
@@ -934,6 +1146,8 @@ function pickTobacco(r) {
     name: r.name,
     brand: r.brand,
     strength: r.strength_user || r.strength_official || 'средний',
+    price: r.price || 0,
+    weight: r.weight || '',
   });
 }
 
@@ -961,6 +1175,8 @@ async function saveMix() {
       })),
     });
     showToast('✦ Микс сохранён!');
+    saveToHistory({mixName:name,tobaccos:lab.tobaccos,packMethod:lab.packMethod,bowlSize:lab.bowlSize});
+    renderHistoryWidget();
     closePreview();
     setTimeout(()=>{ if(confirm('Поделиться в ленту?')) shareToFeed(res.id, name); },600);
   } catch(e) { showToast('Ошибка: '+e.message); }
@@ -1085,7 +1301,7 @@ function renderPost(p) {
   return `<div class="card feed-post">
     <div class="post-header">
       <div class="post-avatar">${p.avatar||'🧔'}</div>
-      <div style="flex:1"><div class="post-username">@${p.username}</div><div class="post-time">${timeAgo(p.created_at)}</div></div>
+      <div style="flex:1"><div class="post-username" onclick="openUserModal('${p.username}')" style="cursor:pointer">@${p.username}</div><div class="post-time">${timeAgo(p.created_at)}</div></div>
       <div style="color:var(--text3);cursor:pointer;padding:4px 8px;font-size:1.1rem">···</div>
     </div>
     <div class="mix-card-inner">
@@ -1107,7 +1323,8 @@ function renderPost(p) {
       <button class="act-btn${p.i_liked?' liked':''}" id="lbtn${p.id}" onclick="toggleLike(${p.id},this)">
         ${p.i_liked?'❤️':'🤍'} <span id="lcnt${p.id}">${p.likes||0}</span>
       </button>
-      <button class="act-btn" onclick="showToast('Комментарии скоро 💬')">💬</button>
+      <button class="act-btn" onclick="toggleComments(this,${p.id})">💬</button>
+      <button class="act-btn" onclick="openRateModal(${p.id},'${(p.name||'').replace(/'/g,'&apos;')}')">⭐</button>
       <button class="act-btn${p.i_saved?' saved':''}" id="sbtn${p.id}" onclick="toggleSave(${p.id},this)" style="margin-left:auto">
         ${p.i_saved?'🔖 Сохранено':'📎 Сохранить'}
       </button>
@@ -1276,7 +1493,7 @@ function buildProfileHTML(d) {
   </div>`).join('');
 
   return `
-    <div class="top-bar"><span class="top-bar-title">👤 Профиль</span><div style="display:flex;gap:8px"><button class="p-edit-btn" style="margin:0;padding:7px 14px;width:auto" onclick="openSetupModal()">⚙️ Сетап</button><button class="p-edit-btn" style="margin:0;padding:7px 14px;width:auto" onclick="doLogout()">Выйти</button></div></div>
+    <div class="top-bar"><span class="top-bar-title">👤 Профиль</span><div style="display:flex;gap:8px"><button class="p-edit-btn" style="margin:0;padding:7px 14px;width:auto" onclick="openEditProfile()">✏️ Профиль</button><button class="p-edit-btn" style="margin:0;padding:7px 14px;width:auto" onclick="openSetupModal()">⚙️ Сетап</button><button class="p-edit-btn" style="margin:0;padding:7px 14px;width:auto" onclick="doLogout()">Выйти</button></div></div>
     <div style="padding:24px 32px"><div class="profile-layout">
     <div class="profile-left">
     <div class="profile-card">
@@ -1457,10 +1674,328 @@ function timeAgo(iso) {
   return new Date(iso).toLocaleDateString('ru');
 }
 
+
+// ── CATALOG ──────────────────────────────────────────────────────
+let catOffset = 0;
+let catInStock = false;
+let catTimer = null;
+function debounceCatalog() { clearTimeout(catTimer); catTimer = setTimeout(()=>loadCatalog(0),400); }
+function toggleCatInStock() {
+  catInStock = !catInStock;
+  document.getElementById('catInStock').classList.toggle('active', catInStock);
+  loadCatalog(0);
+}
+async function loadCatalog(offset=0) {
+  catOffset = offset;
+  const q = document.getElementById('catSearch').value;
+  const sort = document.getElementById('catSort').value;
+  const strength = document.getElementById('catStrength').value;
+  const grid = document.getElementById('catalogGrid');
+  if (offset === 0) grid.innerHTML = '<div class="loading"><div class="spinner"></div>Загрузка...</div>';
+  try {
+    const params = new URLSearchParams({q,sort,strength,in_stock:catInStock,limit:40,offset});
+    const data = await api('/api/catalog?' + params);
+    document.getElementById('catalogTotal').textContent = data.total + ' табаков';
+    document.getElementById('catalogMore').style.display = data.items.length===40 ? 'block' : 'none';
+    const cards = data.items.map(t => {
+      const tags = (t.flavor_tags||[]).slice(0,3).map(g=>`<span class="tob-card-tag">${g}</span>`).join('');
+      const strCol = t.strength_user||t.strength_official||'';
+      const disc = t.has_discount && t.price_before_discount ? `<span class="tob-card-price-old">${t.price_before_discount}₽</span>` : '';
+      const stock = t.in_stock ? '#4ade80' : '#f06b6b';
+      return `<div class="tob-card" onclick="showTobaccoDetail(${t.id})">
+        <div class="tob-card-stock" style="background:${stock}"></div>
+        <div class="tob-card-brand">${t.brand}${t.line?' · '+t.line:''}</div>
+        <div class="tob-card-name">${t.name.replace(/Табак для кальяна\s*/i,'')}</div>
+        <div class="tob-card-tags">${tags}</div>
+        <div class="tob-card-footer">
+          <div>
+            <div style="display:flex;align-items:baseline;gap:5px">
+              <span class="tob-card-price">${t.price}₽</span>${disc}
+            </div>
+            <div style="font-size:0.67rem;color:var(--text3)">${t.weight||''}</div>
+          </div>
+          <div style="display:flex;flex-direction:column;align-items:flex-end;gap:5px">
+            ${t.avg_rating?`<span class="tob-card-rating">⭐ ${t.avg_rating}</span>`:''}
+            ${strCol?`<span class="tob-card-strength">${strCol}</span>`:''}
+          </div>
+          <button class="tob-card-add" onclick="event.stopPropagation();addFromCatalog(${JSON.stringify(t).replace(/"/g,'&quot;')})">+ В микс</button>
+        </div>
+      </div>`;
+    }).join('');
+    if (offset === 0) grid.innerHTML = cards || '<div style="padding:40px;text-align:center;color:var(--text3)">Ничего не найдено</div>';
+    else grid.innerHTML += cards;
+  } catch(e) { grid.innerHTML = '<div style="padding:40px;text-align:center;color:var(--red)">Ошибка загрузки</div>'; }
+}
+function loadCatalogMore() { loadCatalog(catOffset + 40); }
+function addFromCatalog(t) {
+  addTobacco({ali_id:t.id,name:t.name.replace(/Табак для кальяна\s*/i,''),brand:t.brand,strength:t.strength_user||t.strength_official||'средний',price:t.price||0});
+  navigate('lab', document.getElementById('snav-lab'));
+  showToast('Добавлено в лабораторию ⚗️');
+}
+function showTobaccoDetail(id) { /* TODO: открыть страницу табака с отзывами */ }
+
+// ── COMMENTS ─────────────────────────────────────────────────────
+async function toggleComments(btn, mixId) {
+  const post = btn.closest('.card');
+  let section = post.querySelector('.comments-section');
+  if (section) { section.remove(); return; }
+  section = document.createElement('div');
+  section.className = 'comments-section';
+  section.innerHTML = '<div class="loading" style="padding:12px 0"><div class="spinner"></div></div>';
+  post.appendChild(section);
+  try {
+    const data = await api('/api/mixes/'+mixId+'/comments');
+    const list = data.map(c => `<div class="comment-item">
+      <div class="comment-ava">${c.avatar||'🧔'}</div>
+      <div class="comment-body">
+        <div class="comment-user">@${c.username}</div>
+        <div class="comment-text">${escHtml(c.text)}</div>
+        <div class="comment-time">${timeAgo(c.created_at)}</div>
+      </div>
+    </div>`).join('');
+    const inputRow = token ? `<div class="comment-input-row">
+      <input class="comment-inp" id="ci${mixId}" placeholder="Напиши комментарий..." onkeydown="if(event.key==='Enter')sendComment(${mixId})">
+      <button class="comment-send" onclick="sendComment(${mixId})">→</button>
+    </div>` : `<div style="font-size:0.78rem;color:var(--text3);padding:8px 0">Войди чтобы комментировать</div>`;
+    section.innerHTML = `<div class="comments-list">${list||'<div style="padding:10px 0;color:var(--text3);font-size:0.8rem">Будь первым!</div>'}</div>${inputRow}`;
+  } catch(e) { section.innerHTML = '<div style="color:var(--red);font-size:0.8rem;padding:8px">Ошибка загрузки</div>'; }
+}
+async function sendComment(mixId) {
+  if (!token) { openAuth(); return; }
+  const inp = document.getElementById('ci'+mixId);
+  const text = inp?.value?.trim();
+  if (!text) return;
+  try {
+    await api('/api/mixes/'+mixId+'/comments','POST',{text});
+    inp.value = '';
+    const section = inp.closest('.comments-section');
+    const list = section?.querySelector('.comments-list');
+    if (list) {
+      const div = document.createElement('div');
+      div.className = 'comment-item';
+      div.innerHTML = `<div class="comment-ava">${currentUser.avatar||'🧔'}</div>
+        <div class="comment-body"><div class="comment-user">@${currentUser.username}</div>
+        <div class="comment-text">${escHtml(text)}</div><div class="comment-time">только что</div></div>`;
+      list.appendChild(div);
+    }
+    showToast('Комментарий добавлен 💬');
+  } catch(e) { showToast('Ошибка: '+e.message); }
+}
+function escHtml(s) { return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+// ── NOTIFICATIONS ─────────────────────────────────────────────────
+async function loadNotifCount() {
+  if (!token) return;
+  try {
+    const data = await api('/api/notifications?limit=1');
+    const cnt = data.unread;
+    const bell = document.getElementById('notifBell');
+    const badge = document.getElementById('notifCount');
+    if (bell) bell.style.display = 'block';
+    if (badge) { badge.textContent = cnt>0?cnt:''; badge.style.display = cnt>0?'flex':'none'; }
+  } catch(e) {}
+}
+function openNotifications() {
+  document.getElementById('notifModal').classList.add('open');
+  loadNotifications();
+}
+function closeNotifications() { document.getElementById('notifModal').classList.remove('open'); }
+async function loadNotifications() {
+  const el = document.getElementById('notifList');
+  el.innerHTML = '<div class="loading"><div class="spinner"></div></div>';
+  try {
+    const data = await api('/api/notifications');
+    if (!data.items.length) { el.innerHTML = '<div style="padding:32px;text-align:center;color:var(--text3)">Уведомлений пока нет</div>'; return; }
+    const icons = {like:'❤️',comment:'💬',follow:'👤'};
+    const texts = {
+      like: (n)=>`<b>@${n.from_username}</b> лайкнул твой микс «${n.mix_name||''}»`,
+      comment: (n)=>`<b>@${n.from_username}</b> прокомментировал «${n.mix_name||''}»`,
+      follow: (n)=>`<b>@${n.from_username}</b> подписался на тебя`,
+    };
+    el.innerHTML = data.items.map(n=>`
+      <div class="notif-item${n.read?'':' unread'}">
+        <div class="notif-ava">${n.from_avatar||'🧔'}</div>
+        <div style="flex:1"><div class="notif-text">${(texts[n.type]||((x)=>x.type))(n)}</div>
+        <div class="notif-time">${timeAgo(n.created_at)}</div></div>
+        <span style="font-size:1.2rem">${icons[n.type]||''}</span>
+      </div>`).join('');
+    await api('/api/notifications/read-all','POST');
+    const badge = document.getElementById('notifCount');
+    if (badge) { badge.textContent=''; badge.style.display='none'; }
+  } catch(e) { el.innerHTML = '<div style="color:var(--red);padding:20px">Ошибка</div>'; }
+}
+async function markAllRead() {
+  await api('/api/notifications/read-all','POST').catch(()=>{});
+  loadNotifications();
+}
+
+// ── USER MODAL ───────────────────────────────────────────────────
+function openUserModal(username) {
+  document.getElementById('userModalTitle').textContent = '@' + username;
+  document.getElementById('userModal').classList.add('open');
+  loadUserModal(username);
+}
+function closeUserModal() { document.getElementById('userModal').classList.remove('open'); }
+async function loadUserModal(username) {
+  const el = document.getElementById('userModalBody');
+  el.innerHTML = '<div class="loading"><div class="spinner"></div></div>';
+  try {
+    const d = await api('/api/profile/'+username);
+    const isMe = currentUser && currentUser.username === username;
+    const followBtn = !isMe && token ? `<button class="icon-btn" onclick="toggleFollowUser('${username}',this)" style="margin-top:10px">Подписаться</button>` : '';
+    el.innerHTML = `
+      <div style="text-align:center;padding:16px 0">
+        <div style="font-size:2.5rem;margin-bottom:8px">${d.avatar||'🧔'}</div>
+        <div style="font-size:1.1rem;font-weight:700">@${d.username}</div>
+        ${d.bio?`<div style="font-size:0.82rem;color:var(--text2);margin-top:5px">${d.bio}</div>`:''}
+        <div style="display:flex;justify-content:center;gap:24px;margin-top:12px">
+          <div><div style="font-size:1.1rem;font-weight:700">${d.stats.mixes}</div><div style="font-size:0.65rem;color:var(--text3)">Миксов</div></div>
+          <div><div style="font-size:1.1rem;font-weight:700">${d.stats.followers}</div><div style="font-size:0.65rem;color:var(--text3)">Подписчиков</div></div>
+        </div>
+        ${followBtn}
+      </div>
+      <div style="font-size:0.73rem;color:var(--text3);text-transform:uppercase;letter-spacing:0.7px;margin-bottom:10px">Миксы</div>
+      <div class="mix-grid">${d.mixes.map((m,i)=>{
+        const total=m.items.reduce((s,x)=>s+x.percentage,0)||100;
+        const svg=buildMiniSvg(m.items.map((it,j)=>({...it,color:COLORS[j%COLORS.length]})),total,100,50,50,44,16,m.pack_method);
+        return `<div class="mix-grid-item" onclick="loadMixToLab(${JSON.stringify(m).replace(/"/g,'&quot;')});closeUserModal()">${svg.replace('style="flex-shrink:0"','style="width:100%;height:100%"')}<div class="mix-grid-overlay"><div class="mix-grid-name">${m.name}</div></div></div>`;
+      }).join('')||'<div style="grid-column:1/-1;color:var(--text3);font-size:0.8rem;padding:16px;text-align:center">Нет миксов</div>'}</div>`;
+  } catch(e) { el.innerHTML = '<div style="color:var(--red);padding:20px">Ошибка загрузки</div>'; }
+}
+async function toggleFollowUser(username, btn) {
+  if (!token) { openAuth(); return; }
+  try {
+    const r = await api('/api/follow/'+username,'POST');
+    btn.textContent = r.following ? 'Отписаться' : 'Подписаться';
+    showToast(r.following ? 'Подписан!' : 'Отписан');
+  } catch(e) {}
+}
+
+// ── EDIT PROFILE ─────────────────────────────────────────────────
+let _selectedAvatar = null;
+function openEditProfile() {
+  if (!currentUser) { openAuth(); return; }
+  _selectedAvatar = currentUser.avatar || '🧔';
+  document.getElementById('editUsername').value = currentUser.username || '';
+  document.getElementById('editBio').value = currentUser.bio || '';
+  document.querySelectorAll('#avatarPicker span').forEach(s => {
+    s.style.background = s.dataset.emoji === _selectedAvatar ? 'var(--bg4)' : '';
+  });
+  document.getElementById('editProfileModal').classList.add('open');
+}
+function closeEditProfile() { document.getElementById('editProfileModal').classList.remove('open'); }
+function selectAvatar(el) {
+  _selectedAvatar = el.dataset.emoji;
+  document.querySelectorAll('#avatarPicker span').forEach(s => s.style.background='');
+  el.style.background = 'var(--bg4)';
+}
+async function saveEditProfile() {
+  try {
+    await api('/api/me','PATCH',{
+      avatar: _selectedAvatar,
+      bio: document.getElementById('editBio').value.trim(),
+    });
+    currentUser.avatar = _selectedAvatar;
+    currentUser.bio = document.getElementById('editBio').value.trim();
+    localStorage.setItem('hl_user', JSON.stringify(currentUser));
+    closeEditProfile();
+    updateFeedTopBar();
+    renderProfile();
+    showToast('✓ Профиль обновлён!');
+  } catch(e) { showToast('Ошибка: '+e.message); }
+}
+
+// ── MIX HISTORY (localStorage) ───────────────────────────────────
+const MIX_HISTORY_KEY = 'hl_mix_history';
+function saveToHistory(mixData) {
+  const h = JSON.parse(localStorage.getItem(MIX_HISTORY_KEY)||'[]');
+  const entry = { ...mixData, savedAt: new Date().toISOString() };
+  const filtered = h.filter(x => x.savedAt !== entry.savedAt);
+  filtered.unshift(entry);
+  localStorage.setItem(MIX_HISTORY_KEY, JSON.stringify(filtered.slice(0,10)));
+}
+function getHistory() { return JSON.parse(localStorage.getItem(MIX_HISTORY_KEY)||'[]'); }
+function renderHistoryWidget() {
+  const h = getHistory();
+  const el = document.getElementById('historyWidget');
+  if (!el) return;
+  if (!h.length) { el.style.display='none'; return; }
+  el.style.display='block';
+  el.innerHTML = '<div class="lab-slabel" style="margin-bottom:10px">📋 История</div>' +
+    h.slice(0,5).map((m,i) => `<div class="history-item">
+      <span style="font-size:1.1rem">${PACK_ICONS[m.packMethod]||'⚗️'}</span>
+      <div style="flex:1;min-width:0"><div class="history-name">${m.mixName||'Без названия'}</div>
+      <div class="history-meta">${m.tobaccos.length} табаков · ${timeAgo(m.savedAt)}</div></div>
+      <button class="history-load" onclick="loadHistoryMix(${i})">→</button>
+    </div>`).join('');
+}
+function loadHistoryMix(i) {
+  const m = getHistory()[i];
+  if (!m) return;
+  lab.tobaccos = m.tobaccos;
+  lab.packMethod = m.packMethod;
+  lab.bowlSize = m.bowlSize;
+  document.getElementById('labMixName').value = m.mixName||'';
+  activatePackMethod(lab.packMethod);
+  document.querySelectorAll('.bowl-size-btn').forEach(b=>b.classList.remove('active'));
+  document.querySelectorAll('.bowl-size-btn').forEach(b=>{ if(b.textContent.includes(lab.bowlSize===20?'Убивашка':lab.bowlSize===15?'Фанел':'Сифон')) b.classList.add('active'); });
+  renderTobList(); renderBowl(); updateLabDetails();
+  showToast('Микс загружен из истории');
+}
+
+// ── RATING ───────────────────────────────────────────────────────
+let _ratingMixId = null, _ratingVal = 0;
+function openRateModal(mixId, mixName) {
+  _ratingMixId = mixId; _ratingVal = 0;
+  document.getElementById('rateModalName').textContent = mixName;
+  document.querySelectorAll('#rateStars .star').forEach(s=>s.classList.remove('on'));
+  document.getElementById('rateModal').classList.add('open');
+}
+function closeRateModal() { document.getElementById('rateModal').classList.remove('open'); }
+function setRateStar(n) {
+  _ratingVal = n;
+  document.querySelectorAll('#rateStars .star').forEach((s,i)=>s.classList.toggle('on',i<n));
+}
+async function submitRating() {
+  if (!token) { openAuth(); return; }
+  if (!_ratingVal) { showToast('Выбери оценку'); return; }
+  try {
+    const r = await api('/api/mixes/'+_ratingMixId+'/rate','POST',{rating:_ratingVal});
+    closeRateModal();
+    showToast('⭐ Оценка сохранена! Средняя: '+r.avg_rating);
+  } catch(e) { showToast('Ошибка: '+e.message); }
+}
+
+// ── TOP MIXES in feed sidebar ────────────────────────────────────
+async function loadTopMixes() {
+  const el = document.getElementById('topMixesWidget');
+  if (!el) return;
+  try {
+    const rows = await api('/api/catalog/top-mixes?period=week&limit=5');
+    if (!rows.length) { el.style.display='none'; return; }
+    el.innerHTML = '<div class="feed-widget-title">🏆 Топ миксов недели</div>' +
+      rows.map(m=>{
+        const total=m.items.reduce((s,i)=>s+i.percentage,0)||100;
+        const svg=buildMiniSvg(m.items.map((it,i)=>({...it,color:COLORS[i%COLORS.length]})),total,52,26,26,22,8,m.pack_method);
+        return `<div class="search-item" style="padding:7px 8px" onclick="loadMixToLab(${JSON.stringify(m).replace(/"/g,'&quot;')})">
+          ${svg}
+          <div style="flex:1;min-width:0">
+            <div style="font-size:0.82rem;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${m.name}</div>
+            <div style="font-size:0.7rem;color:var(--text3)">@${m.username} · ❤️${m.likes}</div>
+          </div>
+        </div>`;
+      }).join('');
+  } catch(e) {}
+}
+
 // ── INIT ──
 updateFeedTopBar();
 renderBowl();
 loadFeed();
+loadNotifCount();
+loadTopMixes();
+renderHistoryWidget();
+if(document.getElementById("catalogPage")) loadCatalog(0);
 </script>
 </body>
 </html>
