@@ -17,10 +17,10 @@
   --sidebar-w:230px;
 }
 
-html,body{min-height:100vh;background:var(--bg);color:var(--text);font-family:'Space Grotesk',sans-serif;overflow-x:hidden}
+html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Space Grotesk',sans-serif;overflow:hidden}
 
 /* ── DESKTOP LAYOUT ── */
-#app{display:flex;min-height:100vh;max-width:1100px;margin:0 auto;position:relative}
+#app{display:flex;height:100vh;max-width:1100px;margin:0 auto;position:relative;overflow:hidden}
 
 .sidebar{
   width:var(--sidebar-w);flex-shrink:0;position:sticky;left:0;top:0;height:100vh;
@@ -72,8 +72,9 @@ html,body{min-height:100vh;background:var(--bg);color:var(--text);font-family:'S
 .sidebar-login-btn:hover{transform:translateY(-1px);box-shadow:0 4px 20px rgba(157,111,255,0.3)}
 
 .content-wrap{
-  flex:1;min-height:100vh;min-width:0;
+  flex:1;min-width:0;height:100vh;overflow-y:auto;overflow-x:hidden;scrollbar-width:none;
 }
+.content-wrap::-webkit-scrollbar{display:none}
 
 /* ── PAGES ── */
 .page{display:none}
