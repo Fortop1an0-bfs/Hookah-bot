@@ -114,7 +114,7 @@ async def upsert_equipment(conn, eq_type: str, items: list):
             INSERT INTO scraper.ali_equipment
                 (source_id, type, name, brand, line, price, image_url, in_stock, extra)
             VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)
-            ON CONFLICT (source_id, type) DO UPDATE SET
+            ON CONFLICT (source_id, type) WHERE source_id IS NOT NULL DO UPDATE SET
                 name=EXCLUDED.name, brand=EXCLUDED.brand, price=EXCLUDED.price,
                 image_url=EXCLUDED.image_url, in_stock=EXCLUDED.in_stock, scraped_at=NOW()
         """,
@@ -151,7 +151,7 @@ async def main():
         log.info("Table created/verified")
 
     async with httpx.AsyncClient() as client:
-        # 1. Кальяны
+        # 1. Кальяны (cat=1)
         log.info("Scraping hookahs (cat=1)...")
         hookahs = await fetch_category(client, 1)
         if hookahs:
@@ -159,7 +159,7 @@ async def main():
                 n = await upsert_equipment(conn, 'hookah', hookahs)
             log.info(f"Hookahs: {n} upserted")
 
-        # 2. Угли
+        # 2. Угли (cat=6)
         log.info("Scraping coals (cat=6)...")
         coals = await fetch_category(client, 6)
         if coals:
@@ -167,12 +167,30 @@ async def main():
                 n = await upsert_equipment(conn, 'coal', coals)
             log.info(f"Coals: {n} upserted")
 
-    # 3. Статические чаши и HMD
+        # 3. Чаши (cat=12)
+        log.info("Scraping bowls (cat=12)...")
+        bowls = await fetch_category(client, 12)
+        if bowls:
+            async with pool.acquire() as conn:
+                n = await upsert_equipment(conn, 'bowl', bowls)
+            log.info(f"Bowls scraped: {n} upserted")
+
+        # 4. Калауды/HMD (cat=15)
+        log.info("Scraping HMDs (cat=15)...")
+        hmds = await fetch_category(client, 15)
+        if hmds:
+            async with pool.acquire() as conn:
+                n = await upsert_equipment(conn, 'hmd', hmds)
+            log.info(f"HMDs scraped: {n} upserted")
+
+    # 5. Статические чаши и HMD (только если не скрапнули живые)
     async with pool.acquire() as conn:
-        n = await upsert_static(conn, 'bowl', STATIC_BOWLS)
-        log.info(f"Bowls: {n} new static items")
-        n = await upsert_static(conn, 'hmd', STATIC_HMD)
-        log.info(f"HMD: {n} new static items")
+        if not bowls:
+            n = await upsert_static(conn, 'bowl', STATIC_BOWLS)
+            log.info(f"Bowls (static): {n} new items")
+        if not hmds:
+            n = await upsert_static(conn, 'hmd', STATIC_HMD)
+            log.info(f"HMD (static): {n} new items")
 
     # 4. Итог
     async with pool.acquire() as conn:
