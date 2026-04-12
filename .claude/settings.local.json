@@ -173,7 +173,8 @@
       "Bash(scp C:/Project/Hookah/social/backend.py root@198.13.184.39:/opt/hookah-lab/backend.py)",
       "Bash(scp C:/Project/Hookah/social/templates/social.html root@198.13.184.39:/opt/hookah-lab/templates/social.html)",
       "Bash(ssh root@198.13.184.39 \"cd /opt/hookah-lab && psql postgresql://hookah:hookah123@localhost:5432/hookah_db -c \\\\\"ALTER TABLE hl_user_setup ADD COLUMN IF NOT EXISTS flask_shape TEXT DEFAULT ''; ALTER TABLE hl_user_setup ADD COLUMN IF NOT EXISTS flask_color TEXT DEFAULT '';\\\\\" 2>&1 && systemctl restart hookah-lab && sleep 2 && systemctl is-active hookah-lab\")",
-      "Bash(ssh root@198.13.184.39 \"psql postgresql://hookah:hookah123@localhost:5432/hookah_db -c \\\\\"ALTER TABLE hl_user_setup ADD COLUMN IF NOT EXISTS bowl_type TEXT DEFAULT '';\\\\\" && systemctl restart hookah-lab && sleep 2 && systemctl is-active hookah-lab\")"
+      "Bash(ssh root@198.13.184.39 \"psql postgresql://hookah:hookah123@localhost:5432/hookah_db -c \\\\\"ALTER TABLE hl_user_setup ADD COLUMN IF NOT EXISTS bowl_type TEXT DEFAULT '';\\\\\" && systemctl restart hookah-lab && sleep 2 && systemctl is-active hookah-lab\")",
+      "Bash(ssh root@198.13.184.39 \"systemctl restart hookah-lab && sleep 2 && systemctl is-active hookah-lab\")"
     ]
   }
 }

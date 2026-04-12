@@ -1817,11 +1817,36 @@ async function renderProfile() {
     localStorage.setItem('hl_user', JSON.stringify(currentUser));
     updateFeedTopBar();
     el.innerHTML = buildProfileHTML(data);
-    // async: load equipment photos into setup widget
+    // async: load equipment photos into setup widget (always, for defaults too)
     _loadSetupPhotos(data.setup||{});
   } catch(e) {
     el.innerHTML = buildProfileHTML({ username: currentUser.username, bio:'', avatar:'🧔', setup:{}, tobaccos:[], mixes:[], stats:{mixes:0,followers:0,following:0} });
   }
+}
+
+// Default fallback images per equipment type
+const EQUIP_DEFAULTS = {
+  hookah: {icon:'🔱', color:'#9d6fff'},
+  bowl:   {icon:'🏺', color:'#e8a23b'},
+  coal:   {icon:'🔥', color:'#f06b6b'},
+  hmd:    {
+    icon: '🌸',
+    color: '#3dd6ac',
+    // Generic Chinese HMD image (statas / Кальян-Мастер style)
+    img: 'https://ae-pic-a1.aliexpress-media.com/kf/S4b14c0f5f3d1416f9a0d43d27c6c3fb5n.jpg'
+  },
+};
+
+function _equipDefaultHTML(type, named) {
+  const d = EQUIP_DEFAULTS[type] || {icon:'📦', color:'#888'};
+  if (!named && d.img) {
+    return `<img src="${d.img}" onerror="this.parentElement.innerHTML=_equipIconHTML('${type}')">`;
+  }
+  return _equipIconHTML(type);
+}
+function _equipIconHTML(type) {
+  const d = EQUIP_DEFAULTS[type] || {icon:'📦', color:'#888'};
+  return `<span style="font-size:1.3rem;filter:drop-shadow(0 0 6px ${d.color}55)">${d.icon}</span>`;
 }
 
 async function _loadSetupPhotos(setup) {
@@ -1832,15 +1857,22 @@ async function _loadSetupPhotos(setup) {
     ['hmd',    setup.foil,   'profile-setup-img-hmd'],
   ];
   for (const [type, name, elId] of pairs) {
-    if (!name) continue;
     const el = document.getElementById(elId);
     if (!el) continue;
+    if (!name) {
+      el.innerHTML = _equipDefaultHTML(type, false);
+      continue;
+    }
     try {
       const items = await api(`/api/equipment?type=${type}&q=${encodeURIComponent(name)}&limit=1`);
       if (items && items[0] && items[0].image_url) {
-        el.innerHTML = `<img src="${items[0].image_url}" alt="${items[0].name}" title="${items[0].name}">`;
+        el.innerHTML = `<img src="${items[0].image_url}" alt="${items[0].name}" title="${items[0].name}" onerror="this.parentElement.innerHTML=_equipDefaultHTML('${type}',true)">`;
+      } else {
+        el.innerHTML = _equipDefaultHTML(type, true);
       }
-    } catch(e) {}
+    } catch(e) {
+      el.innerHTML = _equipDefaultHTML(type, true);
+    }
   }
 }
 
@@ -2015,12 +2047,12 @@ function openSetupModal() {
     document.getElementById('setupFlaskShape').value= s.flask_shape||'';
     document.getElementById('setupFlaskColor').value= s.flask_color||'';
     document.getElementById('setupBowlType').value  = s.bowl_type||'';
-    // restore previews for saved values
-    ['hookah','bowl','coal','foil'].forEach(t=>{
-      const map = {hookah:'hookah',bowl:'bowl',coal:'coal',foil:'hmd'};
-      const inp = {hookah:'setupHookah',bowl:'setupBowl',coal:'setupCoal',foil:'setupFoil'}[t];
-      const val = document.getElementById(inp).value;
-      if (val) _showEquipPreview(map[t], val, t+'-preview');
+    // restore previews for saved values (or show defaults)
+    [['hookah','hookah','hookah-preview'],['bowl','bowl','bowl-preview'],
+     ['coal','coal','coal-preview'],['foil','hmd','foil-preview']].forEach(([field,type,prevId])=>{
+      const inpMap = {hookah:'setupHookah',bowl:'setupBowl',coal:'setupCoal',foil:'setupFoil'};
+      const val = document.getElementById(inpMap[field]).value;
+      _showEquipPreview(type, val, prevId);
     });
     syncChips();
   }).catch(()=>{});
@@ -2038,7 +2070,11 @@ async function searchEquip(type, inputId, previewId, resultsId) {
   const q = document.getElementById(inputId).value.trim();
   clearTimeout(_equipTimers[inputId]);
   const resultsEl = document.getElementById(resultsId);
-  if (q.length < 2) { resultsEl.innerHTML=''; document.getElementById(previewId).innerHTML=''; return; }
+  if (q.length < 2) {
+    resultsEl.innerHTML='';
+    document.getElementById(previewId).innerHTML = _equipDefaultHTML(type, false);
+    return;
+  }
   _equipTimers[inputId] = setTimeout(async ()=>{
     const cacheKey = type+':'+q;
     let items = _equipCache[cacheKey];
@@ -2047,47 +2083,62 @@ async function searchEquip(type, inputId, previewId, resultsId) {
       catch(e) { return; }
       _equipCache[cacheKey] = items;
     }
-    if (!items || !items.length) { resultsEl.innerHTML='<div class="equip-no-result">Не найдено</div>'; return; }
+    if (!items || !items.length) {
+      resultsEl.innerHTML='<div class="equip-no-result">Не найдено в базе</div>';
+      document.getElementById(previewId).innerHTML = _equipDefaultHTML(type, true);
+      return;
+    }
     resultsEl.innerHTML = items.slice(0,6).map(it=>`
-      <div class="equip-result-item" onclick="selectEquip('${inputId}','${previewId}','${resultsId}',${JSON.stringify(it).replace(/"/g,'&quot;')})">
-        ${it.image_url ? `<img src="${it.image_url}" onerror="this.style.display='none'">` : '<div class="equip-no-img">📷</div>'}
+      <div class="equip-result-item" onclick="selectEquip('${type}','${inputId}','${previewId}','${resultsId}',${JSON.stringify(it).replace(/"/g,'&quot;')})">
+        ${it.image_url
+          ? `<img src="${it.image_url}" onerror="this.outerHTML='<div class=\\'equip-no-img\\'>${(EQUIP_DEFAULTS[type]||{icon:'📦'}).icon}</div>'">`
+          : `<div class="equip-no-img">${(EQUIP_DEFAULTS[type]||{icon:'📦'}).icon}</div>`}
         <div class="equip-result-info">
           <b>${it.name}</b>
           <span>${it.brand||''} ${it.price ? '· '+it.price+'₽' : ''}</span>
         </div>
       </div>`).join('');
-    // Also update preview with first result
-    if (items[0].image_url) _showPhotoPreview(previewId, items[0].image_url, items[0].name);
+    // Update preview with first result
+    const first = items[0];
+    if (first.image_url) _showPhotoPreview(type, previewId, first.image_url, first.name);
+    else document.getElementById(previewId).innerHTML = _equipDefaultHTML(type, true);
   }, 300);
 }
 
-function selectEquip(inputId, previewId, resultsId, item) {
+function selectEquip(type, inputId, previewId, resultsId, item) {
   document.getElementById(inputId).value = item.name;
   document.getElementById(resultsId).innerHTML = '';
-  if (item.image_url) _showPhotoPreview(previewId, item.image_url, item.name);
-  // sync chips foil if applicable
+  if (item.image_url) _showPhotoPreview(type, previewId, item.image_url, item.name);
+  else document.getElementById(previewId).innerHTML = _equipDefaultHTML(type, true);
   if (inputId==='setupFoil') {
     document.querySelectorAll('#chips-foil span').forEach(s=>s.classList.toggle('active',s.textContent.trim()===item.name));
   }
 }
 
 async function _showEquipPreview(type, name, previewId) {
-  if (!name) return;
+  const el = document.getElementById(previewId);
+  if (!el) return;
+  if (!name) {
+    el.innerHTML = _equipDefaultHTML(type, false);
+    return;
+  }
   const cacheKey = type+':'+name;
   let items = _equipCache[cacheKey];
   if (!items) {
     try { items = await api(`/api/equipment?type=${type}&q=${encodeURIComponent(name)}&limit=1`); }
-    catch(e) { return; }
+    catch(e) { el.innerHTML = _equipDefaultHTML(type, true); return; }
     _equipCache[cacheKey] = items;
   }
   if (items && items[0] && items[0].image_url)
-    _showPhotoPreview(previewId, items[0].image_url, items[0].name);
+    _showPhotoPreview(type, previewId, items[0].image_url, items[0].name);
+  else
+    el.innerHTML = _equipDefaultHTML(type, !!name);
 }
 
-function _showPhotoPreview(previewId, url, name) {
+function _showPhotoPreview(type, previewId, url, name) {
   const el = document.getElementById(previewId);
   if (!el) return;
-  el.innerHTML = `<img src="${url}" alt="${name}" title="${name}" onerror="this.parentElement.innerHTML=''">`;
+  el.innerHTML = `<img src="${url}" alt="${name}" title="${name}" onerror="this.parentElement.innerHTML=_equipDefaultHTML('${type}',true)">`;
 }
 
 function pickChip(inputId, el) {
