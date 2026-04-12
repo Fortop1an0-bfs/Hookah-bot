@@ -232,7 +232,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Space 
 .str-pips{display:flex;gap:4px;margin-top:6px}
 .str-pip{flex:1;height:5px;border-radius:3px;background:var(--bg5);transition:all 0.4s}
 
-.lab-save-row{display:flex;gap:9px}
+.lab-save-row{display:flex;gap:9px;width:100%}
 .lab-btn{flex:1;padding:14px 10px;border-radius:14px;font-family:inherit;font-size:0.9rem;font-weight:700;cursor:pointer;border:none;transition:all 0.2s;display:flex;align-items:center;justify-content:center;gap:7px}
 .lab-btn-primary{background:linear-gradient(135deg,var(--purple2),var(--purple));color:#fff;box-shadow:0 4px 20px rgba(157,111,255,0.25)}
 .lab-btn-primary:hover{transform:translateY(-1px);box-shadow:0 6px 24px rgba(157,111,255,0.35)}
@@ -793,8 +793,8 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Space 
         <div class="setup-field-sublabel" style="margin-bottom:10px;text-transform:uppercase;letter-spacing:0.4px;font-size:0.68rem;color:var(--text3)">Сколько грамм у тебя?</div>
         <div class="tob-gram-chips" id="tobGramChips"></div>
         <div style="margin-top:16px;display:flex;gap:8px">
-          <button class="btn-ghost" style="flex:0 0 auto;padding:11px 16px" onclick="_tobStep(1)">← Назад</button>
-          <button class="btn-gold" id="tobAddBtn" onclick="confirmAddTobacco()" style="flex:1">Добавить в кабинет</button>
+          <button class="btn-ghost" style="width:auto;padding:11px 20px;flex-shrink:0" onclick="_tobStep(1)">← Назад</button>
+          <button class="btn-gold" id="tobAddBtn" onclick="confirmAddTobacco()" style="flex:1;width:auto">Добавить в кабинет</button>
         </div>
       </div>
     </div>
@@ -1357,7 +1357,7 @@ function searchTobaccos(q) {
         const strength = r.strength_user || r.strength_official || '';
         return `<div class="search-item" onclick='pickTobacco(${enc(r)})'>
           <div class="search-item-ico">${icon}</div>
-          <div style="flex:1"><div class="search-item-name">${r.name}</div><div class="search-item-brand">${r.brand}</div></div>
+          <div style="flex:1"><div class="search-item-name">${cleanTobName(r.name)}</div><div class="search-item-brand">${r.brand}</div></div>
           ${rating?`<span class="search-item-rating">${rating}</span>`:''}
           ${strength?`<span class="search-item-badge">${strength}</span>`:''}
         </div>`;
@@ -1366,6 +1366,7 @@ function searchTobaccos(q) {
   }, 350);
 }
 
+function cleanTobName(n){ return (n||'').replace(/^Табак(\s+для\s+кальяна)?\s*/i,'').replace(/\s*\(уп\.?\s*\d+\s*г\)/gi,'').trim(); }
 let _tobPicked = null;
 function pickTobacco(r) {
   if (window._cabinetMode) {
@@ -1377,7 +1378,7 @@ function pickTobacco(r) {
   // Lab mode - add directly
   addTobacco({
     ali_id: r.id,
-    name: r.name.replace(/^Табак для кальяна\s*/i,''),
+    name: cleanTobName(r.name),
     brand: r.brand,
     strength: r.strength_user || r.strength_official || 'средний',
     price: r.price || 0,
@@ -1390,7 +1391,7 @@ function _tobStep(step) {
   document.getElementById('tobStep2').style.display = step===2 ? '' : 'none';
   if (step===2 && _tobPicked) {
     const r = _tobPicked;
-    const cleanName = r.name.replace(/^Табак для кальяна\s*/i,'');
+    const cleanName = cleanTobName(r.name);
     const icon = Object.entries(BRAND_ICONS).find(([k])=>r.brand?.includes(k))?.[1]||'🌿';
     document.getElementById('tobPickedIco').textContent  = icon;
     document.getElementById('tobPickedName').textContent = cleanName;
@@ -1436,7 +1437,7 @@ async function confirmAddTobacco() {
     if (!token) { openAuth(); return; }
     await api('/api/cabinet/tobaccos','POST',{
       ali_id: r.id,
-      name:   r.name.replace(/^Табак для кальяна\s*/i,''),
+      name:   cleanTobName(r.name),
       brand:  r.brand,
       line:   r.line||'',
       weight: weight,
@@ -1921,8 +1922,9 @@ function buildProfileHTML(d) {
       </div>`;
 
   const tobs = d.tobaccos.map((t,i)=>`<div class="tob-chip">
-    <div class="tob-chip-dot" style="background:${COLORS[i%COLORS.length]}"></div>${t.name}
-    <span style="color:var(--text3);cursor:pointer;font-size:0.65rem;margin-left:2px" onclick="removeTobFromCabinet(${t.id})">✕</span>
+    <div class="tob-chip-dot" style="background:${COLORS[i%COLORS.length]}"></div>
+    <span>${cleanTobName(t.name)}${t.weight?` <span style="color:var(--text3);font-size:0.68rem">${t.weight}</span>`:''}</span>
+    <span style="color:var(--text3);cursor:pointer;font-size:0.65rem;margin-left:2px" onclick="removeTobFromCabinet(${t.ali_id})">✕</span>
   </div>`).join('');
 
   return `

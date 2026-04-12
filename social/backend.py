@@ -391,36 +391,44 @@ async def search_tobaccos(q: str = "", brand: str = "", limit: int = 40):
 
         # Строим tsvector-условие: ищем по каждому варианту запроса
         # plainto_tsquery обрабатывает многословные запросы (AND между словами)
-        tsq_conditions = " OR ".join([
-            f"to_tsvector('simple', ts.name || ' ' || COALESCE(ts.brand,'')) @@ plainto_tsquery('simple', ${i+3})"
+        tsq_conditions_ali = " OR ".join([
+            f"to_tsvector('simple', a.name || ' ' || COALESCE(a.brand_name,'')) @@ plainto_tsquery('simple', ${i+3})"
             for i in range(len(variants))
         ])
         params = [brand, limit] + variants
 
         rows = await conn.fetch(f"""
-            WITH matches AS (
-                SELECT ts.id, ts.source, ts.name, ts.brand, ts.line, ts.weight,
-                       ts.price, ts.image_url, ts.in_stock, ts.htreviews_id, ts.is_bestseller,
-                       ts.one_c_id,
-                       CASE ts.source WHEN 'ali' THEN 0 ELSE 1 END as src_priority
-                FROM scraper.tobacco_search ts
-                WHERE ($1 = '' OR ts.brand ILIKE '%'||$1||'%')
-                  AND ({tsq_conditions})
-                ORDER BY src_priority, ts.in_stock DESC NULLS LAST, ts.name
-                LIMIT 120
+            WITH ali_matches AS (
+                -- Только ali: чистые данные с brand/line/weight полями
+                SELECT a.id, a.name, a.brand_name AS brand, a.line, a.weight,
+                       a.price, a.image_url, a.in_stock, a.htreviews_id, a.is_bestseller,
+                       a.one_c_id,
+                       -- флейвор = название минус граммовка и скобки с уточнениями
+                       lower(trim(regexp_replace(
+                           regexp_replace(
+                               regexp_replace(a.name,
+                                   '^Табак\\s+(для\\s+кальяна\\s+)?', '', 'i'),
+                               '\\s*\\([^)]*\\)', '', 'gi'),
+                           '\\s+', ' ', 'g'))) AS flavor_key
+                FROM scraper.ali_products a
+                WHERE ($1 = '' OR a.brand_name ILIKE '%'||$1||'%')
+                  AND ({tsq_conditions_ali})
+                  AND a.name IS NOT NULL
+                ORDER BY a.in_stock DESC NULLS LAST, a.is_bestseller DESC, a.name
+                LIMIT 200
             )
-            SELECT DISTINCT ON (lower(regexp_replace(m.name, '^ТАБАК (ДЛЯ КАЛЬЯНА\\s*)?', '', 'i')))
-                m.id, m.source, m.name, m.brand, m.line, m.weight,
+            SELECT DISTINCT ON (lower(m.brand), lower(coalesce(m.line,'')), m.flavor_key)
+                m.id, 'ali' AS source, m.name, m.brand, m.line, m.weight,
                 m.price, m.image_url, m.in_stock, m.htreviews_id, m.is_bestseller,
                 NULL::numeric as has_discount, NULL::int as price_before_discount,
                 NULL::int as stores_count, NULL::int as total_amount,
                 ht.avg_rating, ht.strength_user, ht.strength_official,
                 ht.flavor_tags, ht.total_reviews, ht.url_path as htr_url
-            FROM matches m
+            FROM ali_matches m
             LEFT JOIN scraper.htr_tobaccos ht ON
                 NULLIF(regexp_replace(COALESCE(m.htreviews_id,''),'[^0-9]','','g'),'')::int = ht.htreviews_id
-            ORDER BY lower(regexp_replace(m.name, '^ТАБАК (ДЛЯ КАЛЬЯНА\\s*)?', '', 'i')),
-                     m.src_priority, m.in_stock DESC NULLS LAST
+            ORDER BY lower(m.brand), lower(coalesce(m.line,'')), m.flavor_key,
+                     m.in_stock DESC NULLS LAST, m.is_bestseller DESC
             LIMIT $2
         """, *params)
         return [dict(r) for r in rows]
