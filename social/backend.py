@@ -65,7 +65,9 @@ CREATE TABLE IF NOT EXISTS hl_user_setup (
     hookah      TEXT DEFAULT '',
     bowl        TEXT DEFAULT '',
     coal        TEXT DEFAULT '',
-    notes       TEXT DEFAULT ''
+    foil        TEXT DEFAULT '',
+    flask_shape TEXT DEFAULT '',
+    flask_color TEXT DEFAULT ''
 );
 CREATE TABLE IF NOT EXISTS hl_user_tobaccos (
     id          SERIAL PRIMARY KEY,
@@ -252,7 +254,9 @@ async def update_me(request: Request, user=Depends(req_user)):
             await conn.execute(
                 "UPDATE hl_users SET bio=COALESCE($1,bio), avatar=COALESCE($2,avatar) WHERE id=$3",
                 d.get("bio"), d.get("avatar"), user["id"])
-        setup_fields = {k: d[k] for k in ("hookah","bowl","coal","notes") if k in d}
+        # map "notes" → "foil" for backward compat
+        if "notes" in d: d["foil"] = d.pop("notes")
+        setup_fields = {k: d[k] for k in ("hookah","bowl","coal","foil","flask_shape","flask_color") if k in d}
         if setup_fields:
             sets = ", ".join(f"{k}=${i+2}" for i, k in enumerate(setup_fields))
             vals = list(setup_fields.values())
@@ -727,8 +731,7 @@ async def get_top_mixes(period: str = "week", limit: int = 10):
                        COALESCE(ROUND(AVG(r.rating),1),0) as avg_rating
                 FROM hl_mixes m
                 JOIN hl_users u ON u.id=m.user_id
-                LEFT JOIN hl_posts p ON p.mix_id=m.id
-                LEFT JOIN hl_likes l ON l.post_id=p.id
+                LEFT JOIN hl_likes l ON l.mix_id=m.id
                 LEFT JOIN hl_mix_ratings r ON r.mix_id=m.id
                 WHERE m.is_public=TRUE
                 GROUP BY m.id, u.username, u.avatar
@@ -744,8 +747,7 @@ async def get_top_mixes(period: str = "week", limit: int = 10):
                        COALESCE(ROUND(AVG(r.rating),1),0) as avg_rating
                 FROM hl_mixes m
                 JOIN hl_users u ON u.id=m.user_id
-                LEFT JOIN hl_posts p ON p.mix_id=m.id
-                LEFT JOIN hl_likes l ON l.post_id=p.id
+                LEFT JOIN hl_likes l ON l.mix_id=m.id
                 LEFT JOIN hl_mix_ratings r ON r.mix_id=m.id
                 WHERE m.is_public=TRUE
                   AND m.created_at > NOW() - ($1 * INTERVAL '1 day')
@@ -759,6 +761,24 @@ async def get_top_mixes(period: str = "week", limit: int = 10):
                 items = await _mix_items(conn2, row["id"])
             result.append({**dict(row), "items": items})
         return result
+
+# ── EQUIPMENT ─────────────────────────────────────────────────────────────────
+
+@app.get("/api/equipment")
+async def search_equipment(q: str = "", type: str = "", limit: int = 30):
+    async with pool.acquire() as conn:
+        rows = await conn.fetch("""
+            SELECT id, source_id, type, name, brand, line, price, image_url, in_stock, extra
+            FROM scraper.ali_equipment
+            WHERE ($1 = '' OR type = $1)
+              AND ($2 = '' OR name ILIKE '%'||$2||'%' OR brand ILIKE '%'||$2||'%')
+            ORDER BY
+                CASE WHEN $2 != '' AND name ILIKE $2||'%' THEN 0 ELSE 1 END,
+                in_stock DESC NULLS LAST,
+                name
+            LIMIT $3
+        """, type, q, limit)
+        return [dict(r) for r in rows]
 
 # ── LLM ──────────────────────────────────────────────────────────────────────
 

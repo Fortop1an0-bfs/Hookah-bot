@@ -289,12 +289,14 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Space 
 .p-widget{background:var(--bg2);border:1px solid var(--border);border-radius:16px;padding:16px;margin-bottom:14px}
 .p-widget-title{font-size:0.72rem;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:0.7px;margin-bottom:12px;display:flex;align-items:center;justify-content:space-between}
 .p-widget-add{font-size:0.72rem;color:var(--purple);cursor:pointer;font-weight:600;text-transform:none;letter-spacing:0}
-.setup-row{display:flex;align-items:center;gap:10px;padding:6px 0;border-bottom:1px solid var(--border)}
+.setup-row{display:flex;align-items:flex-start;gap:10px;padding:8px 0;border-bottom:1px solid var(--border)}
 .setup-row:last-child{border-bottom:none;padding-bottom:0}
-.setup-ico{font-size:1.1rem;width:28px;text-align:center;flex-shrink:0}
-.setup-lbl{font-size:0.61rem;color:var(--text3);text-transform:uppercase;letter-spacing:0.4px}
-.setup-v{font-size:0.84rem;font-weight:500}
+.setup-ico{font-size:1rem;width:36px;height:36px;flex-shrink:0;border-radius:8px;background:var(--bg3);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;overflow:hidden}
+.setup-ico img{width:100%;height:100%;object-fit:cover;border-radius:7px}
+.setup-lbl{font-size:0.6rem;color:var(--text3);text-transform:uppercase;letter-spacing:0.4px}
+.setup-v{font-size:0.83rem;font-weight:500;margin-top:1px}
 .setup-v.empty{color:var(--text3);font-style:italic;font-weight:400}
+.setup-sub-tag{display:inline-block;font-size:0.64rem;background:rgba(157,111,255,0.1);border:1px solid rgba(157,111,255,0.2);color:var(--purple);border-radius:20px;padding:1px 7px}
 .tob-cabinet{display:flex;flex-wrap:wrap;gap:6px}
 .tob-chip{padding:4px 10px;background:var(--bg3);border:1px solid var(--border);border-radius:50px;font-size:0.72rem;display:flex;align-items:center;gap:5px;cursor:pointer;transition:all 0.2s}
 .tob-chip:hover{border-color:var(--purple)}
@@ -405,8 +407,30 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Space 
 .ai-use-btn{width:100%;padding:11px;background:rgba(61,214,172,0.1);border:1px solid rgba(61,214,172,0.25);border-radius:12px;color:var(--teal);font-family:inherit;font-size:0.88rem;font-weight:700;cursor:pointer;transition:all 0.2s;margin-top:6px}
 .ai-use-btn:hover{background:rgba(61,214,172,0.18)}
 
-.setup-field{margin-bottom:13px}
-.setup-field-label{font-size:0.69rem;color:var(--text3);margin-bottom:5px;display:block;font-weight:600;text-transform:uppercase;letter-spacing:0.4px}
+.setup-field{margin-bottom:20px}
+.setup-field-label{font-size:0.69rem;color:var(--text3);margin-bottom:8px;display:block;font-weight:600;text-transform:uppercase;letter-spacing:0.4px}
+.setup-field-sub{margin-top:10px;padding-top:10px;border-top:1px solid rgba(255,255,255,0.05)}
+.setup-field-sublabel{font-size:0.63rem;color:var(--text3);margin-bottom:6px;display:block;text-transform:uppercase;letter-spacing:0.3px;opacity:0.7}
+.setup-chips{display:flex;flex-wrap:wrap;gap:5px}
+.setup-chips span{padding:5px 11px;background:var(--bg3);border:1px solid var(--border);border-radius:50px;font-size:0.74rem;color:var(--text2);cursor:pointer;transition:all 0.15s;user-select:none}
+.setup-chips span:hover{border-color:var(--purple);color:var(--text)}
+.setup-chips span.active{background:rgba(157,111,255,0.15);border-color:var(--purple);color:var(--purple);font-weight:600}
+/* Color chips */
+.chips-colors span{position:relative;padding-left:22px}
+.chips-colors span::before{content:'';position:absolute;left:7px;top:50%;transform:translateY(-50%);width:9px;height:9px;border-radius:50%;background:var(--cc,#666);border:1px solid rgba(255,255,255,0.2)}
+/* Equipment photo + search */
+.equip-photo-wrap{width:80px;height:80px;flex-shrink:0;border-radius:10px;overflow:hidden;background:var(--bg3);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;color:var(--text3);font-size:1.4rem}
+.equip-photo-wrap img{width:100%;height:100%;object-fit:cover}
+.equip-results{position:relative;background:var(--bg2);border:1px solid var(--border2);border-radius:10px;overflow:hidden;margin-top:4px;max-height:220px;overflow-y:auto}
+.equip-results:empty{display:none}
+.equip-result-item{display:flex;align-items:center;gap:10px;padding:8px 10px;cursor:pointer;transition:background 0.1s}
+.equip-result-item:hover{background:rgba(157,111,255,0.08)}
+.equip-result-item img{width:44px;height:44px;object-fit:cover;border-radius:6px;flex-shrink:0}
+.equip-no-img{width:44px;height:44px;background:var(--bg3);border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:1.2rem;flex-shrink:0}
+.equip-result-info{flex:1;min-width:0}
+.equip-result-info b{display:block;font-size:0.8rem;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.equip-result-info span{font-size:0.72rem;color:var(--text3)}
+.equip-no-result{padding:10px;text-align:center;font-size:0.78rem;color:var(--text3)}
 
 .toast{position:fixed;bottom:28px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--bg3);border:1px solid var(--border2);color:var(--text);padding:11px 22px;border-radius:50px;font-size:0.84rem;font-weight:500;z-index:500;opacity:0;transition:all 0.3s;pointer-events:none;white-space:nowrap;max-width:340px;text-align:center;box-shadow:0 8px 32px rgba(0,0,0,0.4)}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
@@ -818,15 +842,103 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Space 
 
 <!-- Setup edit modal -->
 <div class="modal-overlay" id="setupModal" onclick="if(event.target===this)closeSetupModal()">
-  <div class="modal-sheet">
+  <div class="modal-sheet" style="max-width:600px">
     <div class="modal-handle"></div>
-    <div class="modal-header"><h3>Мой сетап</h3><button class="modal-close" onclick="closeSetupModal()">✕</button></div>
-    <div class="modal-body">
-      <div class="setup-field"><label class="setup-field-label">🪔 Кальян</label><input class="form-input" id="setupHookah" placeholder="Khalil Mamoon, Amy Deluxe..."></div>
-      <div class="setup-field"><label class="setup-field-label">☕ Чаша</label><input class="form-input" id="setupBowl" placeholder="Убивашка, Фанел, Triton..."></div>
-      <div class="setup-field"><label class="setup-field-label">🪨 Угли</label><input class="form-input" id="setupCoal" placeholder="Coco Nara, Carbopol, Ubercoal..."></div>
-      <div class="setup-field"><label class="setup-field-label">📋 Фольга / Сетка</label><input class="form-input" id="setupFoil" placeholder="Стандартная фольга, сетка..."></div>
-      <button class="btn-gold" style="margin-top:6px" onclick="saveSetupModal()">Сохранить</button>
+    <div class="modal-header"><h3>⚙️ Мой сетап</h3><button class="modal-close" onclick="closeSetupModal()">✕</button></div>
+    <div class="modal-body" style="overflow-y:auto;max-height:75vh">
+
+      <!-- HOOKAH -->
+      <div class="setup-field">
+        <label class="setup-field-label">🔱 Кальян</label>
+        <div style="display:flex;gap:10px;align-items:flex-start">
+          <div style="flex:1">
+            <input class="form-input" id="setupHookah" placeholder="Начни вводить название..."
+              oninput="searchEquip('hookah','setupHookah','hookah-preview','hookah-results')">
+            <div class="equip-results" id="hookah-results"></div>
+          </div>
+          <div class="equip-photo-wrap" id="hookah-preview"></div>
+        </div>
+        <div class="setup-field-sub">
+          <label class="setup-field-sublabel">Форма колбы</label>
+          <div class="setup-chips" id="chips-flask-shape">
+            <span onclick="pickChip('setupFlaskShape',this)">Классика</span>
+            <span onclick="pickChip('setupFlaskShape',this)">Египет</span>
+            <span onclick="pickChip('setupFlaskShape',this)">Колба</span>
+            <span onclick="pickChip('setupFlaskShape',this)">Цилиндр</span>
+            <span onclick="pickChip('setupFlaskShape',this)">Граната</span>
+            <span onclick="pickChip('setupFlaskShape',this)">Шар</span>
+            <span onclick="pickChip('setupFlaskShape',this)">Конус</span>
+          </div>
+          <input type="hidden" id="setupFlaskShape">
+        </div>
+        <div class="setup-field-sub">
+          <label class="setup-field-sublabel">Цвет</label>
+          <div class="setup-chips chips-colors" id="chips-flask-color">
+            <span onclick="pickChip('setupFlaskColor',this)" style="--cc:#111">Чёрный</span>
+            <span onclick="pickChip('setupFlaskColor',this)" style="--cc:#e8e8f0">Прозрачный</span>
+            <span onclick="pickChip('setupFlaskColor',this)" style="--cc:#3a6fd8">Синий</span>
+            <span onclick="pickChip('setupFlaskColor',this)" style="--cc:#2f8f5e">Зелёный</span>
+            <span onclick="pickChip('setupFlaskColor',this)" style="--cc:#c0392b">Красный</span>
+            <span onclick="pickChip('setupFlaskColor',this)" style="--cc:#f0eeea">Белый</span>
+            <span onclick="pickChip('setupFlaskColor',this)" style="--cc:#c9a227">Золотой</span>
+            <span onclick="pickChip('setupFlaskColor',this)" style="--cc:#d63f8c">Розовый</span>
+            <span onclick="pickChip('setupFlaskColor',this)" style="--cc:#9b6b3a">Бронза</span>
+            <span onclick="pickChip('setupFlaskColor',this)" style="--cc:#a0a0b0">Серебро</span>
+            <span onclick="pickChip('setupFlaskColor',this)" style="--cc:#7b3fa0">Фиолетовый</span>
+          </div>
+          <input type="hidden" id="setupFlaskColor">
+        </div>
+      </div>
+
+      <!-- BOWL -->
+      <div class="setup-field">
+        <label class="setup-field-label">🏺 Чаша</label>
+        <div style="display:flex;gap:10px;align-items:flex-start">
+          <div style="flex:1">
+            <input class="form-input" id="setupBowl" placeholder="Начни вводить название..."
+              oninput="searchEquip('bowl','setupBowl','bowl-preview','bowl-results')">
+            <div class="equip-results" id="bowl-results"></div>
+          </div>
+          <div class="equip-photo-wrap" id="bowl-preview"></div>
+        </div>
+      </div>
+
+      <!-- COAL -->
+      <div class="setup-field">
+        <label class="setup-field-label">🔥 Угли</label>
+        <div style="display:flex;gap:10px;align-items:flex-start">
+          <div style="flex:1">
+            <input class="form-input" id="setupCoal" placeholder="Начни вводить название..."
+              oninput="searchEquip('coal','setupCoal','coal-preview','coal-results')">
+            <div class="equip-results" id="coal-results"></div>
+          </div>
+          <div class="equip-photo-wrap" id="coal-preview"></div>
+        </div>
+      </div>
+
+      <!-- HMD / FOIL -->
+      <div class="setup-field">
+        <label class="setup-field-label">🌸 Калауд / ХМД</label>
+        <div style="display:flex;gap:10px;align-items:flex-start">
+          <div style="flex:1">
+            <input class="form-input" id="setupFoil" placeholder="Начни вводить название..."
+              oninput="searchEquip('hmd','setupFoil','foil-preview','foil-results')">
+            <div class="equip-results" id="foil-results"></div>
+          </div>
+          <div class="equip-photo-wrap" id="foil-preview"></div>
+        </div>
+        <div class="setup-chips" id="chips-foil" style="margin-top:8px">
+          <span onclick="pickChipEquip('setupFoil','foil-preview','foil-results',this)">Фольга</span>
+          <span onclick="pickChipEquip('setupFoil','foil-preview','foil-results',this)">Kaloud Lotus</span>
+          <span onclick="pickChipEquip('setupFoil','foil-preview','foil-results',this)">Kaloud Lotus+</span>
+          <span onclick="pickChipEquip('setupFoil','foil-preview','foil-results',this)">Kaloud Lotus 2</span>
+          <span onclick="pickChipEquip('setupFoil','foil-preview','foil-results',this)">Provost</span>
+          <span onclick="pickChipEquip('setupFoil','foil-preview','foil-results',this)">Ignis</span>
+          <span onclick="pickChipEquip('setupFoil','foil-preview','foil-results',this)">Mig HMD</span>
+        </div>
+      </div>
+
+      <button class="btn-gold" style="margin-top:14px;width:100%" onclick="saveSetupModal()">💾 Сохранить сетап</button>
     </div>
   </div>
 </div>
@@ -1597,9 +1709,46 @@ async function renderProfile() {
     localStorage.setItem('hl_user', JSON.stringify(currentUser));
     updateFeedTopBar();
     el.innerHTML = buildProfileHTML(data);
+    // async: load equipment photos into setup widget
+    _loadSetupPhotos(data.setup||{});
   } catch(e) {
     el.innerHTML = buildProfileHTML({ username: currentUser.username, bio:'', avatar:'🧔', setup:{}, tobaccos:[], mixes:[], stats:{mixes:0,followers:0,following:0} });
   }
+}
+
+async function _loadSetupPhotos(setup) {
+  const pairs = [
+    ['hookah', setup.hookah, 'profile-setup-img-hookah'],
+    ['bowl',   setup.bowl,   'profile-setup-img-bowl'],
+    ['coal',   setup.coal,   'profile-setup-img-coal'],
+    ['hmd',    setup.foil,   'profile-setup-img-hmd'],
+  ];
+  for (const [type, name, elId] of pairs) {
+    if (!name) continue;
+    const el = document.getElementById(elId);
+    if (!el) continue;
+    try {
+      const items = await api(`/api/equipment?type=${type}&q=${encodeURIComponent(name)}&limit=1`);
+      if (items && items[0] && items[0].image_url) {
+        el.innerHTML = `<img src="${items[0].image_url}" alt="${items[0].name}" title="${items[0].name}">`;
+      }
+    } catch(e) {}
+  }
+}
+
+function buildSetupRow(icon, type, label, value, extra1, extra2) {
+  const hasVal = !!value;
+  let sub = '';
+  if (extra1) sub += `<span class="setup-sub-tag">${extra1}</span>`;
+  if (extra2) sub += `<span class="setup-sub-tag" style="background:rgba(255,255,255,0.06)">${extra2}</span>`;
+  return `<div class="setup-row">
+    <div class="setup-ico" id="profile-setup-img-${type}">${icon}</div>
+    <div style="flex:1;min-width:0">
+      <div class="setup-lbl">${label}</div>
+      <div class="setup-v${!hasVal?' empty':''}">${value||'Не указан'}</div>
+      ${sub ? `<div style="display:flex;gap:4px;margin-top:4px;flex-wrap:wrap">${sub}</div>` : ''}
+    </div>
+  </div>`;
 }
 
 function buildProfileHTML(d) {
@@ -1697,9 +1846,10 @@ function buildProfileHTML(d) {
     <div class="p-sidebar">
       <div class="p-widget">
         <div class="p-widget-title">Сетап <span class="p-widget-add" onclick="openSetupModal()">изменить</span></div>
-        <div class="setup-row"><div class="setup-ico">🪔</div><div><div class="setup-lbl">Кальян</div><div class="setup-v${!d.setup?.hookah?' empty':''}">${d.setup?.hookah||'Не указан'}</div></div></div>
-        <div class="setup-row"><div class="setup-ico">☕</div><div><div class="setup-lbl">Чаша</div><div class="setup-v${!d.setup?.bowl?' empty':''}">${d.setup?.bowl||'Не указана'}</div></div></div>
-        <div class="setup-row"><div class="setup-ico">🪨</div><div><div class="setup-lbl">Угли</div><div class="setup-v${!d.setup?.coal?' empty':''}">${d.setup?.coal||'Не указаны'}</div></div></div>
+        ${buildSetupRow('🔱','hookah','Кальян',d.setup?.hookah,d.setup?.flask_shape,d.setup?.flask_color)}
+        ${buildSetupRow('🏺','bowl','Чаша',d.setup?.bowl)}
+        ${buildSetupRow('🔥','coal','Угли',d.setup?.coal)}
+        ${buildSetupRow('🌸','hmd','Калауд / ХМД',d.setup?.foil)}
       </div>
       <div class="p-widget">
         <div class="p-widget-title">Мои табаки <span class="p-widget-add" onclick="openTobSearch(true)">+ добавить</span></div>
@@ -1743,26 +1893,128 @@ async function removeTobFromCabinet(id) {
 
 // ── SETUP MODAL ──
 let _setupData = {};
+let _equipTimers = {};
+let _equipCache  = {};
+
 function openSetupModal() {
   if (!currentUser) { openAuth(); return; }
-  // Load current setup
   api(`/api/profile/${currentUser.username}`).then(d=>{
     const s = d.setup||{};
-    document.getElementById('setupHookah').value = s.hookah||'';
-    document.getElementById('setupBowl').value = s.bowl||'';
-    document.getElementById('setupCoal').value = s.coal||'';
-    document.getElementById('setupFoil').value = s.notes||'';
+    document.getElementById('setupHookah').value    = s.hookah||'';
+    document.getElementById('setupBowl').value      = s.bowl||'';
+    document.getElementById('setupCoal').value      = s.coal||'';
+    document.getElementById('setupFoil').value      = s.foil||s.notes||'';
+    document.getElementById('setupFlaskShape').value= s.flask_shape||'';
+    document.getElementById('setupFlaskColor').value= s.flask_color||'';
+    // restore previews for saved values
+    ['hookah','bowl','coal','foil'].forEach(t=>{
+      const map = {hookah:'hookah',bowl:'bowl',coal:'coal',foil:'hmd'};
+      const inp = {hookah:'setupHookah',bowl:'setupBowl',coal:'setupCoal',foil:'setupFoil'}[t];
+      const val = document.getElementById(inp).value;
+      if (val) _showEquipPreview(map[t], val, t+'-preview');
+    });
+    syncChips();
   }).catch(()=>{});
   document.getElementById('setupModal').classList.add('open');
 }
-function closeSetupModal() { document.getElementById('setupModal').classList.remove('open'); }
+function closeSetupModal() {
+  document.getElementById('setupModal').classList.remove('open');
+  ['hookah-results','bowl-results','coal-results','foil-results'].forEach(id=>{
+    const el = document.getElementById(id); if (el) el.innerHTML='';
+  });
+}
+
+// Equipment autocomplete search
+async function searchEquip(type, inputId, previewId, resultsId) {
+  const q = document.getElementById(inputId).value.trim();
+  clearTimeout(_equipTimers[inputId]);
+  const resultsEl = document.getElementById(resultsId);
+  if (q.length < 2) { resultsEl.innerHTML=''; document.getElementById(previewId).innerHTML=''; return; }
+  _equipTimers[inputId] = setTimeout(async ()=>{
+    const cacheKey = type+':'+q;
+    let items = _equipCache[cacheKey];
+    if (!items) {
+      try { items = await api(`/api/equipment?type=${type}&q=${encodeURIComponent(q)}&limit=8`); }
+      catch(e) { return; }
+      _equipCache[cacheKey] = items;
+    }
+    if (!items || !items.length) { resultsEl.innerHTML='<div class="equip-no-result">Не найдено</div>'; return; }
+    resultsEl.innerHTML = items.slice(0,6).map(it=>`
+      <div class="equip-result-item" onclick="selectEquip('${inputId}','${previewId}','${resultsId}',${JSON.stringify(it).replace(/"/g,'&quot;')})">
+        ${it.image_url ? `<img src="${it.image_url}" onerror="this.style.display='none'">` : '<div class="equip-no-img">📷</div>'}
+        <div class="equip-result-info">
+          <b>${it.name}</b>
+          <span>${it.brand||''} ${it.price ? '· '+it.price+'₽' : ''}</span>
+        </div>
+      </div>`).join('');
+    // Also update preview with first result
+    if (items[0].image_url) _showPhotoPreview(previewId, items[0].image_url, items[0].name);
+  }, 300);
+}
+
+function selectEquip(inputId, previewId, resultsId, item) {
+  document.getElementById(inputId).value = item.name;
+  document.getElementById(resultsId).innerHTML = '';
+  if (item.image_url) _showPhotoPreview(previewId, item.image_url, item.name);
+  // sync chips foil if applicable
+  if (inputId==='setupFoil') {
+    document.querySelectorAll('#chips-foil span').forEach(s=>s.classList.toggle('active',s.textContent.trim()===item.name));
+  }
+}
+
+async function _showEquipPreview(type, name, previewId) {
+  if (!name) return;
+  const cacheKey = type+':'+name;
+  let items = _equipCache[cacheKey];
+  if (!items) {
+    try { items = await api(`/api/equipment?type=${type}&q=${encodeURIComponent(name)}&limit=1`); }
+    catch(e) { return; }
+    _equipCache[cacheKey] = items;
+  }
+  if (items && items[0] && items[0].image_url)
+    _showPhotoPreview(previewId, items[0].image_url, items[0].name);
+}
+
+function _showPhotoPreview(previewId, url, name) {
+  const el = document.getElementById(previewId);
+  if (!el) return;
+  el.innerHTML = `<img src="${url}" alt="${name}" title="${name}" onerror="this.parentElement.innerHTML=''">`;
+}
+
+function pickChip(inputId, el) {
+  document.getElementById(inputId).value = el.textContent.trim();
+  el.closest('.setup-chips').querySelectorAll('span').forEach(s=>s.classList.remove('active'));
+  el.classList.add('active');
+}
+
+function pickChipEquip(inputId, previewId, resultsId, el) {
+  const val = el.textContent.trim();
+  document.getElementById(inputId).value = val;
+  el.closest('.setup-chips').querySelectorAll('span').forEach(s=>s.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById(resultsId).innerHTML='';
+  // Try to load photo for HMD
+  _showEquipPreview('hmd', val, previewId);
+}
+
+function syncChips() {
+  [['setupFlaskShape','chips-flask-shape'],['setupFlaskColor','chips-flask-color'],['setupFoil','chips-foil']].forEach(([inp,chips]) => {
+    const val = document.getElementById(inp)?.value?.trim().toLowerCase();
+    document.querySelectorAll('#'+chips+' span').forEach(s => {
+      s.classList.toggle('active', s.textContent.trim().toLowerCase() === val);
+    });
+  });
+}
+
 async function saveSetupModal() {
   try {
     await api('/api/me','PATCH',{
-      hookah: document.getElementById('setupHookah').value,
-      bowl: document.getElementById('setupBowl').value,
-      coal: document.getElementById('setupCoal').value,
-      notes: document.getElementById('setupFoil').value,
+      hookah:      document.getElementById('setupHookah').value.trim(),
+      bowl:        document.getElementById('setupBowl').value.trim(),
+      coal:        document.getElementById('setupCoal').value.trim(),
+      foil:        document.getElementById('setupFoil').value.trim(),
+      flask_shape: document.getElementById('setupFlaskShape').value.trim(),
+      flask_color: document.getElementById('setupFlaskColor').value.trim(),
     });
     closeSetupModal();
     showToast('✓ Сетап сохранён!');
