@@ -9,6 +9,102 @@ from fastapi.staticfiles import StaticFiles
 import asyncpg, hashlib, secrets, json, re, httpx, os
 from typing import Optional
 
+# ── TRANSLITERATION ──────────────────────────────────────────────────────────
+
+_RU_EN = {
+    'а':'a','б':'b','в':'v','г':'g','д':'d','е':'e','ё':'yo','ж':'zh','з':'z',
+    'и':'i','й':'y','к':'k','л':'l','м':'m','н':'n','о':'o','п':'p','р':'r',
+    'с':'s','т':'t','у':'u','ф':'f','х':'kh','ц':'ts','ч':'ch','ш':'sh',
+    'щ':'sch','ъ':'','ы':'y','ь':'','э':'e','ю':'yu','я':'ya',
+}
+_EN_RU = {
+    'darkside':'даркрсайд','tangiers':'танжерс','satyr':'сатир','must':'маст',
+    'adalya':'адалья','al fakher':'аль фахер','jookah':'джукан',
+    'supernova':'супернова','blueberry':'черника','strawberry':'клубника',
+    'mango':'манго','peach':'персик','grape':'виноград','mint':'мята',
+    'watermelon':'арбуз','lemon':'лимон','orange':'апельсин','apple':'яблоко',
+    'raspberry':'малина','cherry':'вишня','vanilla':'ваниль',
+}
+# Словарь русских названий брендов/вкусов → английские
+_RU_BRAND_DICT = {
+    # Бренды
+    'даркрсайд': 'darkside', 'даркрсайт': 'darkside',
+    'танжерс': 'tangiers', 'тангирс': 'tangiers',
+    'сатир': 'satyr', 'маст': 'must', 'мает': 'must',
+    'адалья': 'adalya', 'адалиа': 'adalya',
+    'аль': 'al', 'фахер': 'fakher',
+    'соус': 'sauce', 'одиссей': 'odissey',
+    'облако': 'oblako', 'матрикс': 'matrix',
+    'бондс': 'bonds', 'бонд': 'bond',
+    'элита': 'element', 'джарир': 'jарير',
+    'кесма': 'kesma', 'трабзон': 'trabzon',
+    'хулиган': 'hooligan', 'пираты': 'pirates',
+    # Вкусы и линейки
+    'суперновa': 'supernova', 'супернова': 'supernova',
+    'черника': 'blueberry', 'клубника': 'strawberry',
+    'малина': 'raspberry', 'вишня': 'cherry',
+    'персик': 'peach', 'манго': 'mango',
+    'арбуз': 'watermelon', 'дыня': 'melon',
+    'лимон': 'lemon', 'апельсин': 'orange',
+    'яблоко': 'apple', 'груша': 'pear',
+    'виноград': 'grape', 'слива': 'plum',
+    'мята': 'mint', 'мятный': 'mint',
+    'холод': 'cold', 'холодок': 'ice',
+    'ваниль': 'vanilla', 'карамель': 'caramel',
+    'кофе': 'coffee', 'шоколад': 'chocolate',
+    'банан': 'banana', 'ананас': 'pineapple',
+    'кокос': 'coconut', 'персик': 'peach',
+    'медитация': 'meditation', 'тропик': 'tropic',
+    'нуар': 'noir', 'кор': 'core', 'бейс': 'base',
+    'шот': 'shot', 'нуль': 'null',
+}
+
+def translit_ru_en(text: str) -> str:
+    """Транслитерация русского текста в латиницу"""
+    res = ''
+    for ch in text.lower():
+        res += _RU_EN.get(ch, ch)
+    return res
+
+def expand_query(q: str) -> list[str]:
+    """Возвращает список вариантов запроса: оригинал + транслитерация + словарный перевод"""
+    q = q.strip()
+    variants = {q}
+
+    has_cyrillic = any('\u0400' <= c <= '\u04ff' for c in q)
+
+    if has_cyrillic:
+        # 1. Обычная транслитерация целиком
+        translit = translit_ru_en(q)
+        if translit != q:
+            variants.add(translit)
+
+        # 2. Пословарный перевод: заменяем каждое слово по словарю брендов
+        words = q.lower().split()
+        translated_words = []
+        any_replaced = False
+        for w in words:
+            if w in _RU_BRAND_DICT:
+                translated_words.append(_RU_BRAND_DICT[w])
+                any_replaced = True
+            else:
+                # Транслитерируем слово
+                translated_words.append(translit_ru_en(w))
+        if any_replaced:
+            variants.add(' '.join(translated_words))
+
+        # 3. Версия только из словарных замен (без других слов)
+        dict_words = [_RU_BRAND_DICT[w] for w in words if w in _RU_BRAND_DICT]
+        if dict_words:
+            variants.add(' '.join(dict_words))
+    else:
+        # Запрос на английском — ищем русский эквивалент
+        ql = q.lower()
+        if ql in _EN_RU:
+            variants.add(_EN_RU[ql])
+
+    return list(variants)[:4]  # максимум 4 варианта
+
 app = FastAPI()
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
 
@@ -272,25 +368,61 @@ async def update_me(request: Request, user=Depends(req_user)):
 @app.get("/api/tobaccos")
 async def search_tobaccos(q: str = "", brand: str = "", limit: int = 40):
     async with pool.acquire() as conn:
-        rows = await conn.fetch("""
-            SELECT a.id, a.name, a.brand_name as brand, a.line, a.weight,
-                   a.price, a.price_before_discount, a.has_discount,
-                   a.in_stock, a.stores_count, a.total_amount,
-                   a.htreviews_id, a.image_url, a.is_bestseller,
-                   ht.avg_rating, ht.strength_user, ht.strength_official,
-                   ht.flavor_tags, ht.total_reviews, ht.url_path as htr_url
-            FROM scraper.ali_products a
+        if not q.strip():
+            # Без запроса — возвращаем топ из alibaba
+            rows = await conn.fetch("""
+                SELECT a.id, a.name, a.brand_name as brand, a.line, a.weight,
+                       a.price, a.price_before_discount, a.has_discount,
+                       a.in_stock, a.stores_count, a.total_amount,
+                       a.htreviews_id, a.image_url, a.is_bestseller,
+                       ht.avg_rating, ht.strength_user, ht.strength_official,
+                       ht.flavor_tags, ht.total_reviews, ht.url_path as htr_url
+                FROM scraper.ali_products a
+                LEFT JOIN scraper.htr_tobaccos ht ON
+                    NULLIF(regexp_replace(a.htreviews_id,'[^0-9]','','g'),'')::int = ht.htreviews_id
+                WHERE ($1 = '' OR a.brand_name ILIKE '%'||$1||'%')
+                ORDER BY a.in_stock DESC NULLS LAST, ht.avg_rating DESC NULLS LAST, a.brand_name, a.name
+                LIMIT $2
+            """, brand, limit)
+            return [dict(r) for r in rows]
+
+        # Расширяем запрос транслитерацией
+        variants = expand_query(q)
+
+        # Строим tsvector-условие: ищем по каждому варианту запроса
+        # plainto_tsquery обрабатывает многословные запросы (AND между словами)
+        tsq_conditions = " OR ".join([
+            f"to_tsvector('simple', ts.name || ' ' || COALESCE(ts.brand,'')) @@ plainto_tsquery('simple', ${i+3})"
+            for i in range(len(variants))
+        ])
+        params = [brand, limit] + variants
+
+        rows = await conn.fetch(f"""
+            WITH matches AS (
+                SELECT ts.id, ts.source, ts.name, ts.brand, ts.line, ts.weight,
+                       ts.price, ts.image_url, ts.in_stock, ts.htreviews_id, ts.is_bestseller,
+                       ts.one_c_id,
+                       CASE ts.source WHEN 'ali' THEN 0 ELSE 1 END as src_priority
+                FROM scraper.tobacco_search ts
+                WHERE ($1 = '' OR ts.brand ILIKE '%'||$1||'%')
+                  AND ({tsq_conditions})
+                ORDER BY src_priority, ts.in_stock DESC NULLS LAST, ts.name
+                LIMIT 120
+            )
+            SELECT DISTINCT ON (lower(regexp_replace(m.name, '^ТАБАК (ДЛЯ КАЛЬЯНА\\s*)?', '', 'i')))
+                m.id, m.source, m.name, m.brand, m.line, m.weight,
+                m.price, m.image_url, m.in_stock, m.htreviews_id, m.is_bestseller,
+                NULL::numeric as has_discount, NULL::int as price_before_discount,
+                NULL::int as stores_count, NULL::int as total_amount,
+                ht.avg_rating, ht.strength_user, ht.strength_official,
+                ht.flavor_tags, ht.total_reviews, ht.url_path as htr_url
+            FROM matches m
             LEFT JOIN scraper.htr_tobaccos ht ON
-                NULLIF(regexp_replace(a.htreviews_id, '[^0-9]', '', 'g'), '')::int = ht.htreviews_id
-            WHERE ($1 = '' OR a.name ILIKE '%' || $1 || '%' OR a.brand_name ILIKE '%' || $1 || '%')
-              AND ($2 = '' OR a.brand_name ILIKE '%' || $2 || '%')
-            ORDER BY
-                CASE WHEN a.brand_name ILIKE $1 THEN 0 ELSE 1 END,
-                a.in_stock DESC NULLS LAST,
-                ht.avg_rating DESC NULLS LAST,
-                a.brand_name, a.name
-            LIMIT $3
-        """, q, brand, limit)
+                NULLIF(regexp_replace(COALESCE(m.htreviews_id,''),'[^0-9]','','g'),'')::int = ht.htreviews_id
+            ORDER BY lower(regexp_replace(m.name, '^ТАБАК (ДЛЯ КАЛЬЯНА\\s*)?', '', 'i')),
+                     m.src_priority, m.in_stock DESC NULLS LAST
+            LIMIT $2
+        """, *params)
         return [dict(r) for r in rows]
 
 @app.get("/api/brands")
