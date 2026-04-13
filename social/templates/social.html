@@ -189,6 +189,9 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Space 
 .bowl-size-toggle{display:flex;border:1px solid var(--border);border-radius:50px;overflow:hidden;background:var(--bg3)}
 .bowl-size-btn{padding:6px 14px;font-family:inherit;font-size:0.72rem;font-weight:600;color:var(--text3);background:transparent;border:none;cursor:pointer;transition:all 0.2s;white-space:nowrap}
 .bowl-size-btn.active{background:var(--bg5);color:var(--text)}
+.lab-setup-bowl{width:100%;display:flex;align-items:center;justify-content:center;gap:7px;margin-top:8px;padding:7px 12px;background:rgba(157,111,255,0.08);border:1px solid rgba(157,111,255,0.2);border-radius:50px;color:var(--purple);font-family:inherit;font-size:0.78rem;font-weight:600;cursor:pointer;transition:all 0.2s;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.lab-setup-bowl:hover{background:rgba(157,111,255,0.16);border-color:var(--purple)}
+.lab-setup-bowl.active{background:rgba(157,111,255,0.2);border-color:var(--purple);box-shadow:0 0 8px rgba(157,111,255,0.25)}
 
 /* Pack methods */
 .pack-methods{display:grid;grid-template-columns:1fr 1fr;gap:8px;width:100%}
@@ -637,6 +640,9 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Space 
                   <button class="bowl-size-btn" onclick="setBowlSize(15,this)">Фанел</button>
                   <button class="bowl-size-btn" onclick="setBowlSize(10,this)">Сифон</button>
                 </div>
+                <div id="labSetupBowlHint" style="display:none;width:100%">
+                  <button class="lab-setup-bowl" id="labSetupBowlBtn" onclick="applySetupBowl()">🏺 <span id="labSetupBowlName">Моя чаша</span></button>
+                </div>
               </div>
               <div class="pack-methods">
                 <button class="pack-btn active" data-method="секторами" onclick="setPackMethod('секторами',this)">
@@ -1076,7 +1082,7 @@ const BRAND_ICONS = {'Must have':'🍋','Dark Side':'🌑','Burn Black':'🔥','
 // ── STATE ──
 let token = localStorage.getItem('hl_token');
 let currentUser = JSON.parse(localStorage.getItem('hl_user') || 'null');
-const lab = { mixName:'', bowlSize:20, packMethod:'секторами', tobaccos:[] };
+const lab = { mixName:'', bowlSize:20, packMethod:'секторами', tobaccos:[], setupBowl:null };
 let _pendingAIMix = null;
 
 // ── API ──
@@ -1119,6 +1125,7 @@ function navigate(page, el) {
   if (fs) fs.style.display = page === 'feed' ? '' : 'none';
   if (page === 'profile') renderProfile();
   if (page === 'feed') loadFeed();
+  if (page === 'lab') loadLabSetup();
 }
 
 // ── BOWL SVG ──
@@ -1199,6 +1206,57 @@ function setBowlSize(g, btn) {
   btn.classList.add('active');
   const lbl = {20:'Убивашка',15:'Фанел',10:'Сифон'}[g]||g+'г';
   document.getElementById('labBowlLbl').textContent = lbl;
+  const applyBtn = document.getElementById('labSetupBowlBtn');
+  if (applyBtn) applyBtn.classList.remove('active');
+  renderTobList();
+}
+
+async function loadLabSetup() {
+  const hint = document.getElementById('labSetupBowlHint');
+  if (!hint) return;
+  if (!currentUser || !token) { hint.style.display = 'none'; return; }
+  try {
+    const me = await api('/api/me');
+    const setup = me.setup || {};
+    if (setup.bowl || setup.bowl_type) {
+      lab.setupBowl = { bowl: setup.bowl || '', bowl_type: setup.bowl_type || '' };
+      const nameEl = document.getElementById('labSetupBowlName');
+      if (nameEl) {
+        const parts = [setup.bowl_type, setup.bowl].filter(Boolean);
+        nameEl.textContent = parts.join(' · ') || 'Моя чаша';
+      }
+      hint.style.display = '';
+    } else {
+      lab.setupBowl = null;
+      hint.style.display = 'none';
+    }
+  } catch(e) { hint.style.display = 'none'; }
+}
+
+function applySetupBowl() {
+  if (!lab.setupBowl) return;
+  const BOWL_TYPE_TO_SIZE = {
+    'убивашка': 20, 'стандарт': 20,
+    'фанел': 15, 'обратный фанел': 15,
+    'сифон': 10, 'triton': 10
+  };
+  const type = (lab.setupBowl.bowl_type || 'убивашка').toLowerCase();
+  const size = BOWL_TYPE_TO_SIZE[type] || 20;
+  lab.bowlSize = size;
+  // активируем нужную кнопку размера
+  document.querySelectorAll('.bowl-size-btn').forEach(b => {
+    const btnLabel = b.textContent.trim().toLowerCase();
+    const btnSize = {убивашка:20,фанел:15,сифон:10}[btnLabel] || 0;
+    b.classList.toggle('active', btnSize === size);
+  });
+  // обновляем метку чаши с названием из сетапа
+  const bowlType = lab.setupBowl.bowl_type || {20:'Убивашка',15:'Фанел',10:'Сифон'}[size] || 'Убивашка';
+  const bowlName = lab.setupBowl.bowl;
+  document.getElementById('labBowlLbl').textContent = bowlName
+    ? `${bowlType} · ${bowlName}`
+    : bowlType;
+  const applyBtn = document.getElementById('labSetupBowlBtn');
+  if (applyBtn) applyBtn.classList.add('active');
   renderTobList();
 }
 function setPackMethod(m, btn) {
