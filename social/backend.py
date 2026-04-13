@@ -594,7 +594,9 @@ async def toggle_save(mix_id: int, user=Depends(req_user)):
 # ── FEED ─────────────────────────────────────────────────────────────────────
 
 @app.get("/api/feed")
-async def get_feed(offset: int = 0, limit: int = 20):
+async def get_feed(offset: int = 0, limit: int = 20, authorization: Optional[str] = Header(None)):
+    u = await get_user(authorization)
+    user_id = u["id"] if u else None
     async with pool.acquire() as conn:
         rows = await conn.fetch("""
             SELECT m.id, m.name, m.description, m.bowl_type, m.bowl_grams,
@@ -602,13 +604,17 @@ async def get_feed(offset: int = 0, limit: int = 20):
                    u.username, u.avatar,
                    (SELECT COUNT(*) FROM hl_likes l WHERE l.mix_id=m.id) as likes,
                    (SELECT COUNT(*) FROM hl_saves s WHERE s.mix_id=m.id) as saves,
-                   (SELECT COUNT(*) FROM hl_comments c WHERE c.mix_id=m.id) as comments
+                   (SELECT COUNT(*) FROM hl_comments c WHERE c.mix_id=m.id) as comments,
+                   ($3::int IS NOT NULL AND EXISTS(
+                       SELECT 1 FROM hl_likes WHERE user_id=$3 AND mix_id=m.id)) as i_liked,
+                   ($3::int IS NOT NULL AND EXISTS(
+                       SELECT 1 FROM hl_saves WHERE user_id=$3 AND mix_id=m.id)) as i_saved
             FROM hl_mixes m
             JOIN hl_users u ON u.id=m.user_id
             WHERE m.is_public=TRUE
             ORDER BY m.created_at DESC
             OFFSET $1 LIMIT $2
-        """, offset, limit)
+        """, offset, limit, user_id)
         result = []
         for row in rows:
             items = await _mix_items(conn, row["id"])
@@ -796,9 +802,22 @@ async def rate_mix(mix_id: int, request: Request, user=Depends(req_user)):
 
 # ── CATALOG ───────────────────────────────────────────────────────────────────
 
+@app.get("/api/flavor-tags")
+async def get_flavor_tags(limit: int = 20):
+    async with pool.acquire() as conn:
+        rows = await conn.fetch("""
+            SELECT unnest(flavor_tags) as tag, COUNT(*) as cnt
+            FROM scraper.htr_tobaccos
+            WHERE flavor_tags IS NOT NULL AND array_length(flavor_tags,1) > 0
+            GROUP BY tag
+            ORDER BY cnt DESC
+            LIMIT $1
+        """, limit)
+        return [{"tag": r["tag"], "count": int(r["cnt"])} for r in rows]
+
 @app.get("/api/catalog")
 async def get_catalog(
-    q: str = "", brand: str = "", strength: str = "",
+    q: str = "", brand: str = "", strength: str = "", tag: str = "",
     in_stock: bool = False, min_rating: float = 0,
     sort: str = "rating", offset: int = 0, limit: int = 40
 ):
@@ -818,6 +837,7 @@ async def get_catalog(
               AND (NOT $3 OR a.in_stock = TRUE)
               AND ($4 = 0 OR ht.avg_rating >= $4)
               AND ($5 = '' OR ht.strength_user ILIKE '%'||$5||'%' OR ht.strength_official ILIKE '%'||$5||'%')
+              AND ($9 = '' OR $9 = ANY(ht.flavor_tags))
             ORDER BY
                 CASE WHEN $6='rating'    THEN COALESCE(ht.avg_rating,0) END DESC NULLS LAST,
                 CASE WHEN $6='price_asc' THEN a.price END ASC NULLS LAST,
@@ -825,7 +845,7 @@ async def get_catalog(
                 CASE WHEN $6='reviews'   THEN COALESCE(ht.total_reviews,0) END DESC NULLS LAST,
                 a.is_bestseller DESC, a.brand_name, a.name
             LIMIT $7 OFFSET $8
-        """, q, brand, in_stock, min_rating, strength, sort, limit, offset)
+        """, q, brand, in_stock, min_rating, strength, sort, limit, offset, tag)
         total = await conn.fetchval("""
             SELECT COUNT(*) FROM scraper.ali_products a
             LEFT JOIN scraper.htr_tobaccos ht ON
@@ -834,7 +854,8 @@ async def get_catalog(
               AND ($2='' OR a.brand_name ILIKE '%'||$2||'%')
               AND (NOT $3 OR a.in_stock=TRUE)
               AND ($4=0 OR ht.avg_rating>=$4)
-        """, q, brand, in_stock, min_rating)
+              AND ($5='' OR $5=ANY(ht.flavor_tags))
+        """, q, brand, in_stock, min_rating, tag)
         return {"items": [dict(r) for r in rows], "total": total}
 
 @app.get("/api/catalog/mixes")

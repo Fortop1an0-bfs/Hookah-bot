@@ -278,6 +278,9 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Space 
 .p-content{max-width:1400px;margin:0 auto;padding:24px 32px;display:grid;grid-template-columns:1fr 280px;gap:24px;align-items:start}
 
 /* Mix cards */
+.p-mix-tab{background:none;border:none;border-bottom:2px solid transparent;padding:8px 16px 10px;font-family:inherit;font-size:0.85rem;font-weight:600;color:var(--text3);cursor:pointer;transition:all 0.2s;margin-bottom:-1px}
+.p-mix-tab.active{color:var(--purple);border-bottom-color:var(--purple)}
+.p-mix-tab:hover:not(.active){color:var(--text2)}
 .p-mix-cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:14px}
 .p-mix-card{background:var(--bg2);border:1px solid var(--border);border-radius:16px;overflow:hidden;cursor:pointer;transition:all 0.2s}
 .p-mix-card:hover{border-color:var(--purple);transform:translateY(-2px);box-shadow:0 8px 24px rgba(157,111,255,0.15)}
@@ -500,7 +503,14 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Space 
 .tob-card-stock{position:absolute;top:12px;right:12px;width:8px;height:8px;border-radius:50%}
 .tob-card-add{padding:6px 13px;background:rgba(157,111,255,0.1);border:1px solid rgba(157,111,255,0.25);border-radius:50px;color:var(--purple);font-size:0.75rem;font-weight:600;cursor:pointer;transition:all 0.2s;font-family:inherit}
 .tob-card-add:hover{background:rgba(157,111,255,0.2)}
+.tob-card-img{width:100%;height:110px;border-radius:10px;overflow:hidden;margin-bottom:10px;background:var(--bg3);display:flex;align-items:center;justify-content:center}
+.tob-card-img img{width:100%;height:100%;object-fit:cover;transition:transform 0.3s}
+.tob-card:hover .tob-card-img img{transform:scale(1.05)}
 .catalog-load-more{width:100%;padding:13px;margin-top:16px;background:var(--bg3);border:1px solid var(--border);border-radius:14px;color:var(--text2);font-family:inherit;font-size:0.88rem;font-weight:600;cursor:pointer;transition:all 0.2s}
+.flavor-tags-row{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px;min-height:28px}
+.flavor-chip{padding:5px 13px;border-radius:50px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.09);color:var(--text3);font-size:0.72rem;font-weight:600;cursor:pointer;font-family:inherit;transition:all 0.18s;white-space:nowrap}
+.flavor-chip:hover{background:rgba(157,111,255,0.1);color:var(--text2);border-color:rgba(157,111,255,0.25)}
+.flavor-chip.active{background:rgba(157,111,255,0.18);border-color:rgba(157,111,255,0.45);color:var(--purple)}
 .catalog-load-more:hover{background:var(--bg4)}
 
 /* ── CATALOG TABS ── */
@@ -731,6 +741,10 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Space 
                 <button class="lab-btn lab-btn-secondary" onclick="previewCard()">👁 Превью</button>
                 <button class="lab-btn lab-btn-primary" onclick="saveMix()">✦ Сохранить</button>
               </div>
+              <div id="labDraftBar" style="display:none;margin-top:10px;padding:8px 12px;background:rgba(157,111,255,0.08);border:1px solid rgba(157,111,255,0.2);border-radius:10px;display:flex;align-items:center;justify-content:space-between;gap:10px">
+                <span style="font-size:0.75rem;color:var(--text3)">📋 Автосохранение включено</span>
+                <button onclick="if(confirm('Сбросить черновик?')){_labDraftClear();lab.tobaccos=[];lab.mixName='';document.getElementById('labMixName').value='';renderTobList();renderBowl();updateLabDetails();document.getElementById('labDraftBar').style.display='none';showToast('Черновик сброшен')}" style="background:none;border:none;color:var(--text3);font-size:0.72rem;cursor:pointer;padding:2px 6px;border-radius:6px;font-family:inherit">Сбросить</button>
+              </div>
             </div>
           </div><!-- /lab-right -->
 
@@ -761,6 +775,9 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Space 
       <div id="catSection-tobaccos">
         <div class="catalog-layout">
           <div class="catalog-filters">
+            <select class="filter-select" id="catBrandSel" onchange="catBrand=this.value;loadCatalog(0)">
+              <option value="">Все бренды</option>
+            </select>
             <select class="filter-select" id="catSort" onchange="loadCatalog(0)">
               <option value="rating">По рейтингу</option>
               <option value="reviews">По отзывам</option>
@@ -775,6 +792,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Space 
             </select>
             <button class="filter-toggle" id="catInStock" onclick="toggleCatInStock()">В наличии</button>
           </div>
+          <div class="flavor-tags-row" id="flavorTagsRow"></div>
           <div class="catalog-grid" id="catalogGrid">
             <div class="loading"><div class="spinner"></div>Загрузка...</div>
           </div>
@@ -1167,6 +1185,21 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Space 
 </div>
 
 <!-- Mix rating modal -->
+<!-- Comments modal -->
+<div class="modal-overlay" id="commentsModal" onclick="if(event.target===this)closeComments()">
+  <div class="modal-sheet" style="max-width:620px;display:flex;flex-direction:column;max-height:85vh">
+    <div class="modal-handle"></div>
+    <div class="modal-header">
+      <h3>💬 Комментарии</h3>
+      <button class="modal-close" onclick="closeComments()">✕</button>
+    </div>
+    <div class="modal-body" style="flex:1;overflow-y:auto;padding-bottom:0">
+      <div id="commentsModalList"></div>
+    </div>
+    <div id="commentsModalInput" style="padding:12px 20px;border-top:1px solid var(--border);flex-shrink:0"></div>
+  </div>
+</div>
+
 <div class="modal-overlay" id="rateModal" onclick="if(event.target===this)closeRateModal()">
   <div class="modal-sheet" style="max-width:360px">
     <div class="modal-handle"></div>
@@ -1242,6 +1275,8 @@ function navigate(page, el) {
   if (page === 'feed') loadFeed();
   if (page === 'lab') loadLabSetup();
   if (page === 'catalog') {
+    loadBrandFilter();
+    loadFlavorTags();
     if (activeCatTab === 'mixes') loadMixCatalog(0);
     else loadCatalog(0);
   }
@@ -1330,7 +1365,71 @@ function setBowlSize(g, btn) {
   renderTobList();
 }
 
+// ── LAB DRAFT ──
+const LAB_DRAFT_KEY = 'hl_lab_draft';
+let _draftInterval = null;
+
+function _labDraftSave() {
+  if (!lab.tobaccos.length) return;
+  try {
+    localStorage.setItem(LAB_DRAFT_KEY, JSON.stringify({
+      tobaccos: lab.tobaccos,
+      bowlSize: lab.bowlSize,
+      packMethod: lab.packMethod,
+      mixName: document.getElementById('labMixName')?.value || '',
+      ts: Date.now(),
+    }));
+  } catch(e) {}
+}
+
+function _labDraftLoad() {
+  try {
+    const raw = localStorage.getItem(LAB_DRAFT_KEY);
+    if (!raw) return false;
+    const d = JSON.parse(raw);
+    if (!d.tobaccos?.length) return false;
+    // Only restore if lab is currently empty
+    if (lab.tobaccos.length) return false;
+    lab.tobaccos = d.tobaccos;
+    lab.bowlSize = d.bowlSize || 20;
+    lab.packMethod = d.packMethod || 'секторами';
+    const nameEl = document.getElementById('labMixName');
+    if (nameEl) nameEl.value = d.mixName || '';
+    document.querySelectorAll('.pack-btn').forEach(b =>
+      b.classList.toggle('active', b.dataset.method === lab.packMethod));
+    document.querySelectorAll('.bowl-size-btn').forEach(b => b.classList.remove('active'));
+    const bowlLbl = document.getElementById('labBowlLbl');
+    if (bowlLbl) bowlLbl.textContent = {20:'Убивашка',15:'Фанел',10:'Турка'}[lab.bowlSize]||lab.bowlSize+'г';
+    renderTobList();
+    renderBowl();
+    updateLabDetails();
+    const bar = document.getElementById('labDraftBar');
+    if (bar) bar.style.display = 'flex';
+    return true;
+  } catch(e) { return false; }
+}
+
+function _labDraftClear() {
+  localStorage.removeItem(LAB_DRAFT_KEY);
+}
+
+function _labDraftStart() {
+  clearInterval(_draftInterval);
+  _draftInterval = setInterval(() => {
+    _labDraftSave();
+    const bar = document.getElementById('labDraftBar');
+    if (bar && lab.tobaccos.length) bar.style.display = 'flex';
+  }, 4000);
+}
+
 async function loadLabSetup() {
+  _labDraftStart();
+  const hasDraft = _labDraftLoad();
+  if (hasDraft) {
+    const age = Date.now() - (JSON.parse(localStorage.getItem(LAB_DRAFT_KEY)||'{}').ts||0);
+    if (age < 7 * 24 * 3600 * 1000) showToast('📋 Черновик восстановлен');
+  }
+
   const hint = document.getElementById('labSetupBowlHint');
   if (!hint) return;
   if (!currentUser || !token) { hint.style.display = 'none'; return; }
@@ -1654,6 +1753,7 @@ async function saveMix() {
       })),
     });
     showToast('✦ Микс сохранён!');
+    _labDraftClear();
     saveToHistory({mixName:name,tobaccos:lab.tobaccos,packMethod:lab.packMethod,bowlSize:lab.bowlSize});
     renderHistoryWidget();
     closePreview();
@@ -1819,7 +1919,7 @@ function renderPost(p, opts={}) {
     <button class="act-btn${p.i_liked?' liked':''}" id="lbtn${p.id}" onclick="toggleLike(${p.id},this)">
       ${p.i_liked?'❤️':'🤍'} <span id="lcnt${p.id}">${p.likes||0}</span>
     </button>
-    <button class="act-btn" id="cbtn${p.id}" onclick="toggleComments(this,${p.id})">💬 <span id="ccnt${p.id}">${p.comments||0}</span></button>
+    <button class="act-btn" id="cbtn${p.id}" onclick="openComments(${p.id})">💬 <span id="ccnt${p.id}">${p.comments||0}</span></button>
     ${opts.communityActions
       ? `<button class="act-btn" onclick="${opts.labOnclick}">⚗️ Лаба</button>`
       : `<button class="act-btn" onclick="openRateModal(${p.id},'${(p.name||'').replace(/'/g,"&apos;")}')">⭐</button>`
@@ -1990,15 +2090,18 @@ async function renderProfile() {
   }
   el.innerHTML = '<div style="padding:60px 20px;display:flex;align-items:center;justify-content:center;gap:10px;color:var(--text3);font-size:0.85rem"><div class="spinner"></div>Загрузка...</div>';
   try {
-    const data = await api(`/api/profile/${currentUser.username}`);
+    const [data, saved] = await Promise.all([
+      api(`/api/profile/${currentUser.username}`),
+      token ? api('/api/saved').catch(()=>[]) : Promise.resolve([]),
+    ]);
     currentUser.avatar = data.avatar;
     localStorage.setItem('hl_user', JSON.stringify(currentUser));
     updateFeedTopBar();
-    el.innerHTML = buildProfileHTML(data);
+    el.innerHTML = buildProfileHTML(data, saved);
     // async: load equipment photos into setup widget (always, for defaults too)
     _loadSetupPhotos(data.setup||{});
   } catch(e) {
-    el.innerHTML = buildProfileHTML({ username: currentUser.username, bio:'', avatar:'🧔', setup:{}, tobaccos:[], mixes:[], stats:{mixes:0,followers:0,following:0} });
+    el.innerHTML = buildProfileHTML({ username: currentUser.username, bio:'', avatar:'🧔', setup:{}, tobaccos:[], mixes:[], stats:{mixes:0,followers:0,following:0} }, []);
   }
 }
 
@@ -2069,33 +2172,48 @@ function buildSetupRow(icon, type, label, value, extra1, extra2) {
   </div>`;
 }
 
-function buildProfileHTML(d) {
+function _buildMixCard(m) {
+  const total = m.items.reduce((s,i)=>s+i.percentage,0)||100;
+  const svg = buildMiniSvg(m.items.map((it,i)=>({...it,color:COLORS[i%COLORS.length]})), total, 80, 40, 40, 34, 13, m.pack_method);
+  const tobNames = m.items.map(i=>i.tobacco_name||i.name).join(', ');
+  const strLabel = {легкий:'🟢',средний:'🟡',крепкий:'🔴',убийца:'💀'}[m.strength]||'';
+  return `<div class="p-mix-card" onclick="loadMixToLab(${JSON.stringify(m).replace(/"/g,'&quot;')})">
+    <div class="p-mix-card-vis">${svg}
+      <div style="position:absolute;inset:0;background:radial-gradient(ellipse at center,transparent 40%,rgba(0,0,0,0.4))"></div>
+    </div>
+    <div class="p-mix-card-body">
+      <div class="p-mix-card-name">${m.name}</div>
+      <div class="p-mix-card-tobs">${tobNames||'—'}</div>
+      <div class="p-mix-card-meta">
+        <span>${strLabel} ${m.strength||''}</span>
+        <span style="margin-left:auto">⚗️ ${m.pack_method||''}</span>
+      </div>
+    </div>
+  </div>`;
+}
+
+function buildProfileHTML(d, saved=[]) {
   const handle = d.username.toLowerCase().replace(/\s+/g,'_');
 
   const mixCards = d.mixes.length
-    ? d.mixes.map(m => {
-        const total = m.items.reduce((s,i)=>s+i.percentage,0)||100;
-        const svg = buildMiniSvg(m.items.map((it,i)=>({...it,color:COLORS[i%COLORS.length]})), total, 80, 40, 40, 34, 13, m.pack_method);
-        const tobNames = m.items.map(i=>i.tobacco_name||i.name).join(', ');
-        const strLabel = {легкий:'🟢',средний:'🟡',крепкий:'🔴',убийца:'💀'}[m.strength]||'';
-        return `<div class="p-mix-card" onclick="loadMixToLab(${JSON.stringify(m).replace(/"/g,'&quot;')})">
-          <div class="p-mix-card-vis">${svg}
-            <div style="position:absolute;inset:0;background:radial-gradient(ellipse at center,transparent 40%,rgba(0,0,0,0.4))"></div>
-          </div>
-          <div class="p-mix-card-body">
-            <div class="p-mix-card-name">${m.name}</div>
-            <div class="p-mix-card-tobs">${tobNames||'—'}</div>
-            <div class="p-mix-card-meta">
-              <span>${strLabel} ${m.strength||''}</span>
-              <span style="margin-left:auto">⚗️ ${m.pack_method||''}</span>
-            </div>
-          </div>
-        </div>`;
-      }).join('')
+    ? d.mixes.map(_buildMixCard).join('')
     : `<div style="grid-column:1/-1;padding:48px 24px;text-align:center;color:var(--text3)">
         <div style="font-size:2.5rem;margin-bottom:12px">⚗️</div>
         <div style="font-size:0.95rem;font-weight:600;margin-bottom:6px">Миксов пока нет</div>
         <div style="font-size:0.8rem">Создай первый микс в Лаборатории</div>
+      </div>`;
+
+  const savedCards = saved.length
+    ? saved.map(m => {
+        const card = _buildMixCard(m);
+        // add author badge
+        return card.replace('<div class="p-mix-card-body">',
+          `<div class="p-mix-card-body"><div style="font-size:0.65rem;color:var(--text3);margin-bottom:4px">от ${m.username||''}</div>`);
+      }).join('')
+    : `<div style="grid-column:1/-1;padding:48px 24px;text-align:center;color:var(--text3)">
+        <div style="font-size:2.5rem;margin-bottom:12px">🔖</div>
+        <div style="font-size:0.95rem;font-weight:600;margin-bottom:6px">Нет сохранённых миксов</div>
+        <div style="font-size:0.8rem">Сохраняй понравившиеся миксы из ленты</div>
       </div>`;
 
   const tobs = d.tobaccos.map((t,i)=>`<div class="tob-chip">
@@ -2159,8 +2277,12 @@ function buildProfileHTML(d) {
   </div>
   <div class="p-content">
     <div>
-      <div class="p-section-title" style="margin-bottom:16px">Миксы <span style="color:var(--text3);font-weight:400;font-size:0.8rem">${d.stats.mixes} шт.</span></div>
-      <div class="p-mix-cards">${mixCards}</div>
+      <div style="display:flex;gap:0;margin-bottom:16px;border-bottom:1px solid var(--border)">
+        <button class="p-mix-tab active" id="pTabMixes" onclick="switchProfileTab('mixes')">Мои миксы <span style="color:var(--text3);font-weight:400;font-size:0.78rem">${d.stats.mixes}</span></button>
+        <button class="p-mix-tab" id="pTabSaved" onclick="switchProfileTab('saved')">Сохранённые <span style="color:var(--text3);font-weight:400;font-size:0.78rem">${saved.length}</span></button>
+      </div>
+      <div id="pMixesPanel" class="p-mix-cards">${mixCards}</div>
+      <div id="pSavedPanel" class="p-mix-cards" style="display:none">${savedCards}</div>
     </div>
     <div class="p-sidebar">
       <div class="p-widget">
@@ -2176,6 +2298,13 @@ function buildProfileHTML(d) {
       </div>
     </div>
   </div>`;
+}
+
+function switchProfileTab(tab) {
+  document.getElementById('pTabMixes').classList.toggle('active', tab==='mixes');
+  document.getElementById('pTabSaved').classList.toggle('active', tab==='saved');
+  document.getElementById('pMixesPanel').style.display = tab==='mixes' ? '' : 'none';
+  document.getElementById('pSavedPanel').style.display = tab==='saved' ? '' : 'none';
 }
 
 function loadMixToLab(m) {
@@ -2451,10 +2580,46 @@ function timeAgo(iso) {
 // ── CATALOG ──────────────────────────────────────────────────────
 let catOffset = 0;
 let catInStock = false;
+let catBrand = '';
+let catTag = '';
 let catTimer = null;
 let activeCatTab = 'tobaccos';
 let mixCatOffset = 0;
 const _tobCache = {};
+
+async function loadBrandFilter() {
+  try {
+    const brands = await api('/api/brands');
+    const sel = document.getElementById('catBrandSel');
+    if (!sel || sel.options.length > 1) return;
+    brands.forEach(b => {
+      const opt = document.createElement('option');
+      opt.value = b.brand;
+      opt.textContent = `${b.brand} (${b.in_stock_count||0})`;
+      sel.appendChild(opt);
+    });
+  } catch(e) {}
+}
+
+async function loadFlavorTags() {
+  const row = document.getElementById('flavorTagsRow');
+  if (!row || row.children.length > 0) return;
+  try {
+    const tags = await api('/api/flavor-tags?limit=18');
+    row.innerHTML = tags.map(t =>
+      `<button class="flavor-chip" onclick="setCatTag('${t.tag.replace(/'/g,"\\'")}')">${t.tag}</button>`
+    ).join('');
+  } catch(e) {}
+}
+
+function setCatTag(tag) {
+  const prev = catTag;
+  catTag = prev === tag ? '' : tag;
+  document.querySelectorAll('.flavor-chip').forEach(b => {
+    b.classList.toggle('active', b.textContent.trim() === catTag);
+  });
+  loadCatalog(0);
+}
 
 function switchCatTab(tab) {
   activeCatTab = tab;
@@ -2488,7 +2653,7 @@ async function loadCatalog(offset=0) {
   const grid = document.getElementById('catalogGrid');
   if (offset === 0) grid.innerHTML = '<div class="loading"><div class="spinner"></div>Загрузка...</div>';
   try {
-    const params = new URLSearchParams({q,sort,strength,in_stock:catInStock,limit:40,offset});
+    const params = new URLSearchParams({q,sort,strength,brand:catBrand,tag:catTag,in_stock:catInStock,limit:40,offset});
     const data = await api('/api/catalog?' + params);
     document.getElementById('catalogTotal').textContent = data.total.toLocaleString('ru') + ' табаков';
     document.getElementById('catalogMore').style.display = data.items.length===40 ? 'block' : 'none';
@@ -2498,8 +2663,10 @@ async function loadCatalog(offset=0) {
       const strCol = t.strength_user||t.strength_official||'';
       const disc = t.has_discount && t.price_before_discount ? `<span class="tob-card-price-old">${t.price_before_discount}₽</span>` : '';
       const stock = t.in_stock ? '#4ade80' : '#f06b6b';
+      const imgHtml = t.image_url ? `<div class="tob-card-img"><img src="${t.image_url}" alt="" loading="lazy" onerror="this.parentElement.style.display='none'"></div>` : '';
       return `<div class="tob-card" onclick="showTobaccoDetail(${t.id})">
         <div class="tob-card-stock" style="background:${stock}"></div>
+        ${imgHtml}
         <div class="tob-card-brand">${t.brand}${t.line?' · '+t.line:''}</div>
         <div class="tob-card-name">${t.name.replace(/Табак для кальяна\s*/i,'')}</div>
         <div class="tob-card-tags">${tags}</div>
@@ -2653,58 +2820,90 @@ function openMixDetail(el, m) {
 }
 function closeMixDetail() { document.getElementById('mixDetailModal').classList.remove('open'); }
 
-// ── COMMENTS ─────────────────────────────────────────────────────
-async function toggleComments(btn, mixId) {
-  const post = btn.closest('.feed-post') || btn.closest('.card');
-  let section = post.querySelector('.comments-section');
-  if (section) { section.remove(); return; }
-  section = document.createElement('div');
-  section.className = 'comments-section';
-  section.innerHTML = '<div class="loading" style="padding:12px 0"><div class="spinner"></div></div>';
-  post.appendChild(section);
+// ── COMMENTS MODAL ───────────────────────────────────────────────
+let _commentsMixId = null;
+
+async function openComments(mixId) {
+  _commentsMixId = mixId;
+  const modal = document.getElementById('commentsModal');
+  const listEl = document.getElementById('commentsModalList');
+  const inputEl = document.getElementById('commentsModalInput');
+  listEl.innerHTML = '<div class="loading" style="padding:24px 0"><div class="spinner"></div></div>';
+  inputEl.innerHTML = '';
+  modal.classList.add('open');
   try {
     const data = await api('/api/mixes/'+mixId+'/comments');
-    const list = data.map(c => `<div class="comment-item">
-      <div class="comment-ava">${c.avatar||'🧔'}</div>
-      <div class="comment-body">
-        <div class="comment-user">@${c.username}</div>
-        <div class="comment-text">${escHtml(c.text)}</div>
-        <div class="comment-time">${timeAgo(c.created_at)}</div>
-      </div>
-    </div>`).join('');
-    const inputRow = token ? `<div class="comment-input-row">
-      <input class="comment-inp" id="ci${mixId}" placeholder="Напиши комментарий..." onkeydown="if(event.key==='Enter')sendComment(${mixId})">
-      <button class="comment-send" onclick="sendComment(${mixId})">→</button>
-    </div>` : `<div style="font-size:0.78rem;color:var(--text3);padding:8px 0">Войди чтобы комментировать</div>`;
-    section.innerHTML = `<div class="comments-list">${list||'<div style="padding:10px 0;color:var(--text3);font-size:0.8rem">Будь первым!</div>'}</div>${inputRow}`;
-  } catch(e) { section.innerHTML = '<div style="color:var(--red);font-size:0.8rem;padding:8px">Ошибка загрузки</div>'; }
+    _renderCommentsList(data, mixId);
+  } catch(e) {
+    listEl.innerHTML = '<div style="color:var(--red);padding:16px;font-size:0.84rem">Ошибка загрузки</div>';
+  }
 }
-async function sendComment(mixId) {
-  if (!token) { openAuth(); return; }
-  const inp = document.getElementById('ci'+mixId);
+
+function _renderCommentsList(data, mixId) {
+  const listEl = document.getElementById('commentsModalList');
+  const inputEl = document.getElementById('commentsModalInput');
+  if (data.length === 0) {
+    listEl.innerHTML = '<div style="padding:40px 20px;text-align:center;color:var(--text3)"><div style="font-size:2rem;margin-bottom:10px">💬</div><div style="font-size:0.9rem;font-weight:600;margin-bottom:4px">Пока нет комментариев</div><div style="font-size:0.78rem">Будь первым!</div></div>';
+  } else {
+    listEl.innerHTML = '<div class="comments-list" style="padding:12px 0">' + data.map(c => {
+      const isOwn = currentUser?.username === c.username;
+      return `<div class="comment-item" id="cmt-${c.id}">
+        <div class="comment-ava">${c.avatar||'🧔'}</div>
+        <div class="comment-body">
+          <div class="comment-user">@${c.username}
+            ${isOwn ? `<button onclick="deleteComment(${c.id},${mixId})" style="background:none;border:none;color:var(--text3);cursor:pointer;font-size:0.65rem;margin-left:8px;padding:0;font-family:inherit;transition:color 0.15s" onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='var(--text3)'">удалить</button>` : ''}
+          </div>
+          <div class="comment-text">${escHtml(c.text)}</div>
+          <div class="comment-time">${timeAgo(c.created_at)}</div>
+        </div>
+      </div>`;
+    }).join('') + '</div>';
+    // scroll to bottom
+    setTimeout(() => { listEl.scrollTop = listEl.scrollHeight; }, 50);
+  }
+  inputEl.innerHTML = token
+    ? `<div class="comment-input-row">
+         <input class="comment-inp" id="commentsInp" placeholder="Комментарий..." onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendCommentModal()}">
+         <button class="comment-send" onclick="sendCommentModal()">→</button>
+       </div>`
+    : `<div style="font-size:0.8rem;color:var(--text3);padding:6px 0"><a style="color:var(--purple);cursor:pointer" onclick="closeComments();openAuth()">Войди</a>, чтобы написать</div>`;
+  setTimeout(() => document.getElementById('commentsInp')?.focus(), 100);
+}
+
+function closeComments() {
+  document.getElementById('commentsModal').classList.remove('open');
+  _commentsMixId = null;
+}
+
+async function sendCommentModal() {
+  const mixId = _commentsMixId;
+  if (!mixId || !token) return;
+  const inp = document.getElementById('commentsInp');
   const text = inp?.value?.trim();
   if (!text) return;
+  inp.disabled = true;
   try {
-    await api('/api/mixes/'+mixId+'/comments','POST',{text});
+    await api('/api/mixes/'+mixId+'/comments', 'POST', {text});
     inp.value = '';
-    const section = inp.closest('.comments-section');
-    const list = section?.querySelector('.comments-list');
-    if (list) {
-      const empty = list.querySelector('[style*="Будь первым"]');
-      if (empty) empty.remove();
-      const div = document.createElement('div');
-      div.className = 'comment-item';
-      div.innerHTML = `<div class="comment-ava">${currentUser.avatar||'🧔'}</div>
-        <div class="comment-body"><div class="comment-user">@${currentUser.username}</div>
-        <div class="comment-text">${escHtml(text)}</div><div class="comment-time">только что</div></div>`;
-      list.appendChild(div);
-    }
-    // обновить счётчик на кнопке
+    const data = await api('/api/mixes/'+mixId+'/comments');
+    _renderCommentsList(data, mixId);
     const cntEl = document.getElementById('ccnt'+mixId);
-    if (cntEl) cntEl.textContent = parseInt(cntEl.textContent||0) + 1;
-    showToast('Комментарий добавлен 💬');
+    if (cntEl) cntEl.textContent = data.length;
+  } catch(e) { showToast('Ошибка: '+e.message); }
+  finally { inp.disabled = false; inp.focus(); }
+}
+
+async function deleteComment(commentId, mixId) {
+  if (!confirm('Удалить комментарий?')) return;
+  try {
+    await api('/api/comments/'+commentId, 'DELETE');
+    const data = await api('/api/mixes/'+mixId+'/comments');
+    _renderCommentsList(data, mixId);
+    const cntEl = document.getElementById('ccnt'+mixId);
+    if (cntEl) cntEl.textContent = data.length;
   } catch(e) { showToast('Ошибка: '+e.message); }
 }
+
 function escHtml(s) { return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 
 // ── NOTIFICATIONS ─────────────────────────────────────────────────
@@ -2959,7 +3158,7 @@ document.addEventListener('wheel', function(e) {
   }
 }, { passive: false });
 renderHistoryWidget();
-if(document.getElementById("catalogPage")) loadCatalog(0);
+if(document.getElementById("catalogPage")) { loadBrandFilter(); loadFlavorTags(); loadCatalog(0); }
 </script>
 </body>
 </html>
