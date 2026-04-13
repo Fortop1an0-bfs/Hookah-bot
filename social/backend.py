@@ -132,6 +132,7 @@ async def startup():
             "ALTER TABLE hl_saves DROP CONSTRAINT IF EXISTS hl_saves_mix_id_fkey",
             "ALTER TABLE hl_comments DROP CONSTRAINT IF EXISTS hl_comments_mix_id_fkey",
             "ALTER TABLE hl_user_setup ADD COLUMN IF NOT EXISTS coal_size TEXT DEFAULT ''",
+            "ALTER TABLE hl_user_setup ADD COLUMN IF NOT EXISTS coal_warmup TEXT DEFAULT ''",
         ]:
             await conn.execute(sql)
 
@@ -162,6 +163,7 @@ CREATE TABLE IF NOT EXISTS hl_user_setup (
     hookah      TEXT DEFAULT '',
     bowl        TEXT DEFAULT '',
     coal_size   TEXT DEFAULT '',
+    coal_warmup TEXT DEFAULT '',
     bowl_type   TEXT DEFAULT '',
     coal        TEXT DEFAULT '',
     foil        TEXT DEFAULT '',
@@ -355,7 +357,7 @@ async def update_me(request: Request, user=Depends(req_user)):
                 d.get("bio"), d.get("avatar"), user["id"])
         # map "notes" → "foil" for backward compat
         if "notes" in d: d["foil"] = d.pop("notes")
-        setup_fields = {k: d[k] for k in ("hookah","bowl","bowl_type","coal","coal_size","foil","flask_shape","flask_color") if k in d}
+        setup_fields = {k: d[k] for k in ("hookah","bowl","bowl_type","coal","coal_size","coal_warmup","foil","flask_shape","flask_color") if k in d}
         if setup_fields:
             sets = ", ".join(f"{k}=${i+2}" for i, k in enumerate(setup_fields))
             vals = list(setup_fields.values())

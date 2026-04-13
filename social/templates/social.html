@@ -968,6 +968,17 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Space 
           </div>
           <input type="hidden" id="setupCoalSize">
         </div>
+        <div class="setup-field-sub">
+          <label class="setup-field-sublabel">🧢 Прогрев с колпаком</label>
+          <div class="setup-chips" id="chips-coal-warmup">
+            <span onclick="pickChip('setupCoalWarmup',this)">1.5 мин</span>
+            <span onclick="pickChip('setupCoalWarmup',this)">2 мин</span>
+            <span onclick="pickChip('setupCoalWarmup',this)">3 мин</span>
+            <span onclick="pickChip('setupCoalWarmup',this)">4 мин</span>
+            <span onclick="pickChip('setupCoalWarmup',this)">5 мин</span>
+          </div>
+          <input type="hidden" id="setupCoalWarmup">
+        </div>
       </div>
 
       <!-- HMD / FOIL -->
@@ -2057,7 +2068,7 @@ function buildProfileHTML(d) {
         <div class="p-widget-title">Сетап <span class="p-widget-add" onclick="openSetupModal()">изменить</span></div>
         ${buildSetupRow('🔱','hookah','Кальян',d.setup?.hookah,d.setup?.flask_shape,d.setup?.flask_color)}
         ${buildSetupRow('🏺','bowl','Чаша',d.setup?.bowl,d.setup?.bowl_type)}
-        ${buildSetupRow('🔥','coal','Угли',d.setup?.coal,d.setup?.coal_size)}
+        ${buildSetupRow('🔥','coal','Угли',d.setup?.coal,d.setup?.coal_size,d.setup?.coal_warmup?'🧢 '+d.setup.coal_warmup:undefined)}
         ${buildSetupRow('🌸','hmd','Калауд / ХМД',d.setup?.foil)}
       </div>
       <div class="p-widget">
@@ -2116,7 +2127,8 @@ function openSetupModal() {
     document.getElementById('setupFlaskShape').value= s.flask_shape||'';
     document.getElementById('setupFlaskColor').value= s.flask_color||'';
     document.getElementById('setupBowlType').value  = s.bowl_type||'';
-    document.getElementById('setupCoalSize').value  = s.coal_size||'';
+    document.getElementById('setupCoalSize').value   = s.coal_size||'';
+    document.getElementById('setupCoalWarmup').value = s.coal_warmup||'';
     // restore previews for saved values (or show defaults)
     [['hookah','hookah','hookah-preview'],['bowl','bowl','bowl-preview'],
      ['coal','coal','coal-preview'],['foil','hmd','foil-preview']].forEach(([field,type,prevId])=>{
@@ -2233,6 +2245,7 @@ function syncChips() {
     ['setupFlaskColor','chips-flask-color'],
     ['setupBowlType','chips-bowl-type'],
     ['setupCoalSize','chips-coal-size'],
+    ['setupCoalWarmup','chips-coal-warmup'],
     ['setupFoil','chips-foil'],
   ].forEach(([inp,chips]) => {
     const val = document.getElementById(inp)?.value?.trim().toLowerCase();
@@ -2250,6 +2263,7 @@ async function saveSetupModal() {
       bowl_type:   document.getElementById('setupBowlType').value.trim(),
       coal:        document.getElementById('setupCoal').value.trim(),
       coal_size:   document.getElementById('setupCoalSize').value.trim(),
+      coal_warmup: document.getElementById('setupCoalWarmup').value.trim(),
       foil:        document.getElementById('setupFoil').value.trim(),
       flask_shape: document.getElementById('setupFlaskShape').value.trim(),
       flask_color: document.getElementById('setupFlaskColor').value.trim(),
