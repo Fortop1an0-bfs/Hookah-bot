@@ -198,7 +198,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Space 
 .pack-btn{padding:10px 12px;border:1px solid var(--border);border-radius:12px;background:var(--bg3);display:flex;align-items:center;gap:8px;cursor:pointer;transition:all 0.2s;text-align:left;font-family:inherit;width:100%}
 .pack-btn:hover{background:var(--bg4)}
 .pack-btn.active{border-color:var(--purple);background:rgba(157,111,255,0.1);box-shadow:0 0 14px rgba(157,111,255,0.1)}
-.pack-btn-icon{font-size:1rem;flex-shrink:0}
+.pack-btn-icon{width:32px;height:32px;flex-shrink:0;display:flex;align-items:center;justify-content:center}
 .pack-btn-name{font-size:0.8rem;font-weight:600;color:var(--text)}
 .pack-btn-hint{font-size:0.62rem;color:var(--text3);margin-top:1px}
 
@@ -681,19 +681,27 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Space 
               </div>
               <div class="pack-methods">
                 <button class="pack-btn active" data-method="секторами" onclick="setPackMethod('секторами',this)">
-                  <span class="pack-btn-icon">🥧</span>
+                  <span class="pack-btn-icon">
+                    <svg width="32" height="32" viewBox="0 0 32 32"><circle cx="16" cy="16" r="13" fill="#161320"/><path d="M16,16 L16,3 A13,13,0,0,1,27.3,22.5 Z" fill="#9d6fff"/><path d="M16,16 L27.3,22.5 A13,13,0,0,1,4.7,22.5 Z" fill="#e8a23b"/><path d="M16,16 L4.7,22.5 A13,13,0,0,1,16,3 Z" fill="#3dd6ac"/><circle cx="16" cy="16" r="5" fill="#0f0d1a"/></svg>
+                  </span>
                   <div><div class="pack-btn-name">Секторами</div><div class="pack-btn-hint">каждый в свой сектор</div></div>
                 </button>
                 <button class="pack-btn" data-method="слоями" onclick="setPackMethod('слоями',this)">
-                  <span class="pack-btn-icon">📑</span>
+                  <span class="pack-btn-icon">
+                    <svg width="32" height="32" viewBox="0 0 32 32"><defs><clipPath id="pci-layers"><circle cx="16" cy="16" r="13"/></clipPath></defs><circle cx="16" cy="16" r="13" fill="#161320"/><rect x="3" y="3" width="26" height="9" fill="#9d6fff" clip-path="url(#pci-layers)"/><rect x="3" y="12" width="26" height="8" fill="#e8a23b" clip-path="url(#pci-layers)"/><rect x="3" y="20" width="26" height="9" fill="#3dd6ac" clip-path="url(#pci-layers)"/></svg>
+                  </span>
                   <div><div class="pack-btn-name">Слоями</div><div class="pack-btn-hint">нежный вниз, стойкий наверх</div></div>
                 </button>
                 <button class="pack-btn" data-method="компот" onclick="setPackMethod('компот',this)">
-                  <span class="pack-btn-icon">🔀</span>
+                  <span class="pack-btn-icon">
+                    <svg width="32" height="32" viewBox="0 0 32 32"><circle cx="16" cy="16" r="13" fill="#161320"/><circle cx="11" cy="11" r="3.5" fill="#9d6fff"/><circle cx="22" cy="12" r="3" fill="#e8a23b"/><circle cx="9" cy="20" r="3" fill="#3dd6ac"/><circle cx="22" cy="21" r="3.5" fill="#f472b6"/><circle cx="16" cy="16" r="2.5" fill="#60a5fa"/></svg>
+                  </span>
                   <div><div class="pack-btn-name">Компот</div><div class="pack-btn-hint">всё перемешать</div></div>
                 </button>
                 <button class="pack-btn" data-method="центр+края" onclick="setPackMethod('центр+края',this)">
-                  <span class="pack-btn-icon">🎯</span>
+                  <span class="pack-btn-icon">
+                    <svg width="32" height="32" viewBox="0 0 32 32"><circle cx="16" cy="16" r="13" fill="#e8a23b" opacity="0.85"/><circle cx="16" cy="16" r="8" fill="#9d6fff" opacity="0.9"/><circle cx="16" cy="16" r="4" fill="#3dd6ac" opacity="0.95"/></svg>
+                  </span>
                   <div><div class="pack-btn-name">Центр+края</div><div class="pack-btn-hint">акцент в центр</div></div>
                 </button>
               </div>
