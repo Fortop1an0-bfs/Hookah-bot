@@ -837,6 +837,40 @@ async def get_catalog(
         """, q, brand, in_stock, min_rating)
         return {"items": [dict(r) for r in rows], "total": total}
 
+@app.get("/api/catalog/mixes")
+async def get_catalog_mixes(
+    q: str = "", strength: str = "", bowl_type: str = "",
+    sort: str = "new", offset: int = 0, limit: int = 20
+):
+    order_by = "m.created_at DESC" if sort == "new" else "likes DESC, m.created_at DESC"
+    async with pool.acquire() as conn:
+        rows = await conn.fetch(f"""
+            SELECT m.id, m.name, m.description, m.bowl_type, m.pack_method,
+                   m.strength, m.created_at, m.is_llm,
+                   u.username, u.avatar,
+                   (SELECT COUNT(*) FROM hl_likes l WHERE l.mix_id=m.id) as likes
+            FROM hl_mixes m
+            JOIN hl_users u ON u.id=m.user_id
+            WHERE m.is_public=TRUE
+              AND ($1='' OR m.name ILIKE '%'||$1||'%' OR m.description ILIKE '%'||$1||'%')
+              AND ($2='' OR m.strength ILIKE '%'||$2||'%')
+              AND ($3='' OR m.bowl_type ILIKE '%'||$3||'%')
+            ORDER BY {order_by}
+            OFFSET $4 LIMIT $5
+        """, q, strength, bowl_type, offset, limit)
+        total = await conn.fetchval("""
+            SELECT COUNT(*) FROM hl_mixes m
+            WHERE m.is_public=TRUE
+              AND ($1='' OR m.name ILIKE '%'||$1||'%' OR m.description ILIKE '%'||$1||'%')
+              AND ($2='' OR m.strength ILIKE '%'||$2||'%')
+              AND ($3='' OR m.bowl_type ILIKE '%'||$3||'%')
+        """, q, strength, bowl_type)
+        result = []
+        for row in rows:
+            items = await _mix_items(conn, row["id"])
+            result.append({**dict(row), "items": items})
+        return {"items": result, "total": total}
+
 @app.get("/api/community-mixes")
 async def get_community_mixes(limit: int = 20):
     async with pool.acquire() as conn:
