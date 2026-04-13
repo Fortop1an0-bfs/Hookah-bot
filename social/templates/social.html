@@ -189,9 +189,6 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Space 
 .bowl-size-toggle{display:flex;border:1px solid var(--border);border-radius:50px;overflow:hidden;background:var(--bg3)}
 .bowl-size-btn{padding:6px 14px;font-family:inherit;font-size:0.72rem;font-weight:600;color:var(--text3);background:transparent;border:none;cursor:pointer;transition:all 0.2s;white-space:nowrap}
 .bowl-size-btn.active{background:var(--bg5);color:var(--text)}
-.lab-setup-bowl{width:100%;display:flex;align-items:center;justify-content:center;gap:7px;margin-top:8px;padding:7px 12px;background:rgba(157,111,255,0.08);border:1px solid rgba(157,111,255,0.2);border-radius:50px;color:var(--purple);font-family:inherit;font-size:0.78rem;font-weight:600;cursor:pointer;transition:all 0.2s;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.lab-setup-bowl:hover{background:rgba(157,111,255,0.16);border-color:var(--purple)}
-.lab-setup-bowl.active{background:rgba(157,111,255,0.2);border-color:var(--purple);box-shadow:0 0 8px rgba(157,111,255,0.25)}
 
 /* Pack methods */
 .pack-methods{display:grid;grid-template-columns:1fr 1fr;gap:8px;width:100%}
@@ -278,9 +275,6 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Space 
 .p-content{max-width:1400px;margin:0 auto;padding:24px 32px;display:grid;grid-template-columns:1fr 280px;gap:24px;align-items:start}
 
 /* Mix cards */
-.p-mix-tab{background:none;border:none;border-bottom:2px solid transparent;padding:8px 16px 10px;font-family:inherit;font-size:0.85rem;font-weight:600;color:var(--text3);cursor:pointer;transition:all 0.2s;margin-bottom:-1px}
-.p-mix-tab.active{color:var(--purple);border-bottom-color:var(--purple)}
-.p-mix-tab:hover:not(.active){color:var(--text2)}
 .p-mix-cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:14px}
 .p-mix-card{background:var(--bg2);border:1px solid var(--border);border-radius:16px;overflow:hidden;cursor:pointer;transition:all 0.2s}
 .p-mix-card:hover{border-color:var(--purple);transform:translateY(-2px);box-shadow:0 8px 24px rgba(157,111,255,0.15)}
@@ -404,14 +398,81 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Space 
 .ai-ex:hover{border-color:var(--teal);color:var(--teal)}
 .btn-teal{padding:13px;background:linear-gradient(135deg,#0d2a1e,#153d2b);border:1px solid rgba(61,214,172,0.3);color:var(--teal);border-radius:50px;font-family:inherit;font-size:0.93rem;font-weight:700;cursor:pointer;width:100%;transition:all 0.2s}
 .btn-teal:hover{box-shadow:0 4px 20px rgba(61,214,172,0.2);transform:translateY(-1px)}
-.ai-result-card{background:var(--bg3);border:1px solid rgba(61,214,172,0.2);border-radius:16px;padding:15px;margin-top:14px}
-.ai-result-name{font-size:1.0rem;font-weight:700;margin-bottom:4px}
-.ai-result-desc{font-size:0.77rem;color:var(--text2);margin-bottom:10px;line-height:1.45}
-.ai-result-items{display:flex;flex-direction:column;gap:5px;margin-bottom:10px}
-.ai-result-item{font-size:0.79rem;display:flex;align-items:center;gap:8px}
-.ai-pack{font-size:0.73rem;color:var(--purple)}
-.ai-use-btn{width:100%;padding:11px;background:rgba(61,214,172,0.1);border:1px solid rgba(61,214,172,0.25);border-radius:12px;color:var(--teal);font-family:inherit;font-size:0.88rem;font-weight:700;cursor:pointer;transition:all 0.2s;margin-top:6px}
-.ai-use-btn:hover{background:rgba(61,214,172,0.18)}
+.ai-result-card{
+  background:
+    radial-gradient(120% 140% at 8% 0%, rgba(61,214,172,0.08) 0%, rgba(61,214,172,0) 46%),
+    linear-gradient(180deg, rgba(255,255,255,0.01), rgba(255,255,255,0.0)),
+    var(--bg3);
+  border:1px solid rgba(61,214,172,0.24);
+  border-radius:18px;
+  padding:16px 16px 14px;
+  margin-top:14px;
+  box-shadow:0 10px 24px rgba(0,0,0,0.22);
+  display:flex;
+  flex-direction:column;
+  height:100%;
+}
+.ai-result-name{font-size:1.08rem;font-weight:800;line-height:1.25;letter-spacing:-0.01em}
+.ai-result-desc{
+  font-size:0.8rem;color:var(--text2);margin:6px 0 12px;line-height:1.45;
+  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;
+}
+.ai-result-items{display:flex;flex-direction:column;gap:8px;margin-bottom:10px}
+.ai-result-item{
+  font-size:0.8rem;display:flex;align-items:flex-start;gap:9px;
+  padding:8px 10px;border-radius:12px;background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.05);
+}
+.ai-result-item-main{display:grid;grid-template-columns:1fr auto auto;align-items:center;gap:8px}
+.ai-result-item-title{
+  min-width:0;font-size:0.86rem;font-weight:700;line-height:1.25;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+.ai-result-item-brand{font-size:0.72rem;color:var(--text3);margin-top:2px}
+.ai-result-item-pct{font-family:'JetBrains Mono',monospace;color:var(--gold);font-size:0.75rem;font-weight:700}
+.ai-result-item-link{
+  font-size:0.7rem;color:var(--teal);text-decoration:none;border-bottom:1px dashed rgba(61,214,172,0.45);
+  white-space:nowrap;
+}
+.ai-result-item-link:hover{color:#8af7da;border-bottom-color:#8af7da}
+.ai-result-item-sub{
+  font-size:0.72rem;color:var(--text3);margin-top:3px;line-height:1.35;
+  display:-webkit-box;-webkit-line-clamp:1;-webkit-box-orient:vertical;overflow:hidden;
+}
+.ai-tech{display:flex;flex-wrap:wrap;gap:7px;margin:10px 0 6px}
+.ai-tech-chip{font-size:0.7rem;padding:5px 10px;border-radius:999px;background:rgba(157,111,255,0.11);border:1px solid rgba(157,111,255,0.24);color:#b796ff}
+.ai-use-btn{
+  width:100%;padding:11px;background:linear-gradient(180deg, rgba(61,214,172,0.16), rgba(61,214,172,0.08));
+  border:1px solid rgba(61,214,172,0.34);border-radius:12px;color:#61e8c3;font-family:inherit;
+  font-size:0.89rem;font-weight:800;cursor:pointer;transition:all 0.2s;margin-top:2px;
+}
+.ai-use-btn:hover{background:linear-gradient(180deg, rgba(61,214,172,0.22), rgba(61,214,172,0.12))}
+.ai-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:auto;padding-top:8px}
+.ai-save-btn{
+  width:100%;padding:11px;background:linear-gradient(180deg, rgba(157,111,255,0.17), rgba(157,111,255,0.09));
+  border:1px solid rgba(157,111,255,0.35);border-radius:12px;color:#c9adff;font-family:inherit;
+  font-size:0.89rem;font-weight:800;cursor:pointer;transition:all 0.2s;
+}
+.ai-save-btn:hover{background:linear-gradient(180deg, rgba(157,111,255,0.24), rgba(157,111,255,0.12))}
+.ai-page-wrap{padding:22px 30px 30px}
+.ai-page-card{background:var(--bg2);border:1px solid var(--border);border-radius:18px;padding:16px}
+.ai-mode-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px}
+.ai-mode-btn{padding:8px 14px;border-radius:999px;background:var(--bg3);border:1px solid var(--border);color:var(--text2);font-size:0.8rem;font-weight:700;cursor:pointer;font-family:inherit}
+.ai-mode-btn.active{background:rgba(61,214,172,0.12);border-color:rgba(61,214,172,0.32);color:var(--teal)}
+.ai-mix-opts{display:flex;align-items:center;gap:8px;margin-bottom:10px}
+.ai-small-select{background:var(--bg3);border:1px solid var(--border);color:var(--text);border-radius:10px;padding:7px 9px;font-size:0.8rem;font-family:inherit}
+.ai-results-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(360px,1fr));gap:14px;margin-top:16px}
+.ai-single-card{
+  background:linear-gradient(180deg, rgba(255,255,255,0.01), rgba(255,255,255,0)) , var(--bg3);
+  border:1px solid rgba(255,255,255,0.08);border-radius:16px;padding:14px;
+}
+.ai-single-title{font-size:0.98rem;font-weight:800;line-height:1.25}
+.ai-single-meta{font-size:0.74rem;color:var(--text3);margin-top:4px}
+.ai-single-desc{
+  font-size:0.76rem;color:var(--text2);line-height:1.45;margin-top:8px;
+  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;
+}
+.ai-single-footer{display:flex;align-items:center;flex-wrap:wrap;gap:8px;margin-top:10px}
+.ai-page-empty{padding:18px;border-radius:14px;background:var(--bg3);border:1px dashed var(--border2);color:var(--text3);font-size:0.82rem;text-align:center}
 
 .setup-field{margin-bottom:20px}
 .setup-field-label{font-size:0.69rem;color:var(--text3);margin-bottom:8px;display:block;font-weight:600;text-transform:uppercase;letter-spacing:0.4px}
@@ -483,73 +544,29 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Space 
 /* ── CATALOG ── */
 .catalog-layout{padding:24px 32px;max-width:1400px;width:100%;margin:0 auto}
 .catalog-filters{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:20px;align-items:center}
+.catalog-ai-summary{display:none;margin:-8px 0 16px;padding:10px 12px;border-radius:12px;background:rgba(61,214,172,0.08);border:1px solid rgba(61,214,172,0.2);font-size:0.75rem;color:var(--text2);line-height:1.5}
 .filter-inp{padding:9px 14px;background:var(--bg3);border:1px solid var(--border);border-radius:50px;color:var(--text);font-family:inherit;font-size:0.85rem;outline:none;transition:border-color 0.2s;min-width:180px}
 .filter-inp:focus{border-color:var(--purple)}
 .filter-select{padding:9px 14px;background:var(--bg3);border:1px solid var(--border);border-radius:50px;color:var(--text);font-family:inherit;font-size:0.85rem;outline:none;cursor:pointer;appearance:none;min-width:140px}
 .filter-toggle{padding:8px 16px;background:var(--bg3);border:1px solid var(--border);border-radius:50px;color:var(--text2);font-family:inherit;font-size:0.82rem;cursor:pointer;transition:all 0.2s;font-weight:500}
 .filter-toggle.active{background:rgba(157,111,255,0.12);border-color:var(--purple);color:var(--purple)}
-.catalog-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px;align-items:start}
-.tob-card{background:var(--bg2);border:1px solid var(--border);border-radius:16px;overflow:hidden;transition:all 0.2s;cursor:pointer;position:relative;display:flex;flex-direction:column}
+.catalog-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px}
+.tob-card{background:var(--bg2);border:1px solid var(--border);border-radius:16px;padding:16px;transition:all 0.2s;cursor:pointer;position:relative}
 .tob-card:hover{border-color:var(--border2);transform:translateY(-2px);box-shadow:0 8px 24px rgba(0,0,0,0.3)}
-.tob-card-img{width:100%;height:120px;flex-shrink:0;background:var(--bg3);display:flex;align-items:center;justify-content:center;overflow:hidden;position:relative}
-.tob-card-img img{width:100%;height:100%;object-fit:cover;transition:transform 0.3s}
-.tob-card:hover .tob-card-img img{transform:scale(1.05)}
-.tob-card-img-placeholder{font-size:2.2rem;letter-spacing:-2px;opacity:0.25;user-select:none;filter:blur(0.5px)}
-.tob-card-body{padding:12px 14px 14px;display:flex;flex-direction:column;flex:1}
-.tob-card-brand{font-size:0.63rem;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:3px}
-.tob-card-name{font-size:0.88rem;font-weight:600;line-height:1.35;flex:1;margin-bottom:8px}
-.tob-card-tags{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:10px;min-height:20px}
-.tob-card-tag{font-size:0.6rem;padding:2px 7px;border-radius:50px;background:rgba(157,111,255,0.1);color:var(--purple)}
-.tob-card-reviews{font-size:0.65rem;color:var(--text3);margin-top:-6px;margin-bottom:8px}
-.tob-card-footer{display:flex;align-items:center;gap:6px;border-top:1px solid var(--border);padding-top:10px;margin-top:auto}
-.tob-card-price{font-size:0.95rem;font-weight:700;color:var(--gold)}
-.tob-card-price-old{font-size:0.68rem;color:var(--text3);text-decoration:line-through}
-.tob-card-rating{font-size:0.72rem;color:var(--gold);display:flex;align-items:center;gap:2px;white-space:nowrap}
-.tob-card-strength{font-size:0.63rem;padding:2px 7px;border-radius:50px;background:var(--bg4);color:var(--text2);white-space:nowrap}
-.tob-card-stock{position:absolute;top:10px;right:10px;width:7px;height:7px;border-radius:50%;z-index:2;box-shadow:0 0 0 2px rgba(0,0,0,0.4)}
-.tob-card-add{margin-left:auto;padding:5px 11px;background:rgba(157,111,255,0.1);border:1px solid rgba(157,111,255,0.25);border-radius:50px;color:var(--purple);font-size:0.72rem;font-weight:600;cursor:pointer;transition:all 0.2s;font-family:inherit;white-space:nowrap;flex-shrink:0}
-.tob-card-add:hover{background:rgba(157,111,255,0.22)}
+.tob-card-brand{font-size:0.68rem;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px}
+.tob-card-name{font-size:0.9rem;font-weight:600;margin-bottom:8px;line-height:1.35}
+.tob-card-tags{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:10px;min-height:22px}
+.tob-card-tag{font-size:0.62rem;padding:2px 8px;border-radius:50px;background:rgba(157,111,255,0.1);color:var(--purple)}
+.tob-card-footer{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.tob-card-price{font-size:1rem;font-weight:700;color:var(--gold)}
+.tob-card-price-old{font-size:0.73rem;color:var(--text3);text-decoration:line-through}
+.tob-card-rating{font-size:0.78rem;color:var(--gold);display:flex;align-items:center;gap:3px}
+.tob-card-strength{font-size:0.68rem;padding:3px 8px;border-radius:50px;background:var(--bg4);color:var(--text2)}
+.tob-card-stock{position:absolute;top:12px;right:12px;width:8px;height:8px;border-radius:50%}
+.tob-card-add{padding:6px 13px;background:rgba(157,111,255,0.1);border:1px solid rgba(157,111,255,0.25);border-radius:50px;color:var(--purple);font-size:0.75rem;font-weight:600;cursor:pointer;transition:all 0.2s;font-family:inherit}
+.tob-card-add:hover{background:rgba(157,111,255,0.2)}
 .catalog-load-more{width:100%;padding:13px;margin-top:16px;background:var(--bg3);border:1px solid var(--border);border-radius:14px;color:var(--text2);font-family:inherit;font-size:0.88rem;font-weight:600;cursor:pointer;transition:all 0.2s}
-.flavor-tags-row{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px;min-height:28px}
-.flavor-chip{padding:5px 13px;border-radius:50px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.09);color:var(--text3);font-size:0.72rem;font-weight:600;cursor:pointer;font-family:inherit;transition:all 0.18s;white-space:nowrap}
-.flavor-chip:hover{background:rgba(157,111,255,0.1);color:var(--text2);border-color:rgba(157,111,255,0.25)}
-.flavor-chip.active{background:rgba(157,111,255,0.18);border-color:rgba(157,111,255,0.45);color:var(--purple)}
 .catalog-load-more:hover{background:var(--bg4)}
-
-/* ── CATALOG TABS ── */
-.cat-tabs{display:flex;gap:0;border-bottom:1px solid var(--border);padding:0 32px;background:var(--bg1);flex-shrink:0}
-.cat-tab{padding:11px 20px;background:transparent;border:none;border-bottom:2px solid transparent;margin-bottom:-1px;font-family:inherit;font-size:0.88rem;font-weight:600;color:var(--text3);cursor:pointer;transition:all 0.2s}
-.cat-tab:hover{color:var(--text)}
-.cat-tab.active{color:var(--purple);border-bottom-color:var(--purple)}
-
-/* ── TOBACCO DETAIL MODAL ── */
-.tob-detail-panel{background:var(--bg1);border-radius:20px;padding:24px;max-height:88vh;overflow-y:auto;position:relative;width:100%;max-width:580px}
-.tob-detail-close{position:absolute;top:14px;right:14px}
-.tob-detail-rating-row{display:flex;align-items:center;gap:12px;margin:12px 0}
-.tob-detail-score{font-size:2.2rem;font-weight:800;color:var(--gold);line-height:1}
-.tob-detail-meta{font-size:0.73rem;color:var(--text3);line-height:1.7}
-.tob-detail-recommend{color:#4ade80;font-weight:600}
-.review-list{margin-top:4px}
-.review-item{padding:12px 0;border-bottom:1px solid var(--border)}
-.review-item:last-child{border-bottom:none;padding-bottom:0}
-.review-header{display:flex;align-items:center;gap:8px;margin-bottom:6px;flex-wrap:wrap}
-.review-rating-badge{background:var(--gold);color:#000;font-size:0.7rem;font-weight:800;padding:2px 8px;border-radius:50px;flex-shrink:0}
-.review-user{font-size:0.78rem;font-weight:600}
-.review-date{font-size:0.67rem;color:var(--text3);margin-left:auto}
-.review-text{font-size:0.84rem;color:var(--text2);line-height:1.6}
-.review-likes{font-size:0.68rem;color:var(--text3);margin-top:4px}
-
-/* ── MIX CATALOG CARD ── */
-.mix-cat-card{background:var(--bg2);border:1px solid var(--border);border-radius:16px;padding:14px;transition:all 0.2s;cursor:pointer;display:flex;gap:12px;align-items:flex-start}
-.mix-cat-card:hover{border-color:var(--border2);transform:translateY(-2px);box-shadow:0 8px 24px rgba(0,0,0,0.3)}
-.mix-cat-body{flex:1;min-width:0}
-.mix-cat-name{font-size:0.9rem;font-weight:700;margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.mix-cat-author{font-size:0.67rem;color:var(--text3);margin-bottom:5px}
-.mix-cat-items{font-size:0.74rem;color:var(--text2);margin-bottom:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.mix-cat-footer{display:flex;align-items:center;justify-content:space-between;margin-top:6px}
-.mix-cat-likes{font-size:0.73rem;color:var(--text3)}
-.mix-cat-btn{padding:5px 12px;background:rgba(157,111,255,0.1);border:1px solid rgba(157,111,255,0.25);border-radius:50px;color:var(--purple);font-size:0.72rem;font-weight:600;cursor:pointer;font-family:inherit;transition:all 0.2s;white-space:nowrap}
-.mix-cat-btn:hover{background:rgba(157,111,255,0.2)}
 
 /* ── COMMENTS ── */
 .comments-section{padding:0 16px 14px;border-top:1px solid var(--border)}
@@ -609,6 +626,8 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Space 
 }
 @media(max-width:500px){
   .catalog-grid{grid-template-columns:1fr}
+  .ai-page-wrap{padding:14px 14px 90px}
+  .ai-results-grid{grid-template-columns:1fr}
 }
 </style>
 </head>
@@ -628,12 +647,15 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Space 
       <div class="snav-item" id="snav-catalog" onclick="navigate('catalog',this)">
         <span class="snav-icon">📦</span><span>Каталог</span>
       </div>
+      <div class="snav-item" id="snav-ai" onclick="navigate('ai',this)">
+        <span class="snav-icon">🤖</span><span>Подбор миксов</span>
+      </div>
       <div class="snav-item" id="snav-profile" onclick="navigate('profile',this)">
         <span class="snav-icon">👤</span><span>Профиль</span>
       </div>
     </div>
     <div class="sidebar-user" id="sidebarUser">
-      <button class="sidebar-ai-btn" onclick="openAI()">🤖 ИИ-генератор</button>
+      <button class="sidebar-ai-btn" onclick="openAI()">🤖 Подбор миксов</button>
       <div class="notif-bell" id="notifBell" onclick="openNotifications()" style="margin-bottom:10px;display:none"><button class="icon-btn" style="width:100%;justify-content:space-between"><span>🔔 Уведомления</span><span id="notifCount" class="notif-badge" style="position:static;margin-left:auto"></span></button></div>
     <div id="sidebarAuthArea"></div>
     </div>
@@ -669,7 +691,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Space 
     <div class="page-inner">
       <div class="top-bar">
         <span class="top-bar-title">⚗️ Лаборатория</span>
-        <button class="lab-btn lab-btn-ai" style="flex:0 0 auto;padding:9px 14px;font-size:0.82rem" onclick="openAI()">🤖 ИИ-генератор</button>
+        <button class="lab-btn lab-btn-ai" style="flex:0 0 auto;padding:9px 14px;font-size:0.82rem" onclick="openAI()">🤖 Подбор миксов</button>
       </div>
       <div style="padding:24px 32px">
         <input class="lab-name-input" id="labMixName" placeholder="Название микса..." maxlength="50">
@@ -686,10 +708,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Space 
                 <div class="bowl-size-toggle">
                   <button class="bowl-size-btn active" onclick="setBowlSize(20,this)">Убивашка</button>
                   <button class="bowl-size-btn" onclick="setBowlSize(15,this)">Фанел</button>
-                  <button class="bowl-size-btn" onclick="setBowlSize(10,this)">Турка</button>
-                </div>
-                <div id="labSetupBowlHint" style="display:none;width:100%">
-                  <button class="lab-setup-bowl" id="labSetupBowlBtn" onclick="applySetupBowl()">🏺 <span id="labSetupBowlName">Моя чаша</span></button>
+                  <button class="bowl-size-btn" onclick="setBowlSize(10,this)">Сифон</button>
                 </div>
               </div>
               <div class="pack-methods">
@@ -744,10 +763,6 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Space 
                 <button class="lab-btn lab-btn-secondary" onclick="previewCard()">👁 Превью</button>
                 <button class="lab-btn lab-btn-primary" onclick="saveMix()">✦ Сохранить</button>
               </div>
-              <div id="labDraftBar" style="display:none;margin-top:10px;padding:8px 12px;background:rgba(157,111,255,0.08);border:1px solid rgba(157,111,255,0.2);border-radius:10px;display:flex;align-items:center;justify-content:space-between;gap:10px">
-                <span style="font-size:0.75rem;color:var(--text3)">📋 Автосохранение включено</span>
-                <button onclick="if(confirm('Сбросить черновик?')){_labDraftClear();lab.tobaccos=[];lab.mixName='';document.getElementById('labMixName').value='';renderTobList();renderBowl();updateLabDetails();document.getElementById('labDraftBar').style.display='none';showToast('Черновик сброшен')}" style="background:none;border:none;color:var(--text3);font-size:0.72rem;cursor:pointer;padding:2px 6px;border-radius:6px;font-family:inherit">Сбросить</button>
-              </div>
             </div>
           </div><!-- /lab-right -->
 
@@ -765,72 +780,70 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Space 
           <span class="search-ico">🔍</span>
           <input class="search-inp" id="catSearch" placeholder="Поиск по названию, бренду..." oninput="debounceCatalog()">
         </div>
-        <span style="font-size:0.78rem;color:var(--text3);flex-shrink:0;margin-left:auto" id="catalogTotal"></span>
+        <span style="font-size:0.78rem;color:var(--text3);flex-shrink:0;margin-left:auto" id="catalogTotal">2837 табаков</span>
       </div>
-
-      <!-- Переключатель разделов -->
-      <div class="cat-tabs">
-        <button class="cat-tab active" id="catTab-tobaccos" onclick="switchCatTab('tobaccos')">🌿 Табаки</button>
-        <button class="cat-tab" id="catTab-mixes" onclick="switchCatTab('mixes')">⚗️ Миксы</button>
-      </div>
-
-      <!-- Раздел: Табаки -->
-      <div id="catSection-tobaccos">
-        <div class="catalog-layout">
-          <div class="catalog-filters">
-            <select class="filter-select" id="catBrandSel" onchange="catBrand=this.value;loadCatalog(0)">
-              <option value="">Все бренды</option>
-            </select>
-            <select class="filter-select" id="catSort" onchange="loadCatalog(0)">
-              <option value="rating">По рейтингу</option>
-              <option value="reviews">По отзывам</option>
-              <option value="price_asc">Дешевле</option>
-              <option value="price_desc">Дороже</option>
-            </select>
-            <select class="filter-select" id="catStrength" onchange="loadCatalog(0)">
-              <option value="">Любая крепость</option>
-              <option value="лёгк">Лёгкая</option>
-              <option value="средн">Средняя</option>
-              <option value="крепк">Крепкая</option>
-            </select>
-            <button class="filter-toggle" id="catInStock" onclick="toggleCatInStock()">В наличии</button>
-          </div>
-          <div class="flavor-tags-row" id="flavorTagsRow"></div>
-          <div class="catalog-grid" id="catalogGrid">
-            <div class="loading"><div class="spinner"></div>Загрузка...</div>
-          </div>
-          <button class="catalog-load-more" id="catalogMore" style="display:none" onclick="loadCatalogMore()">Показать ещё</button>
+      <div class="catalog-layout">
+        <div class="catalog-filters">
+          <select class="filter-select" id="catSort" onchange="loadCatalog(0)">
+            <option value="rating">По рейтингу</option>
+            <option value="reviews">По отзывам</option>
+            <option value="price_asc">Дешевле</option>
+            <option value="price_desc">Дороже</option>
+          </select>
+          <select class="filter-select" id="catStrength" onchange="loadCatalog(0)">
+            <option value="">Любая крепость</option>
+            <option value="лёгк">Лёгкая</option>
+            <option value="средн">Средняя</option>
+            <option value="крепк">Крепкая</option>
+          </select>
+          <button class="filter-toggle" id="catInStock" onclick="toggleCatInStock()">В наличии</button>
+          <button class="filter-toggle" id="catAISearch" onclick="toggleCatAISearch()">ИИ поиск</button>
         </div>
-      </div>
-
-      <!-- Раздел: Миксы -->
-      <div id="catSection-mixes" style="display:none">
-        <div class="catalog-layout">
-          <div class="catalog-filters">
-            <select class="filter-select" id="mixCatSort" onchange="loadMixCatalog(0)">
-              <option value="new">Новые</option>
-              <option value="top">Популярные</option>
-            </select>
-            <select class="filter-select" id="mixCatStrength" onchange="loadMixCatalog(0)">
-              <option value="">Любая крепость</option>
-              <option value="лёгк">Лёгкий</option>
-              <option value="средн">Средний</option>
-              <option value="крепк">Крепкий</option>
-            </select>
-            <select class="filter-select" id="mixCatBowl" onchange="loadMixCatalog(0)">
-              <option value="">Любая чаша</option>
-              <option value="убивашка">Убивашка</option>
-              <option value="фанел">Фанел</option>
-              <option value="турка">Турка</option>
-            </select>
-          </div>
-          <div class="catalog-grid" id="mixCatalogGrid">
-            <div class="loading"><div class="spinner"></div>Загрузка...</div>
-          </div>
-          <button class="catalog-load-more" id="mixCatalogMore" style="display:none" onclick="loadMixCatalogMore()">Показать ещё</button>
+        <div class="catalog-ai-summary" id="catAISummary"></div>
+        <div class="catalog-grid" id="catalogGrid">
+          <div class="loading"><div class="spinner"></div>Загрузка...</div>
         </div>
+        <button class="catalog-load-more" id="catalogMore" style="display:none" onclick="loadCatalogMore()">Показать ещё</button>
       </div>
+    </div>
+  </div>
 
+  <div id="aiPage" class="page">
+    <div class="page-inner">
+      <div class="top-bar" style="gap:12px">
+        <span class="top-bar-title">🤖 Подбор миксов</span>
+      </div>
+      <div class="ai-page-wrap">
+        <div class="ai-page-card">
+          <p class="ai-hint">Полноценный поиск из вашей `tabak_openai` базы. Режимы: соло или миксы (2-4 позиции).</p>
+          <div class="ai-mode-row">
+            <button class="ai-mode-btn active" id="aiModeMixBtn" onclick="setAIPageMode('mix',this)">Миксы</button>
+            <button class="ai-mode-btn" id="aiModeSingleBtn" onclick="setAIPageMode('single',this)">Соло</button>
+          </div>
+          <div class="ai-mix-opts" id="aiMixOpts">
+            <span style="font-size:0.78rem;color:var(--text3)">Позиций в миксе:</span>
+            <select class="ai-small-select" id="aiMixParts">
+              <option value="0">Любое (2-4)</option>
+              <option value="2">2 позиции</option>
+              <option value="3">3 позиции</option>
+              <option value="4">4 позиции</option>
+            </select>
+          </div>
+          <div class="ai-examples">
+            <span class="ai-ex" onclick="fillAIPageEx(this)">🍑 фрукты + холодок</span>
+            <span class="ai-ex" onclick="fillAIPageEx(this)">☕ кофе и шоколад</span>
+            <span class="ai-ex" onclick="fillAIPageEx(this)">🌿 лёгкая мята, не сладко</span>
+            <span class="ai-ex" onclick="fillAIPageEx(this)">🍋 цитрус + кислинка</span>
+            <span class="ai-ex" onclick="fillAIPageEx(this)">💀 крепкий, тёмный табак</span>
+          </div>
+          <textarea id="aiPageDesc" class="ai-desc-input" placeholder="Опиши вкус, настроение или желаемый эффект..."></textarea>
+          <label id="aiPageCabinetToggle" style="display:none;font-size:0.8rem;color:var(--text2);margin-top:10px;align-items:center;gap:8px">
+            <input type="checkbox" id="aiPageUseCabinet"> Только из моих табаков
+          </label>
+          <button class="btn-teal" style="margin-top:11px" onclick="runAIFullSearch()">✦ Найти</button>
+        </div>
+        <div id="aiPageResults" class="ai-results-grid"></div>
+      </div>
     </div>
   </div>
 
@@ -840,27 +853,6 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Space 
   </div>
 
   </div><!-- /content-wrap -->
-
-  <!-- ── TOBACCO DETAIL MODAL ── -->
-  <div id="tobDetailModal" class="modal-overlay" onclick="if(event.target===this)closeTobDetail()">
-    <div class="tob-detail-panel">
-      <button class="modal-close tob-detail-close" onclick="closeTobDetail()">✕</button>
-      <div id="tobDetailContent">
-        <div class="loading" style="padding:40px 20px"><div class="spinner"></div></div>
-      </div>
-    </div>
-  </div>
-
-  <!-- ── MIX DETAIL MODAL ── -->
-  <div id="mixDetailModal" class="modal-overlay" onclick="if(event.target===this)closeMixDetail()">
-    <div class="modal-sheet" style="max-width:560px">
-      <div class="modal-header">
-        <h3 id="mixDetailTitle">Микс</h3>
-        <button class="modal-close" onclick="closeMixDetail()">✕</button>
-      </div>
-      <div class="modal-body" id="mixDetailContent"></div>
-    </div>
-  </div>
 
   <!-- ── FEED SIDEBAR (desktop right panel) ── -->
   <div class="feed-sidebar" id="feedSidebar">
@@ -873,7 +865,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Space 
       <div class="feed-widget-title">⚗️ Создай микс</div>
       <p style="font-size:0.8rem;color:var(--text2);margin-bottom:12px;line-height:1.5">Создай свой авторский микс в Лаборатории или доверь это ИИ</p>
       <button class="lab-btn lab-btn-primary" style="margin-bottom:8px;padding:11px" onclick="navigate('lab',document.getElementById('snav-lab'))">⚗️ Открыть Лабораторию</button>
-      <button class="sidebar-ai-btn" onclick="openAI()">🤖 ИИ-генератор</button>
+      <button class="sidebar-ai-btn" onclick="openAI()">🤖 Подбор миксов</button>
     </div>
     <div class="feed-widget" id="topMixesWidget">
       <div class="loading" style="padding:10px 0"><div class="spinner"></div></div>
@@ -885,6 +877,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Space 
     <div class="nav-item active" id="nav-feed" onclick="navigate('feed',this)"><span class="nav-icon">🌿</span><span class="nav-label">Лента</span></div>
     <div class="nav-item" id="nav-lab" onclick="navigate('lab',this)"><span class="nav-icon">⚗️</span><span class="nav-label">Лаборатория</span></div>
     <div class="nav-item" id="nav-catalog" onclick="navigate('catalog',this)"><span class="nav-icon">📦</span><span class="nav-label">Каталог</span></div>
+    <div class="nav-item" id="nav-ai" onclick="navigate('ai',this)"><span class="nav-icon">🤖</span><span class="nav-label">Миксы</span></div>
     <div class="nav-item" id="nav-profile" onclick="navigate('profile',this)"><span class="nav-icon">👤</span><span class="nav-label">Профиль</span></div>
   </nav>
 </div>
@@ -964,7 +957,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Space 
   <div class="modal-sheet">
     <div class="modal-handle"></div>
     <div class="modal-header">
-      <h3>🤖 ИИ-генератор миксов</h3>
+      <h3>🤖 Подбор миксов</h3>
       <button class="modal-close" onclick="closeAI()">✕</button>
     </div>
     <div class="modal-body">
@@ -1057,7 +1050,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Space 
             <span onclick="pickChip('setupBowlType',this)">Фанел</span>
             <span onclick="pickChip('setupBowlType',this)">Обратный фанел</span>
             <span onclick="pickChip('setupBowlType',this)">Triton</span>
-            <span onclick="pickChip('setupBowlType',this)">Турка</span>
+            <span onclick="pickChip('setupBowlType',this)">Сифон</span>
             <span onclick="pickChip('setupBowlType',this)">Стандарт</span>
           </div>
           <input type="hidden" id="setupBowlType">
@@ -1074,26 +1067,6 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Space 
             <div class="equip-results" id="coal-results"></div>
           </div>
           <div class="equip-photo-wrap" id="coal-preview"></div>
-        </div>
-        <div class="setup-field-sub">
-          <label class="setup-field-sublabel">Размер угля</label>
-          <div class="setup-chips" id="chips-coal-size">
-            <span onclick="pickChip('setupCoalSize',this)">22мм</span>
-            <span onclick="pickChip('setupCoalSize',this)">25мм</span>
-            <span onclick="pickChip('setupCoalSize',this)">26мм</span>
-          </div>
-          <input type="hidden" id="setupCoalSize">
-        </div>
-        <div class="setup-field-sub">
-          <label class="setup-field-sublabel">🧢 Прогрев с колпаком</label>
-          <div class="setup-chips" id="chips-coal-warmup">
-            <span onclick="pickChip('setupCoalWarmup',this)">1.5 мин</span>
-            <span onclick="pickChip('setupCoalWarmup',this)">2 мин</span>
-            <span onclick="pickChip('setupCoalWarmup',this)">3 мин</span>
-            <span onclick="pickChip('setupCoalWarmup',this)">4 мин</span>
-            <span onclick="pickChip('setupCoalWarmup',this)">5 мин</span>
-          </div>
-          <input type="hidden" id="setupCoalWarmup">
         </div>
       </div>
 
@@ -1188,21 +1161,6 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Space 
 </div>
 
 <!-- Mix rating modal -->
-<!-- Comments modal -->
-<div class="modal-overlay" id="commentsModal" onclick="if(event.target===this)closeComments()">
-  <div class="modal-sheet" style="max-width:620px;display:flex;flex-direction:column;max-height:85vh">
-    <div class="modal-handle"></div>
-    <div class="modal-header">
-      <h3>💬 Комментарии</h3>
-      <button class="modal-close" onclick="closeComments()">✕</button>
-    </div>
-    <div class="modal-body" style="flex:1;overflow-y:auto;padding-bottom:0">
-      <div id="commentsModalList"></div>
-    </div>
-    <div id="commentsModalInput" style="padding:12px 20px;border-top:1px solid var(--border);flex-shrink:0"></div>
-  </div>
-</div>
-
 <div class="modal-overlay" id="rateModal" onclick="if(event.target===this)closeRateModal()">
   <div class="modal-sheet" style="max-width:360px">
     <div class="modal-handle"></div>
@@ -1233,8 +1191,10 @@ const BRAND_ICONS = {'Must have':'🍋','Dark Side':'🌑','Burn Black':'🔥','
 // ── STATE ──
 let token = localStorage.getItem('hl_token');
 let currentUser = JSON.parse(localStorage.getItem('hl_user') || 'null');
-const lab = { mixName:'', bowlSize:20, packMethod:'секторами', tobaccos:[], setupBowl:null };
+const lab = { mixName:'', bowlSize:20, packMethod:'секторами', tobaccos:[] };
 let _pendingAIMix = null;
+let _pendingAISearchResults = [];
+let aiPageMode = 'mix';
 
 // ── API ──
 async function api(path, method='GET', body=null) {
@@ -1276,12 +1236,13 @@ function navigate(page, el) {
   if (fs) fs.style.display = page === 'feed' ? '' : 'none';
   if (page === 'profile') renderProfile();
   if (page === 'feed') loadFeed();
-  if (page === 'lab') loadLabSetup();
-  if (page === 'catalog') {
-    loadBrandFilter();
-    loadFlavorTags();
-    if (activeCatTab === 'mixes') loadMixCatalog(0);
-    else loadCatalog(0);
+  if (page === 'ai') {
+    const cabinetToggle = document.getElementById('aiPageCabinetToggle');
+    if (cabinetToggle) cabinetToggle.style.display = currentUser ? 'flex' : 'none';
+    setTimeout(() => {
+      const elIn = document.getElementById('aiPageDesc');
+      if (elIn && !elIn.value) elIn.focus();
+    }, 80);
   }
 }
 
@@ -1361,123 +1322,8 @@ function setBowlSize(g, btn) {
   lab.bowlSize = g;
   document.querySelectorAll('.bowl-size-btn').forEach(b=>b.classList.remove('active'));
   btn.classList.add('active');
-  const lbl = {20:'Убивашка',15:'Фанел',10:'Турка'}[g]||g+'г';
+  const lbl = {20:'Убивашка',15:'Фанел',10:'Сифон'}[g]||g+'г';
   document.getElementById('labBowlLbl').textContent = lbl;
-  const applyBtn = document.getElementById('labSetupBowlBtn');
-  if (applyBtn) applyBtn.classList.remove('active');
-  renderTobList();
-}
-
-// ── LAB DRAFT ──
-const LAB_DRAFT_KEY = 'hl_lab_draft';
-let _draftInterval = null;
-
-function _labDraftSave() {
-  if (!lab.tobaccos.length) return;
-  try {
-    localStorage.setItem(LAB_DRAFT_KEY, JSON.stringify({
-      tobaccos: lab.tobaccos,
-      bowlSize: lab.bowlSize,
-      packMethod: lab.packMethod,
-      mixName: document.getElementById('labMixName')?.value || '',
-      ts: Date.now(),
-    }));
-  } catch(e) {}
-}
-
-function _labDraftLoad() {
-  try {
-    const raw = localStorage.getItem(LAB_DRAFT_KEY);
-    if (!raw) return false;
-    const d = JSON.parse(raw);
-    if (!d.tobaccos?.length) return false;
-    // Only restore if lab is currently empty
-    if (lab.tobaccos.length) return false;
-    lab.tobaccos = d.tobaccos;
-    lab.bowlSize = d.bowlSize || 20;
-    lab.packMethod = d.packMethod || 'секторами';
-    const nameEl = document.getElementById('labMixName');
-    if (nameEl) nameEl.value = d.mixName || '';
-    document.querySelectorAll('.pack-btn').forEach(b =>
-      b.classList.toggle('active', b.dataset.method === lab.packMethod));
-    document.querySelectorAll('.bowl-size-btn').forEach(b => b.classList.remove('active'));
-    const bowlLbl = document.getElementById('labBowlLbl');
-    if (bowlLbl) bowlLbl.textContent = {20:'Убивашка',15:'Фанел',10:'Турка'}[lab.bowlSize]||lab.bowlSize+'г';
-    renderTobList();
-    renderBowl();
-    updateLabDetails();
-    const bar = document.getElementById('labDraftBar');
-    if (bar) bar.style.display = 'flex';
-    return true;
-  } catch(e) { return false; }
-}
-
-function _labDraftClear() {
-  localStorage.removeItem(LAB_DRAFT_KEY);
-}
-
-function _labDraftStart() {
-  clearInterval(_draftInterval);
-  _draftInterval = setInterval(() => {
-    _labDraftSave();
-    const bar = document.getElementById('labDraftBar');
-    if (bar && lab.tobaccos.length) bar.style.display = 'flex';
-  }, 4000);
-}
-
-async function loadLabSetup() {
-  _labDraftStart();
-  const hasDraft = _labDraftLoad();
-  if (hasDraft) {
-    const age = Date.now() - (JSON.parse(localStorage.getItem(LAB_DRAFT_KEY)||'{}').ts||0);
-    if (age < 7 * 24 * 3600 * 1000) showToast('📋 Черновик восстановлен');
-  }
-
-  const hint = document.getElementById('labSetupBowlHint');
-  if (!hint) return;
-  if (!currentUser || !token) { hint.style.display = 'none'; return; }
-  try {
-    const me = await api('/api/me');
-    const setup = me.setup || {};
-    if (setup.bowl || setup.bowl_type) {
-      lab.setupBowl = { bowl: setup.bowl || '', bowl_type: setup.bowl_type || '' };
-      const nameEl = document.getElementById('labSetupBowlName');
-      if (nameEl) {
-        const parts = [setup.bowl_type, setup.bowl].filter(Boolean);
-        nameEl.textContent = parts.join(' · ') || 'Моя чаша';
-      }
-      hint.style.display = '';
-    } else {
-      lab.setupBowl = null;
-      hint.style.display = 'none';
-    }
-  } catch(e) { hint.style.display = 'none'; }
-}
-
-function applySetupBowl() {
-  if (!lab.setupBowl) return;
-  const BOWL_TYPE_TO_SIZE = {
-    'убивашка': 20, 'стандарт': 20,
-    'фанел': 15, 'обратный фанел': 15,
-    'турка': 10, 'сифон': 10, 'triton': 10
-  };
-  const type = (lab.setupBowl.bowl_type || 'убивашка').toLowerCase();
-  const size = BOWL_TYPE_TO_SIZE[type] || 20;
-  lab.bowlSize = size;
-  // активируем нужную кнопку размера
-  document.querySelectorAll('.bowl-size-btn').forEach(b => {
-    const btnLabel = b.textContent.trim().toLowerCase();
-    const btnSize = {убивашка:20,фанел:15,турка:10,сифон:10}[btnLabel] || 0;
-    b.classList.toggle('active', btnSize === size);
-  });
-  // обновляем метку чаши с названием из сетапа
-  const bowlType = lab.setupBowl.bowl_type || {20:'Убивашка',15:'Фанел',10:'Турка'}[size] || 'Убивашка';
-  const bowlName = lab.setupBowl.bowl;
-  document.getElementById('labBowlLbl').textContent = bowlName
-    ? `${bowlType} · ${bowlName}`
-    : bowlType;
-  const applyBtn = document.getElementById('labSetupBowlBtn');
-  if (applyBtn) applyBtn.classList.add('active');
   renderTobList();
 }
 function setPackMethod(m, btn) {
@@ -1742,7 +1588,7 @@ async function saveMix() {
   try {
     const res = await api('/api/mixes','POST',{
       name,
-      bowl_type: {20:'убивашка',15:'фанел',10:'турка'}[lab.bowlSize]||'убивашка',
+      bowl_type: {20:'убивашка',15:'фанел',10:'сифон'}[lab.bowlSize]||'убивашка',
       bowl_grams: lab.bowlSize,
       pack_method: lab.packMethod,
       coal_tip: document.getElementById('labCoalLbl').textContent,
@@ -1756,7 +1602,6 @@ async function saveMix() {
       })),
     });
     showToast('✦ Микс сохранён!');
-    _labDraftClear();
     saveToHistory({mixName:name,tobaccos:lab.tobaccos,packMethod:lab.packMethod,bowlSize:lab.bowlSize});
     renderHistoryWidget();
     closePreview();
@@ -1922,7 +1767,7 @@ function renderPost(p, opts={}) {
     <button class="act-btn${p.i_liked?' liked':''}" id="lbtn${p.id}" onclick="toggleLike(${p.id},this)">
       ${p.i_liked?'❤️':'🤍'} <span id="lcnt${p.id}">${p.likes||0}</span>
     </button>
-    <button class="act-btn" id="cbtn${p.id}" onclick="openComments(${p.id})">💬 <span id="ccnt${p.id}">${p.comments||0}</span></button>
+    <button class="act-btn" id="cbtn${p.id}" onclick="toggleComments(this,${p.id})">💬 <span id="ccnt${p.id}">${p.comments||0}</span></button>
     ${opts.communityActions
       ? `<button class="act-btn" onclick="${opts.labOnclick}">⚗️ Лаба</button>`
       : `<button class="act-btn" onclick="openRateModal(${p.id},'${(p.name||'').replace(/'/g,"&apos;")}')">⭐</button>`
@@ -1992,14 +1837,7 @@ async function toggleSave(mixId, btn) {
 
 // ── AI GENERATOR ──
 function openAI() {
-  document.getElementById('aiResult').innerHTML = '';
-  document.getElementById('aiDesc').value = '';
-  const cabinetToggle = document.getElementById('aiCabinetToggle');
-  if (currentUser) {
-    cabinetToggle.style.display = 'block';
-  }
-  document.getElementById('aiModal').classList.add('open');
-  setTimeout(()=>document.getElementById('aiDesc').focus(), 300);
+  navigate('ai', document.getElementById('snav-ai') || document.getElementById('nav-ai'));
 }
 function closeAI() {
   document.getElementById('aiModal').classList.remove('open');
@@ -2007,45 +1845,196 @@ function closeAI() {
 }
 
 function fillAIEx(el) {
-  document.getElementById('aiDesc').value = el.textContent.replace(/^[^\s]+\s/,'');
-  document.getElementById('aiDesc').focus();
+  fillAIPageEx(el);
 }
 
-async function runAI() {
-  const desc = document.getElementById('aiDesc').value.trim();
-  if (!desc || desc.length < 5) { showToast('Напиши хотя бы 5 символов'); return; }
-  const res = document.getElementById('aiResult');
-  const useCabinet = document.getElementById('aiUseCabinet').checked;
+function fillAIPageEx(el) {
+  const v = el.textContent.replace(/^[^\s]+\s/,'');
+  const inp = document.getElementById('aiPageDesc');
+  if (inp) { inp.value = v; inp.focus(); }
+  const modalInp = document.getElementById('aiDesc');
+  if (modalInp) modalInp.value = v;
+}
 
-  let cabinetIds = [];
+function setAIPageMode(mode, el) {
+  aiPageMode = mode === 'single' ? 'single' : 'mix';
+  document.querySelectorAll('#aiPage .ai-mode-btn').forEach(b=>b.classList.remove('active'));
+  if (el) el.classList.add('active');
+  const mixOpts = document.getElementById('aiMixOpts');
+  if (mixOpts) mixOpts.style.display = aiPageMode === 'mix' ? 'flex' : 'none';
+}
+
+function renderAIMixCard(card, index) {
+  const itemsHtml = (card.items||[]).map((it,i)=>`
+    <div class="ai-result-item">
+      <div style="width:8px;height:8px;border-radius:50%;background:${COLORS[i%COLORS.length]};flex-shrink:0"></div>
+      <div style="flex:1;min-width:0">
+        <div class="ai-result-item-main">
+          <div style="min-width:0">
+            <div class="ai-result-item-title">${it.tobacco_name}</div>
+            <div class="ai-result-item-brand">${it.brand||''}</div>
+          </div>
+          <span class="ai-result-item-pct">${it.percentage}%</span>
+          ${it.shop_url?`<a class="ai-result-item-link" href="${it.shop_url}" target="_blank" rel="noopener noreferrer">в магазин</a>`:''}
+        </div>
+        ${(it.description || it.strength || it.rating)?`<div class="ai-result-item-sub">${it.description||''}${it.description&&it.strength?' · ':''}${it.strength||''}${it.rating?` · ★ ${it.rating}`:''}</div>`:''}
+      </div>
+    </div>`).join('');
+  return `<div class="ai-result-card" style="margin-top:0">
+    <div class="ai-result-name">${card.name}</div>
+    ${card.description?`<div class="ai-result-desc">${card.description}</div>`:''}
+    <div class="ai-result-items">${itemsHtml}</div>
+    <div class="ai-tech">
+      ${card.bowl_type?`<span class="ai-tech-chip">чаша: ${card.bowl_type}</span>`:''}
+      ${card.coal_tip?`<span class="ai-tech-chip">угли: ${card.coal_tip}</span>`:''}
+      ${card.pack_method?`<span class="ai-tech-chip">${PACK_ICONS[card.pack_method]||'🫕'} ${card.pack_method}</span>`:''}
+    </div>
+    <div class="ai-actions">
+      <button class="ai-use-btn" onclick="applyAISearchMix(${index})">⚗️ В Лабу</button>
+      <button class="ai-save-btn" onclick="saveAISearchMix(${index})">💾 Сохранить</button>
+    </div>
+  </div>`;
+}
+
+function renderAISingleCard(card, index) {
+  return `<div class="ai-single-card">
+    <div class="ai-single-title">${card.name}</div>
+    <div class="ai-single-meta">${card.brand||'—'}${card.grams?` · ${card.grams}г`:''}${card.rating?` · ★ ${card.rating}`:''}</div>
+    ${card.description?`<div class="ai-single-desc">${card.description}</div>`:''}
+    <div class="ai-tech">
+      ${card.bowl_type?`<span class="ai-tech-chip">чаша: ${card.bowl_type}</span>`:''}
+      ${card.coal_tip?`<span class="ai-tech-chip">угли: ${card.coal_tip}</span>`:''}
+      ${card.strength?`<span class="ai-tech-chip">${card.strength}</span>`:''}
+    </div>
+    <div class="ai-single-footer">
+      ${card.shop_url?`<a class="ai-result-item-link" href="${card.shop_url}" target="_blank" rel="noopener noreferrer">в магазин</a>`:''}
+      <button class="ai-use-btn" style="margin-top:0;padding:8px 10px;font-size:0.78rem;width:auto" onclick="applyAISingle(${index})">+ в лабораторию</button>
+    </div>
+  </div>`;
+}
+
+async function runAIFullSearch() {
+  const input = document.getElementById('aiPageDesc');
+  const desc = (input?.value || '').trim();
+  if (!desc || desc.length < 3) { showToast('Напиши хотя бы 3 символа'); return; }
+  const res = document.getElementById('aiPageResults');
+  if (!res) return;
+
+  const useCabinet = !!document.getElementById('aiPageUseCabinet')?.checked;
+  let cabinetItems = [];
   if (useCabinet && currentUser) {
     try {
       const me = await api('/api/me');
-      cabinetIds = (me.tobaccos||[]).map(t=>t.id);
-      if (!cabinetIds.length) { showToast('Кабинет пуст — используем все табаки'); }
+      cabinetItems = (me.tobaccos||[]).map(t=>({
+        name: t.name || '',
+        brand: t.brand || '',
+      }));
+      if (!cabinetItems.length) {
+        res.innerHTML = '<div class="ai-page-empty" style="grid-column:1/-1">В кабинете пока нет табаков для фильтра.</div>';
+        return;
+      }
     } catch(e) {}
   }
 
-  res.innerHTML = '<div class="loading" style="padding:16px 0"><div class="spinner teal"></div>ИИ думает...</div>';
+  res.innerHTML = '<div class="loading" style="grid-column:1/-1;padding:22px 0"><div class="spinner teal"></div>ИИ думает...</div>';
   try {
-    const data = await api('/api/llm/generate', 'POST', { prompt: desc, cabinet_ids: cabinetIds });
-    _pendingAIMix = data;
-    const itemsHtml = data.items.map((it,i)=>`
-      <div class="ai-result-item">
-        <div style="width:8px;height:8px;border-radius:50%;background:${COLORS[i%COLORS.length]};flex-shrink:0"></div>
-        <span style="flex:1"><b>${it.tobacco_name}</b> <span style="color:var(--text3)">${it.brand}</span></span>
-        <span style="font-family:monospace;color:var(--gold);font-size:0.7rem">${it.percentage}%</span>
-      </div>`).join('');
-    res.innerHTML = `<div class="ai-result-card">
-      <div class="ai-result-name">${data.name}</div>
-      ${data.description?`<div class="ai-result-desc">${data.description}</div>`:''}
-      <div class="ai-result-items">${itemsHtml}</div>
-      <div class="ai-pack">${PACK_ICONS[data.pack_method]||'🫕'} ${data.pack_method}</div>
-      <button class="ai-use-btn" onclick="applyAIMix()">⚗️ Загрузить в Лабораторию</button>
-    </div>`;
+    const mixParts = parseInt(document.getElementById('aiMixParts')?.value || '0', 10) || 0;
+    const data = await api('/api/llm/search', 'POST', {
+      prompt: desc,
+      mode: aiPageMode,
+      mix_parts: mixParts,
+      max_results: 4,
+      use_cabinet: useCabinet,
+      cabinet_items: cabinetItems,
+    });
+    _pendingAISearchResults = data.results || [];
+    if (!_pendingAISearchResults.length) {
+      res.innerHTML = '<div class="ai-page-empty" style="grid-column:1/-1">Ничего не найдено, попробуй переформулировать запрос.</div>';
+      return;
+    }
+    if (aiPageMode === 'mix') {
+      res.innerHTML = _pendingAISearchResults.map((m,i)=>renderAIMixCard(m,i)).join('');
+    } else {
+      res.innerHTML = _pendingAISearchResults.map((m,i)=>renderAISingleCard(m,i)).join('');
+    }
   } catch(e) {
-    res.innerHTML = `<div style="padding:12px;background:rgba(240,107,107,0.08);border:1px solid rgba(240,107,107,0.2);border-radius:12px;color:var(--red);font-size:0.82rem">${e.message}</div>`;
+    res.innerHTML = `<div class="ai-page-empty" style="grid-column:1/-1;color:var(--red);border-color:rgba(240,107,107,0.25)">${e.message}</div>`;
   }
+}
+
+function runAI() { return runAIFullSearch(); }
+
+function applyAISearchMix(idx) {
+  const m = (_pendingAISearchResults||[])[idx];
+  if (!m) return;
+  _pendingAIMix = m;
+  applyAIMix();
+}
+
+async function saveAISearchMix(idx) {
+  const m = (_pendingAISearchResults||[])[idx];
+  if (!m) return;
+  if (!token) { openAuth(); return; }
+  const items = (m.items||[]).map((t, i)=>({
+    ali_id: t.ali_id||null,
+    tobacco_name: t.tobacco_name,
+    brand: t.brand,
+    percentage: t.percentage,
+    sort_order: i,
+  }));
+  const total = items.reduce((s,t)=>s+(parseInt(t.percentage,10)||0),0);
+  if (total !== 100) {
+    showToast(`Сумма ${total}% — должно быть ровно 100%`);
+    return;
+  }
+  const bt = (m.bowl_type||'').toLowerCase();
+  const bowlGrams = bt.includes('убива') ? 20 : (bt.includes('сифон') ? 10 : 15);
+  try {
+    await api('/api/mixes','POST',{
+      name: (m.name||'ИИ микс').trim(),
+      description: m.description||'',
+      bowl_type: m.bowl_type || 'фанел',
+      bowl_grams: bowlGrams,
+      pack_method: m.pack_method || 'секторами',
+      coal_tip: m.coal_tip || '',
+      strength: m.strength || 'средний',
+      items,
+    });
+    showToast('✦ Микс сохранён');
+  } catch(e) {
+    showToast('Ошибка: '+e.message);
+  }
+}
+
+function _rebalanceLabPercentages() {
+  if (!lab.tobaccos.length) return;
+  const n = lab.tobaccos.length;
+  const base = Math.floor(100 / n);
+  let rem = 100 - base * n;
+  lab.tobaccos = lab.tobaccos.map((t, i) => ({...t, percentage: base + (i < rem ? 1 : 0)}));
+}
+
+function applyAISingle(idx) {
+  const it = (_pendingAISearchResults||[])[idx];
+  if (!it) return;
+  if (lab.tobaccos.length >= 4) {
+    showToast('В чаше максимум 4 позиции');
+    return;
+  }
+  lab.tobaccos.push({
+    ali_id: it.id || null,
+    name: it.name,
+    brand: it.brand || '',
+    strength: it.strength || 'средний',
+    percentage: 0,
+    color: COLORS[lab.tobaccos.length % COLORS.length],
+  });
+  _rebalanceLabPercentages();
+  renderTobList();
+  renderBowl();
+  updateLabDetails();
+  navigate('lab', document.getElementById('snav-lab') || document.getElementById('nav-lab'));
+  showToast('Табак добавлен в Лабораторию');
 }
 
 function applyAIMix() {
@@ -2066,6 +2055,18 @@ function applyAIMix() {
   document.querySelectorAll('.pack-btn').forEach(b=>{
     b.classList.toggle('active', b.dataset.method===pm);
   });
+  const bt = (m.bowl_type||'').toLowerCase();
+  if (bt.includes('убива')) lab.bowlSize = 20;
+  else if (bt.includes('сифон')) lab.bowlSize = 10;
+  else lab.bowlSize = 15;
+  document.querySelectorAll('.bowl-size-btn').forEach(b=>b.classList.remove('active'));
+  const activeBowlBtn = Array.from(document.querySelectorAll('.bowl-size-btn')).find(b => {
+    const txt = (b.textContent||'').toLowerCase();
+    return (lab.bowlSize===20 && txt.includes('убива')) ||
+           (lab.bowlSize===15 && txt.includes('фанел')) ||
+           (lab.bowlSize===10 && txt.includes('сифон'));
+  });
+  if (activeBowlBtn) activeBowlBtn.classList.add('active');
   renderTobList();
   renderBowl();
   updateLabDetails();
@@ -2093,18 +2094,15 @@ async function renderProfile() {
   }
   el.innerHTML = '<div style="padding:60px 20px;display:flex;align-items:center;justify-content:center;gap:10px;color:var(--text3);font-size:0.85rem"><div class="spinner"></div>Загрузка...</div>';
   try {
-    const [data, saved] = await Promise.all([
-      api(`/api/profile/${currentUser.username}`),
-      token ? api('/api/saved').catch(()=>[]) : Promise.resolve([]),
-    ]);
+    const data = await api(`/api/profile/${currentUser.username}`);
     currentUser.avatar = data.avatar;
     localStorage.setItem('hl_user', JSON.stringify(currentUser));
     updateFeedTopBar();
-    el.innerHTML = buildProfileHTML(data, saved);
+    el.innerHTML = buildProfileHTML(data);
     // async: load equipment photos into setup widget (always, for defaults too)
     _loadSetupPhotos(data.setup||{});
   } catch(e) {
-    el.innerHTML = buildProfileHTML({ username: currentUser.username, bio:'', avatar:'🧔', setup:{}, tobaccos:[], mixes:[], stats:{mixes:0,followers:0,following:0} }, []);
+    el.innerHTML = buildProfileHTML({ username: currentUser.username, bio:'', avatar:'🧔', setup:{}, tobaccos:[], mixes:[], stats:{mixes:0,followers:0,following:0} });
   }
 }
 
@@ -2175,48 +2173,33 @@ function buildSetupRow(icon, type, label, value, extra1, extra2) {
   </div>`;
 }
 
-function _buildMixCard(m) {
-  const total = m.items.reduce((s,i)=>s+i.percentage,0)||100;
-  const svg = buildMiniSvg(m.items.map((it,i)=>({...it,color:COLORS[i%COLORS.length]})), total, 80, 40, 40, 34, 13, m.pack_method);
-  const tobNames = m.items.map(i=>i.tobacco_name||i.name).join(', ');
-  const strLabel = {легкий:'🟢',средний:'🟡',крепкий:'🔴',убийца:'💀'}[m.strength]||'';
-  return `<div class="p-mix-card" onclick="loadMixToLab(${JSON.stringify(m).replace(/"/g,'&quot;')})">
-    <div class="p-mix-card-vis">${svg}
-      <div style="position:absolute;inset:0;background:radial-gradient(ellipse at center,transparent 40%,rgba(0,0,0,0.4))"></div>
-    </div>
-    <div class="p-mix-card-body">
-      <div class="p-mix-card-name">${m.name}</div>
-      <div class="p-mix-card-tobs">${tobNames||'—'}</div>
-      <div class="p-mix-card-meta">
-        <span>${strLabel} ${m.strength||''}</span>
-        <span style="margin-left:auto">⚗️ ${m.pack_method||''}</span>
-      </div>
-    </div>
-  </div>`;
-}
-
-function buildProfileHTML(d, saved=[]) {
+function buildProfileHTML(d) {
   const handle = d.username.toLowerCase().replace(/\s+/g,'_');
 
   const mixCards = d.mixes.length
-    ? d.mixes.map(_buildMixCard).join('')
+    ? d.mixes.map(m => {
+        const total = m.items.reduce((s,i)=>s+i.percentage,0)||100;
+        const svg = buildMiniSvg(m.items.map((it,i)=>({...it,color:COLORS[i%COLORS.length]})), total, 80, 40, 40, 34, 13, m.pack_method);
+        const tobNames = m.items.map(i=>i.tobacco_name||i.name).join(', ');
+        const strLabel = {легкий:'🟢',средний:'🟡',крепкий:'🔴',убийца:'💀'}[m.strength]||'';
+        return `<div class="p-mix-card" onclick="loadMixToLab(${JSON.stringify(m).replace(/"/g,'&quot;')})">
+          <div class="p-mix-card-vis">${svg}
+            <div style="position:absolute;inset:0;background:radial-gradient(ellipse at center,transparent 40%,rgba(0,0,0,0.4))"></div>
+          </div>
+          <div class="p-mix-card-body">
+            <div class="p-mix-card-name">${m.name}</div>
+            <div class="p-mix-card-tobs">${tobNames||'—'}</div>
+            <div class="p-mix-card-meta">
+              <span>${strLabel} ${m.strength||''}</span>
+              <span style="margin-left:auto">⚗️ ${m.pack_method||''}</span>
+            </div>
+          </div>
+        </div>`;
+      }).join('')
     : `<div style="grid-column:1/-1;padding:48px 24px;text-align:center;color:var(--text3)">
         <div style="font-size:2.5rem;margin-bottom:12px">⚗️</div>
         <div style="font-size:0.95rem;font-weight:600;margin-bottom:6px">Миксов пока нет</div>
         <div style="font-size:0.8rem">Создай первый микс в Лаборатории</div>
-      </div>`;
-
-  const savedCards = saved.length
-    ? saved.map(m => {
-        const card = _buildMixCard(m);
-        // add author badge
-        return card.replace('<div class="p-mix-card-body">',
-          `<div class="p-mix-card-body"><div style="font-size:0.65rem;color:var(--text3);margin-bottom:4px">от ${m.username||''}</div>`);
-      }).join('')
-    : `<div style="grid-column:1/-1;padding:48px 24px;text-align:center;color:var(--text3)">
-        <div style="font-size:2.5rem;margin-bottom:12px">🔖</div>
-        <div style="font-size:0.95rem;font-weight:600;margin-bottom:6px">Нет сохранённых миксов</div>
-        <div style="font-size:0.8rem">Сохраняй понравившиеся миксы из ленты</div>
       </div>`;
 
   const tobs = d.tobaccos.map((t,i)=>`<div class="tob-chip">
@@ -2280,19 +2263,15 @@ function buildProfileHTML(d, saved=[]) {
   </div>
   <div class="p-content">
     <div>
-      <div style="display:flex;gap:0;margin-bottom:16px;border-bottom:1px solid var(--border)">
-        <button class="p-mix-tab active" id="pTabMixes" onclick="switchProfileTab('mixes')">Мои миксы <span style="color:var(--text3);font-weight:400;font-size:0.78rem">${d.stats.mixes}</span></button>
-        <button class="p-mix-tab" id="pTabSaved" onclick="switchProfileTab('saved')">Сохранённые <span style="color:var(--text3);font-weight:400;font-size:0.78rem">${saved.length}</span></button>
-      </div>
-      <div id="pMixesPanel" class="p-mix-cards">${mixCards}</div>
-      <div id="pSavedPanel" class="p-mix-cards" style="display:none">${savedCards}</div>
+      <div class="p-section-title" style="margin-bottom:16px">Миксы <span style="color:var(--text3);font-weight:400;font-size:0.8rem">${d.stats.mixes} шт.</span></div>
+      <div class="p-mix-cards">${mixCards}</div>
     </div>
     <div class="p-sidebar">
       <div class="p-widget">
         <div class="p-widget-title">Сетап <span class="p-widget-add" onclick="openSetupModal()">изменить</span></div>
         ${buildSetupRow('🔱','hookah','Кальян',d.setup?.hookah,d.setup?.flask_shape,d.setup?.flask_color)}
         ${buildSetupRow('🏺','bowl','Чаша',d.setup?.bowl,d.setup?.bowl_type)}
-        ${buildSetupRow('🔥','coal','Угли',d.setup?.coal,d.setup?.coal_size,d.setup?.coal_warmup?'🧢 '+d.setup.coal_warmup:undefined)}
+        ${buildSetupRow('🔥','coal','Угли',d.setup?.coal)}
         ${buildSetupRow('🌸','hmd','Калауд / ХМД',d.setup?.foil)}
       </div>
       <div class="p-widget">
@@ -2301,13 +2280,6 @@ function buildProfileHTML(d, saved=[]) {
       </div>
     </div>
   </div>`;
-}
-
-function switchProfileTab(tab) {
-  document.getElementById('pTabMixes').classList.toggle('active', tab==='mixes');
-  document.getElementById('pTabSaved').classList.toggle('active', tab==='saved');
-  document.getElementById('pMixesPanel').style.display = tab==='mixes' ? '' : 'none';
-  document.getElementById('pSavedPanel').style.display = tab==='saved' ? '' : 'none';
 }
 
 function loadMixToLab(m) {
@@ -2358,8 +2330,6 @@ function openSetupModal() {
     document.getElementById('setupFlaskShape').value= s.flask_shape||'';
     document.getElementById('setupFlaskColor').value= s.flask_color||'';
     document.getElementById('setupBowlType').value  = s.bowl_type||'';
-    document.getElementById('setupCoalSize').value   = s.coal_size||'';
-    document.getElementById('setupCoalWarmup').value = s.coal_warmup||'';
     // restore previews for saved values (or show defaults)
     [['hookah','hookah','hookah-preview'],['bowl','bowl','bowl-preview'],
      ['coal','coal','coal-preview'],['foil','hmd','foil-preview']].forEach(([field,type,prevId])=>{
@@ -2475,8 +2445,6 @@ function syncChips() {
     ['setupFlaskShape','chips-flask-shape'],
     ['setupFlaskColor','chips-flask-color'],
     ['setupBowlType','chips-bowl-type'],
-    ['setupCoalSize','chips-coal-size'],
-    ['setupCoalWarmup','chips-coal-warmup'],
     ['setupFoil','chips-foil'],
   ].forEach(([inp,chips]) => {
     const val = document.getElementById(inp)?.value?.trim().toLowerCase();
@@ -2493,8 +2461,6 @@ async function saveSetupModal() {
       bowl:        document.getElementById('setupBowl').value.trim(),
       bowl_type:   document.getElementById('setupBowlType').value.trim(),
       coal:        document.getElementById('setupCoal').value.trim(),
-      coal_size:   document.getElementById('setupCoalSize').value.trim(),
-      coal_warmup: document.getElementById('setupCoalWarmup').value.trim(),
       foil:        document.getElementById('setupFoil').value.trim(),
       flask_shape: document.getElementById('setupFlaskShape').value.trim(),
       flask_color: document.getElementById('setupFlaskColor').value.trim(),
@@ -2583,123 +2549,93 @@ function timeAgo(iso) {
 // ── CATALOG ──────────────────────────────────────────────────────
 let catOffset = 0;
 let catInStock = false;
-let catBrand = '';
-let catTag = '';
+let catAISearch = false;
 let catTimer = null;
-let activeCatTab = 'tobaccos';
-let mixCatOffset = 0;
-const _tobCache = {};
-
-async function loadBrandFilter() {
-  try {
-    const brands = await api('/api/brands');
-    const sel = document.getElementById('catBrandSel');
-    if (!sel || sel.options.length > 1) return;
-    brands.forEach(b => {
-      const opt = document.createElement('option');
-      opt.value = b.brand;
-      opt.textContent = `${b.brand} (${b.in_stock_count||0})`;
-      sel.appendChild(opt);
-    });
-  } catch(e) {}
-}
-
-async function loadFlavorTags() {
-  const row = document.getElementById('flavorTagsRow');
-  if (!row || row.children.length > 0) return;
-  try {
-    const tags = await api('/api/flavor-tags?limit=18');
-    row.innerHTML = tags.map(t =>
-      `<button class="flavor-chip" onclick="setCatTag('${t.tag.replace(/'/g,"\\'")}')">${t.tag}</button>`
-    ).join('');
-  } catch(e) {}
-}
-
-function setCatTag(tag) {
-  const prev = catTag;
-  catTag = prev === tag ? '' : tag;
-  document.querySelectorAll('.flavor-chip').forEach(b => {
-    b.classList.toggle('active', b.textContent.trim() === catTag);
-  });
-  loadCatalog(0);
-}
-
-function switchCatTab(tab) {
-  activeCatTab = tab;
-  document.querySelectorAll('.cat-tab').forEach(b => b.classList.remove('active'));
-  document.getElementById('catTab-' + tab).classList.add('active');
-  document.getElementById('catSection-tobaccos').style.display = tab === 'tobaccos' ? '' : 'none';
-  document.getElementById('catSection-mixes').style.display   = tab === 'mixes'    ? '' : 'none';
-  const ph = tab === 'tobaccos' ? 'Поиск по названию, бренду...' : 'Поиск по названию микса...';
-  document.getElementById('catSearch').placeholder = ph;
-  if (tab === 'tobaccos') loadCatalog(0);
-  else loadMixCatalog(0);
-}
-
-function debounceCatalog() {
-  clearTimeout(catTimer);
-  catTimer = setTimeout(() => {
-    if (activeCatTab === 'mixes') loadMixCatalog(0);
-    else loadCatalog(0);
-  }, 400);
-}
+function debounceCatalog() { clearTimeout(catTimer); catTimer = setTimeout(()=>loadCatalog(0),400); }
 function toggleCatInStock() {
   catInStock = !catInStock;
   document.getElementById('catInStock').classList.toggle('active', catInStock);
   loadCatalog(0);
 }
+function toggleCatAISearch() {
+  catAISearch = !catAISearch;
+  document.getElementById('catAISearch').classList.toggle('active', catAISearch);
+  loadCatalog(0);
+}
+function renderCatalogAISummary(ai, rawQuery) {
+  const box = document.getElementById('catAISummary');
+  if (!catAISearch || !ai) {
+    box.style.display = 'none';
+    box.innerHTML = '';
+    return;
+  }
+  const clean = ai.clean_query || rawQuery || '';
+  const searchQ = ai.search_query || clean || '';
+  const tags = (ai.tags||[]).slice(0,8).map(t=>`<span class="tob-card-tag">${t}</span>`).join('');
+  const strength = ai.strength_pref || 'любой';
+  box.innerHTML = `
+    <div><b>AI:</b> ${clean}</div>
+    <div style="margin-top:3px;color:var(--text3)">Поисковая фраза: ${searchQ} · Крепость: ${strength}</div>
+    ${tags?`<div class="tob-card-tags" style="margin-top:7px;min-height:auto">${tags}</div>`:''}
+  `;
+  box.style.display = 'block';
+}
 async function loadCatalog(offset=0) {
   catOffset = offset;
-  const q = document.getElementById('catSearch').value;
+  const q = document.getElementById('catSearch').value.trim();
   const sort = document.getElementById('catSort').value;
   const strength = document.getElementById('catStrength').value;
   const grid = document.getElementById('catalogGrid');
+  const totalEl = document.getElementById('catalogTotal');
+  const moreEl = document.getElementById('catalogMore');
   if (offset === 0) grid.innerHTML = '<div class="loading"><div class="spinner"></div>Загрузка...</div>';
+
+  if (catAISearch && q.length < 2) {
+    grid.innerHTML = '<div style="padding:34px;text-align:center;color:var(--text3)">Введите минимум 2 символа для ИИ-поиска</div>';
+    totalEl.textContent = '0 табаков';
+    moreEl.style.display = 'none';
+    renderCatalogAISummary(null, q);
+    return;
+  }
+
   try {
-    const params = new URLSearchParams({q,sort,strength,brand:catBrand,tag:catTag,in_stock:catInStock,limit:40,offset});
-    const data = await api('/api/catalog?' + params);
-    document.getElementById('catalogTotal').textContent = data.total.toLocaleString('ru') + ' табаков';
-    document.getElementById('catalogMore').style.display = data.items.length===40 ? 'block' : 'none';
+    const endpoint = catAISearch ? '/api/catalog/ai-search' : '/api/catalog';
+    const params = new URLSearchParams({q,sort,strength,in_stock:catInStock,limit:40,offset});
+    const data = await api(endpoint + '?' + params);
+    totalEl.textContent = data.total + ' табаков';
+    moreEl.style.display = data.items.length===40 ? 'block' : 'none';
+    renderCatalogAISummary(data.ai, q);
     const cards = data.items.map(t => {
-      _tobCache[t.id] = t;
       const tags = (t.flavor_tags||[]).slice(0,3).map(g=>`<span class="tob-card-tag">${g}</span>`).join('');
       const strCol = t.strength_user||t.strength_official||'';
       const disc = t.has_discount && t.price_before_discount ? `<span class="tob-card-price-old">${t.price_before_discount}₽</span>` : '';
       const stock = t.in_stock ? '#4ade80' : '#f06b6b';
-      const brandEmoji = {'Darkside':'🟣','Must':'🔵','Satyr':'🟤','Tangiers':'🟠','Al Fakher':'🟡','WTO':'🟢','Fumari':'🔴','Brusko':'⚫'}[t.brand] || '🍃';
-      const imgHtml = t.image_url
-        ? `<img src="${t.image_url}" alt="" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">`
-        : '';
-      const reviewLine = t.avg_rating
-        ? `<div class="tob-card-reviews">⭐ ${t.avg_rating}${t.total_reviews?' · '+t.total_reviews+' отзывов':''}</div>`
-        : '';
       return `<div class="tob-card" onclick="showTobaccoDetail(${t.id})">
-        <div class="tob-card-img">
-          <div class="tob-card-stock" style="background:${stock}"></div>
-          ${imgHtml}
-          <div class="tob-card-img-placeholder" style="display:${t.image_url?'none':'flex'};position:absolute;inset:0;align-items:center;justify-content:center;font-size:3rem">${brandEmoji}</div>
-        </div>
-        <div class="tob-card-body">
-          <div class="tob-card-brand">${t.brand}${t.line?' · '+t.line:''}</div>
-          <div class="tob-card-name">${t.name.replace(/Табак для кальяна\s*/i,'')}</div>
-          <div class="tob-card-tags">${tags}</div>
-          ${reviewLine}
-          <div class="tob-card-footer">
-            <div>
-              <div style="display:flex;align-items:baseline;gap:4px">
-                <span class="tob-card-price">${t.price}₽</span>${disc}
-              </div>
-              <div style="font-size:0.62rem;color:var(--text3)">${t.weight||''}</div>
+        <div class="tob-card-stock" style="background:${stock}"></div>
+        <div class="tob-card-brand">${t.brand}${t.line?' · '+t.line:''}</div>
+        <div class="tob-card-name">${t.name.replace(/Табак для кальяна\s*/i,'')}</div>
+        <div class="tob-card-tags">${tags}</div>
+        <div class="tob-card-footer">
+          <div>
+            <div style="display:flex;align-items:baseline;gap:5px">
+              <span class="tob-card-price">${t.price}₽</span>${disc}
             </div>
-            ${strCol?`<span class="tob-card-strength">${strCol}</span>`:''}
-            <button class="tob-card-add" onclick="event.stopPropagation();addFromCatalog(${JSON.stringify(t).replace(/"/g,'&quot;')})">+ В микс</button>
+            <div style="font-size:0.67rem;color:var(--text3)">${t.weight||''}</div>
           </div>
+          <div style="display:flex;flex-direction:column;align-items:flex-end;gap:5px">
+            ${t.avg_rating?`<span class="tob-card-rating">⭐ ${t.avg_rating}</span>`:''}
+            ${strCol?`<span class="tob-card-strength">${strCol}</span>`:''}
+          </div>
+          <button class="tob-card-add" onclick="event.stopPropagation();addFromCatalog(${JSON.stringify(t).replace(/"/g,'&quot;')})">+ В микс</button>
         </div>
       </div>`;
     }).join('');
     if (offset === 0) grid.innerHTML = cards || '<div style="padding:40px;text-align:center;color:var(--text3)">Ничего не найдено</div>';
     else grid.innerHTML += cards;
-  } catch(e) { grid.innerHTML = '<div style="padding:40px;text-align:center;color:var(--red)">Ошибка загрузки</div>'; }
+  } catch(e) {
+    renderCatalogAISummary(null, q);
+    grid.innerHTML = '<div style="padding:40px;text-align:center;color:var(--red)">Ошибка загрузки</div>';
+  }
 }
 function loadCatalogMore() { loadCatalog(catOffset + 40); }
 function addFromCatalog(t) {
@@ -2707,215 +2643,60 @@ function addFromCatalog(t) {
   navigate('lab', document.getElementById('snav-lab'));
   showToast('Добавлено в лабораторию ⚗️');
 }
-async function showTobaccoDetail(id) {
-  const modal = document.getElementById('tobDetailModal');
-  const content = document.getElementById('tobDetailContent');
-  modal.classList.add('open');
-  content.innerHTML = '<div class="loading" style="padding:40px 20px"><div class="spinner"></div></div>';
-  const cached = _tobCache[id] || {};
-  try {
-    const data = await api(`/api/tobaccos/${id}/reviews`);
-    const info = data.htr_info || {};
-    const tob = cached;
+function showTobaccoDetail(id) { /* TODO: открыть страницу табака с отзывами */ }
 
-    const cleanName = (tob.name||'').replace(/Табак для кальяна\s*/i,'');
-    const tagHtml = (info.flavor_tags || tob.flavor_tags || [])
-      .map(t=>`<span class="tob-card-tag">${t}</span>`).join('');
-    const strength = info.strength_user || info.strength_official || tob.strength_user || tob.strength_official || '';
-
-    const ratingBlock = info.avg_rating ? `
-      <div class="tob-detail-rating-row">
-        <div class="tob-detail-score">⭐ ${info.avg_rating}</div>
-        <div class="tob-detail-meta">
-          <div>${info.total_reviews||0} отзывов · ${info.total_ratings||0} оценок</div>
-          ${info.pct_recommend?`<div class="tob-detail-recommend">👍 ${info.pct_recommend}% рекомендуют</div>`:''}
-          ${strength?`<div>${strength}</div>`:''}
-        </div>
-      </div>` : (tob.avg_rating ? `<div class="tob-detail-rating-row"><div class="tob-detail-score">⭐ ${tob.avg_rating}</div></div>` : '');
-
-    const reviewsHtml = data.reviews.length
-      ? data.reviews.map(r => `<div class="review-item">
-          <div class="review-header">
-            <span class="review-rating-badge">★ ${r.rating}</span>
-            <span class="review-user">@${r.username||'аноним'}</span>
-            <span class="review-date">${r.reviewed_at ? new Date(r.reviewed_at).toLocaleDateString('ru') : ''}</span>
-          </div>
-          <div class="review-text">${escHtml(r.review_text||'')}</div>
-          ${r.likes?`<div class="review-likes">👍 ${r.likes}</div>`:''}
-        </div>`).join('')
-      : `<div style="color:var(--text3);font-size:0.85rem;padding:12px 0">Отзывов пока нет</div>`;
-
-    content.innerHTML = `
-      <div style="font-size:0.67rem;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px">${tob.brand||''}</div>
-      <div style="font-size:1.15rem;font-weight:700;line-height:1.3;margin-bottom:10px">${cleanName}</div>
-      ${tob.price ? `<div style="font-size:1rem;font-weight:700;color:var(--gold);margin-bottom:8px">${tob.price}₽ <span style="font-size:0.73rem;font-weight:400;color:var(--text3)">${tob.weight||''}</span></div>` : ''}
-      ${ratingBlock}
-      <div style="display:flex;flex-wrap:wrap;gap:5px;margin-bottom:14px">${tagHtml}</div>
-      <button class="tob-card-add" style="margin-bottom:16px;width:100%;padding:11px" onclick="addFromCatalog(${JSON.stringify(tob).replace(/"/g,'&quot;')});closeTobDetail()">⚗️ Добавить в микс</button>
-      <div style="font-size:0.7rem;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;border-top:1px solid var(--border);padding-top:14px">
-        Отзывы HTReviews (${data.reviews.length})
-      </div>
-      <div class="review-list">${reviewsHtml}</div>
-    `;
-  } catch(e) {
-    content.innerHTML = '<div style="color:var(--red);padding:20px">Ошибка загрузки данных</div>';
-  }
-}
-function closeTobDetail() { document.getElementById('tobDetailModal').classList.remove('open'); }
-
-// ── MIXES CATALOG ─────────────────────────────────────────────────
-async function loadMixCatalog(offset = 0) {
-  mixCatOffset = offset;
-  const q        = document.getElementById('catSearch').value;
-  const sort     = document.getElementById('mixCatSort').value;
-  const strength = document.getElementById('mixCatStrength').value;
-  const bowl     = document.getElementById('mixCatBowl').value;
-  const grid     = document.getElementById('mixCatalogGrid');
-  if (offset === 0) grid.innerHTML = '<div class="loading"><div class="spinner"></div>Загрузка...</div>';
-  try {
-    const params = new URLSearchParams({q, sort, strength, bowl_type: bowl, limit: 20, offset});
-    const data = await api('/api/catalog/mixes?' + params);
-    document.getElementById('catalogTotal').textContent = data.total + ' миксов';
-    document.getElementById('mixCatalogMore').style.display = data.items.length === 20 ? 'block' : 'none';
-    const cards = data.items.map(m => renderMixCatCard(m)).join('');
-    if (offset === 0) grid.innerHTML = cards || '<div style="padding:40px;text-align:center;color:var(--text3)">Пока нет миксов</div>';
-    else grid.innerHTML += cards;
-  } catch(e) { grid.innerHTML = '<div style="padding:40px;text-align:center;color:var(--red)">Ошибка загрузки</div>'; }
-}
-function loadMixCatalogMore() { loadMixCatalog(mixCatOffset + 20); }
-
-function renderMixCatCard(m) {
-  const colors = m.items.map((_,i) => COLORS[i % COLORS.length]);
-  const items  = m.items.map((it,i) => ({...it, color: colors[i]}));
-  const total  = items.reduce((s,t) => s + (t.percentage||0), 0);
-  const svg    = buildMiniSvg(items, total, 64, 32, 32, 28, 10, m.pack_method||'секторами');
-  const packIcon = PACK_ICONS[m.pack_method] || '🥧';
-  const preview  = m.items.slice(0,3).map(i => `${i.brand} ${i.tobacco_name}`).join(' · ');
-  const mEnc     = JSON.stringify(m).replace(/"/g,'&quot;');
-  return `<div class="mix-cat-card" onclick="openMixDetail(this,${mEnc})">
-    ${svg}
-    <div class="mix-cat-body">
-      <div class="mix-cat-name">${escHtml(m.name)}</div>
-      <div class="mix-cat-author">@${m.username} · ${timeAgo(m.created_at)}</div>
-      <div class="mix-cat-items">${escHtml(preview)}${m.items.length>3?' +ещё':''}</div>
-      <div class="tob-card-tags" style="margin:4px 0 0">
-        ${m.bowl_type?`<span class="tob-card-tag">☕ ${m.bowl_type}</span>`:''}
-        <span class="tob-card-tag">${packIcon} ${m.pack_method||'секторами'}</span>
-        ${m.strength?`<span class="tob-card-tag">${m.strength}</span>`:''}
-      </div>
-      <div class="mix-cat-footer">
-        <span class="mix-cat-likes">❤️ ${m.likes||0}</span>
-        <button class="mix-cat-btn" onclick="event.stopPropagation();addMixItemsToLab(${mEnc})">⚗️ В лабу</button>
-      </div>
-    </div>
-  </div>`;
-}
-
-function addMixItemsToLab(m) {
-  const colors = m.items.map((_,i) => COLORS[i % COLORS.length]);
-  lab.tobaccos = m.items.map((it,i) => ({
-    ali_id: it.ali_id||null, name: it.tobacco_name, brand: it.brand,
-    percentage: it.percentage, color: colors[i], strength: 'средний'
-  }));
-  document.getElementById('labMixName').value = m.name;
-  navigate('lab', document.getElementById('snav-lab'));
-  renderTobList(); renderBowl(); updateLabDetails();
-  showToast('Микс загружен в лабораторию ⚗️');
-}
-
-function openMixDetail(el, m) {
-  const colors = m.items.map((_,i) => COLORS[i % COLORS.length]);
-  const postData = {...m, items: m.items.map((it,i) => ({...it, color: colors[i], strength: it.strength||'средний'}))};
-  document.getElementById('mixDetailTitle').textContent = m.name;
-  document.getElementById('mixDetailContent').innerHTML = renderPost(postData, {communityActions: false, bowlGrams: m.bowl_grams||20});
-  document.getElementById('mixDetailModal').classList.add('open');
-}
-function closeMixDetail() { document.getElementById('mixDetailModal').classList.remove('open'); }
-
-// ── COMMENTS MODAL ───────────────────────────────────────────────
-let _commentsMixId = null;
-
-async function openComments(mixId) {
-  _commentsMixId = mixId;
-  const modal = document.getElementById('commentsModal');
-  const listEl = document.getElementById('commentsModalList');
-  const inputEl = document.getElementById('commentsModalInput');
-  listEl.innerHTML = '<div class="loading" style="padding:24px 0"><div class="spinner"></div></div>';
-  inputEl.innerHTML = '';
-  modal.classList.add('open');
+// ── COMMENTS ─────────────────────────────────────────────────────
+async function toggleComments(btn, mixId) {
+  const post = btn.closest('.feed-post') || btn.closest('.card');
+  let section = post.querySelector('.comments-section');
+  if (section) { section.remove(); return; }
+  section = document.createElement('div');
+  section.className = 'comments-section';
+  section.innerHTML = '<div class="loading" style="padding:12px 0"><div class="spinner"></div></div>';
+  post.appendChild(section);
   try {
     const data = await api('/api/mixes/'+mixId+'/comments');
-    _renderCommentsList(data, mixId);
-  } catch(e) {
-    listEl.innerHTML = '<div style="color:var(--red);padding:16px;font-size:0.84rem">Ошибка загрузки</div>';
-  }
+    const list = data.map(c => `<div class="comment-item">
+      <div class="comment-ava">${c.avatar||'🧔'}</div>
+      <div class="comment-body">
+        <div class="comment-user">@${c.username}</div>
+        <div class="comment-text">${escHtml(c.text)}</div>
+        <div class="comment-time">${timeAgo(c.created_at)}</div>
+      </div>
+    </div>`).join('');
+    const inputRow = token ? `<div class="comment-input-row">
+      <input class="comment-inp" id="ci${mixId}" placeholder="Напиши комментарий..." onkeydown="if(event.key==='Enter')sendComment(${mixId})">
+      <button class="comment-send" onclick="sendComment(${mixId})">→</button>
+    </div>` : `<div style="font-size:0.78rem;color:var(--text3);padding:8px 0">Войди чтобы комментировать</div>`;
+    section.innerHTML = `<div class="comments-list">${list||'<div style="padding:10px 0;color:var(--text3);font-size:0.8rem">Будь первым!</div>'}</div>${inputRow}`;
+  } catch(e) { section.innerHTML = '<div style="color:var(--red);font-size:0.8rem;padding:8px">Ошибка загрузки</div>'; }
 }
-
-function _renderCommentsList(data, mixId) {
-  const listEl = document.getElementById('commentsModalList');
-  const inputEl = document.getElementById('commentsModalInput');
-  if (data.length === 0) {
-    listEl.innerHTML = '<div style="padding:40px 20px;text-align:center;color:var(--text3)"><div style="font-size:2rem;margin-bottom:10px">💬</div><div style="font-size:0.9rem;font-weight:600;margin-bottom:4px">Пока нет комментариев</div><div style="font-size:0.78rem">Будь первым!</div></div>';
-  } else {
-    listEl.innerHTML = '<div class="comments-list" style="padding:12px 0">' + data.map(c => {
-      const isOwn = currentUser?.username === c.username;
-      return `<div class="comment-item" id="cmt-${c.id}">
-        <div class="comment-ava">${c.avatar||'🧔'}</div>
-        <div class="comment-body">
-          <div class="comment-user">@${c.username}
-            ${isOwn ? `<button onclick="deleteComment(${c.id},${mixId})" style="background:none;border:none;color:var(--text3);cursor:pointer;font-size:0.65rem;margin-left:8px;padding:0;font-family:inherit;transition:color 0.15s" onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='var(--text3)'">удалить</button>` : ''}
-          </div>
-          <div class="comment-text">${escHtml(c.text)}</div>
-          <div class="comment-time">${timeAgo(c.created_at)}</div>
-        </div>
-      </div>`;
-    }).join('') + '</div>';
-    // scroll to bottom
-    setTimeout(() => { listEl.scrollTop = listEl.scrollHeight; }, 50);
-  }
-  inputEl.innerHTML = token
-    ? `<div class="comment-input-row">
-         <input class="comment-inp" id="commentsInp" placeholder="Комментарий..." onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendCommentModal()}">
-         <button class="comment-send" onclick="sendCommentModal()">→</button>
-       </div>`
-    : `<div style="font-size:0.8rem;color:var(--text3);padding:6px 0"><a style="color:var(--purple);cursor:pointer" onclick="closeComments();openAuth()">Войди</a>, чтобы написать</div>`;
-  setTimeout(() => document.getElementById('commentsInp')?.focus(), 100);
-}
-
-function closeComments() {
-  document.getElementById('commentsModal').classList.remove('open');
-  _commentsMixId = null;
-}
-
-async function sendCommentModal() {
-  const mixId = _commentsMixId;
-  if (!mixId || !token) return;
-  const inp = document.getElementById('commentsInp');
+async function sendComment(mixId) {
+  if (!token) { openAuth(); return; }
+  const inp = document.getElementById('ci'+mixId);
   const text = inp?.value?.trim();
   if (!text) return;
-  inp.disabled = true;
   try {
-    await api('/api/mixes/'+mixId+'/comments', 'POST', {text});
+    await api('/api/mixes/'+mixId+'/comments','POST',{text});
     inp.value = '';
-    const data = await api('/api/mixes/'+mixId+'/comments');
-    _renderCommentsList(data, mixId);
+    const section = inp.closest('.comments-section');
+    const list = section?.querySelector('.comments-list');
+    if (list) {
+      const empty = list.querySelector('[style*="Будь первым"]');
+      if (empty) empty.remove();
+      const div = document.createElement('div');
+      div.className = 'comment-item';
+      div.innerHTML = `<div class="comment-ava">${currentUser.avatar||'🧔'}</div>
+        <div class="comment-body"><div class="comment-user">@${currentUser.username}</div>
+        <div class="comment-text">${escHtml(text)}</div><div class="comment-time">только что</div></div>`;
+      list.appendChild(div);
+    }
+    // обновить счётчик на кнопке
     const cntEl = document.getElementById('ccnt'+mixId);
-    if (cntEl) cntEl.textContent = data.length;
-  } catch(e) { showToast('Ошибка: '+e.message); }
-  finally { inp.disabled = false; inp.focus(); }
-}
-
-async function deleteComment(commentId, mixId) {
-  if (!confirm('Удалить комментарий?')) return;
-  try {
-    await api('/api/comments/'+commentId, 'DELETE');
-    const data = await api('/api/mixes/'+mixId+'/comments');
-    _renderCommentsList(data, mixId);
-    const cntEl = document.getElementById('ccnt'+mixId);
-    if (cntEl) cntEl.textContent = data.length;
+    if (cntEl) cntEl.textContent = parseInt(cntEl.textContent||0) + 1;
+    showToast('Комментарий добавлен 💬');
   } catch(e) { showToast('Ошибка: '+e.message); }
 }
-
 function escHtml(s) { return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 
 // ── NOTIFICATIONS ─────────────────────────────────────────────────
@@ -3073,7 +2854,7 @@ function loadHistoryMix(i) {
   document.getElementById('labMixName').value = m.mixName||'';
   activatePackMethod(lab.packMethod);
   document.querySelectorAll('.bowl-size-btn').forEach(b=>b.classList.remove('active'));
-  document.querySelectorAll('.bowl-size-btn').forEach(b=>{ if(b.textContent.includes(lab.bowlSize===20?'Убивашка':lab.bowlSize===15?'Фанел':'Турка')) b.classList.add('active'); });
+  document.querySelectorAll('.bowl-size-btn').forEach(b=>{ if(b.textContent.includes(lab.bowlSize===20?'Убивашка':lab.bowlSize===15?'Фанел':'Сифон')) b.classList.add('active'); });
   renderTobList(); renderBowl(); updateLabDetails();
   showToast('Микс загружен из истории');
 }
@@ -3170,7 +2951,7 @@ document.addEventListener('wheel', function(e) {
   }
 }, { passive: false });
 renderHistoryWidget();
-if(document.getElementById("catalogPage")) { loadBrandFilter(); loadFlavorTags(); loadCatalog(0); }
+if(document.getElementById("catalogPage")) loadCatalog(0);
 </script>
 </body>
 </html>

@@ -113,12 +113,334 @@ try:
 except Exception:
     pass
 
-DB_DSN   = "postgresql://hookah:hookah123@localhost:5432/hookah_db"
+DB_DSN   = os.environ.get("DB_DSN", "postgresql://hookah:hookah123@localhost:5432/hookah_db")
 GROQ_KEY = os.environ.get("GROQ_KEY", "")
 GROQ_URL = "https://api.groq.com/openai/v1/chat/completions"
 GROQ_MODEL = "llama-3.3-70b-versatile"
+TABAK_OPENAI_SEARCH_URL = os.environ.get("TABAK_OPENAI_SEARCH_URL", "http://127.0.0.1:5051/api/search")
 
 pool = None
+
+AI_QUERY_SYSTEM_PROMPT = """You normalize user search queries for hookah tobacco catalog search.
+Return JSON only:
+{
+  "clean_query": "...",
+  "search_query": "...",
+  "tags": ["..."],
+  "strength_pref": "легкий|средний|крепкий|любой"
+}
+Rules:
+- Keep clean_query short and natural.
+- search_query should contain key flavor intent words.
+- tags should contain 2-8 short flavor tags in Russian.
+- If strength is unknown, set strength_pref to "любой".
+"""
+
+
+def _strength_pref_to_sql_like(pref: str) -> str:
+    p = (pref or "").strip().lower()
+    if "лег" in p:
+        return "лёгк"
+    if "креп" in p:
+        return "креп"
+    if "сред" in p:
+        return "средн"
+    return ""
+
+
+def _tokenize_ai_query(text: str) -> list[str]:
+    if not text:
+        return []
+    words = re.findall(r"[a-zA-Zа-яА-ЯёЁ0-9]{2,}", text.lower())
+    stop = {
+        "и", "или", "для", "под", "очень", "мне", "хочу", "нужно", "как", "что",
+        "без", "с", "на", "по", "в", "во", "из", "к", "до", "не", "это", "тот",
+    }
+    out: list[str] = []
+    for w in words:
+        if w in stop:
+            continue
+        if w not in out:
+            out.append(w)
+    return out[:14]
+
+
+async def _parse_ai_catalog_query(query: str) -> dict:
+    q = (query or "").strip()
+    fallback = {
+        "clean_query": q,
+        "search_query": q,
+        "tags": [],
+        "strength_pref": "любой",
+    }
+    if not q or not GROQ_KEY:
+        return fallback
+    try:
+        async with httpx.AsyncClient(timeout=20) as client:
+            resp = await client.post(
+                GROQ_URL,
+                json={
+                    "model": GROQ_MODEL,
+                    "messages": [
+                        {"role": "system", "content": AI_QUERY_SYSTEM_PROMPT},
+                        {"role": "user", "content": q},
+                    ],
+                    "temperature": 0.1,
+                    "max_tokens": 300,
+                    "response_format": {"type": "json_object"},
+                },
+                headers={"Authorization": f"Bearer {GROQ_KEY}"},
+            )
+        content = (resp.json().get("choices") or [{}])[0].get("message", {}).get("content", "{}")
+        parsed = json.loads(content)
+        tags = parsed.get("tags") if isinstance(parsed.get("tags"), list) else []
+        tags = [str(t).strip() for t in tags if str(t).strip()][:8]
+        strength_pref = str(parsed.get("strength_pref") or "любой").strip().lower()
+        if strength_pref not in ("легкий", "лёгкий", "средний", "крепкий", "любой"):
+            strength_pref = "любой"
+        return {
+            "clean_query": str(parsed.get("clean_query") or q).strip(),
+            "search_query": str(parsed.get("search_query") or q).strip(),
+            "tags": tags,
+            "strength_pref": strength_pref,
+        }
+    except Exception:
+        return fallback
+
+
+def _score_strength_label(item: dict) -> int:
+    txt = f"{item.get('strength_user') or ''} {item.get('strength_official') or ''}".lower()
+    if "креп" in txt:
+        return 3
+    if "лёг" in txt or "лег" in txt:
+        return 1
+    return 2
+
+
+def _clean_tobacco_name(name: str) -> str:
+    return re.sub(r"^Табак для кальяна\s*", "", str(name or ""), flags=re.IGNORECASE).strip()
+
+
+def _extract_brand_name_from_title(title: str) -> tuple[str, str]:
+    t = _clean_tobacco_name(title or "")
+    t = t.replace('"', "").replace("«", "").replace("»", "").strip()
+    left = t.split(",")[0].strip()
+    words = left.split()
+    if not words:
+        return "", t
+    if len(words) >= 2 and words[0].lower() in ("must", "dark", "al", "black"):
+        brand = f"{words[0]} {words[1]}"
+        name = left[len(brand):].strip(" -")
+        return brand, (name or left)
+    brand = words[0]
+    name = left[len(brand):].strip(" -")
+    return brand, (name or left)
+
+
+def _coal_tip_from_heat(heat: str) -> str:
+    h = (heat or "").strip()
+    if not h:
+        return "2 угля стандарт"
+    m = re.search(r"Старт:\s*([^;]+)", h, flags=re.IGNORECASE)
+    return m.group(1).strip() if m else h
+
+
+def _strength_from_score(score: float | int | None) -> str:
+    try:
+        s = float(score or 0)
+    except Exception:
+        s = 0.0
+    if s >= 3.6:
+        return "крепкий"
+    if s <= 1.8:
+        return "лёгкий"
+    return "средний"
+
+
+def _norm_text(v: str) -> str:
+    s = re.sub(r"\([^)]*\)", " ", str(v or "").lower())
+    s = re.sub(r"\d+(?:[.,]\d+)?\s*(?:г|гр|g|gr)\b", " ", s, flags=re.IGNORECASE)
+    s = re.sub(r"[^a-zа-я0-9]+", " ", s, flags=re.IGNORECASE)
+    return re.sub(r"\s+", " ", s).strip()
+
+
+def _cabinet_matchers(cabinet_items: list[dict]) -> tuple[list[str], list[tuple[str, str]]]:
+    names: list[str] = []
+    pairs: list[tuple[str, str]] = []
+    for c in cabinet_items or []:
+        b = _norm_text(c.get("brand") or "")
+        n = _norm_text(_clean_tobacco_name(c.get("name") or ""))
+        if n:
+            names.append(n)
+        if b and n:
+            pairs.append((b, n))
+    return names, pairs
+
+
+def _is_in_cabinet(title: str, brand: str, cab_names: list[str], cab_pairs: list[tuple[str, str]]) -> bool:
+    cb = _norm_text(brand or "")
+    cn = _norm_text(_clean_tobacco_name(title or ""))
+    if not cn:
+        return False
+    if any((n and (n in cn or cn in n)) for n in cab_names):
+        return True
+    if cb and any((b in cb or cb in b) and (n in cn or cn in n) for b, n in cab_pairs):
+        return True
+    return False
+
+
+async def _tabak_openai_search(query: str, mode: str = "mix") -> dict:
+    m = (mode or "mix").strip().lower()
+    if m not in ("single", "mix"):
+        m = "mix"
+    async with httpx.AsyncClient(timeout=120) as client:
+        resp = await client.post(
+            TABAK_OPENAI_SEARCH_URL,
+            json={"query": query, "mode": m},
+            headers={"Content-Type": "application/json"},
+        )
+        resp.raise_for_status()
+        return resp.json()
+
+
+def _sort_ai_ranked_items(ranked: list[dict], sort: str) -> list[dict]:
+    if sort == "price_asc":
+        ranked.sort(key=lambda x: (x.get("price") is None, x.get("price") or 0))
+    elif sort == "price_desc":
+        ranked.sort(key=lambda x: (x.get("price") is None, -(x.get("price") or 0)))
+    elif sort == "reviews":
+        ranked.sort(key=lambda x: (x.get("total_reviews") or 0), reverse=True)
+    elif sort == "rating":
+        ranked.sort(
+            key=lambda x: (
+                x.get("_ai_score") or 0,
+                x.get("avg_rating") or 0,
+                x.get("total_reviews") or 0,
+            ),
+            reverse=True,
+        )
+    else:
+        ranked.sort(key=lambda x: x.get("_ai_score") or 0, reverse=True)
+    return ranked
+
+
+async def _run_ai_catalog_search(
+    query: str,
+    in_stock: bool = False,
+    strength: str = "",
+    cabinet_ids: list[int] | None = None,
+) -> tuple[dict, list[dict]]:
+    q = (query or "").strip()
+    ai = await _parse_ai_catalog_query(q)
+    ai_strength_like = _strength_pref_to_sql_like(ai.get("strength_pref") or "")
+    ui_strength_like = _strength_pref_to_sql_like(strength)
+    strength_like = ui_strength_like or ai_strength_like
+
+    use_cabinet = bool(cabinet_ids)
+    cab_ids = [int(x) for x in (cabinet_ids or []) if str(x).isdigit()]
+    cab_ids = list(dict.fromkeys(cab_ids))[:400]
+
+    async with pool.acquire() as conn:
+        if use_cabinet and cab_ids:
+            rows = await conn.fetch(
+                """
+                SELECT a.id, a.name, a.brand_name as brand, a.line, a.weight,
+                       a.price, a.has_discount, a.price_before_discount,
+                       a.in_stock, a.stores_count, a.total_amount,
+                       a.one_c_id,
+                       a.image_url, a.is_bestseller,
+                       ht.avg_rating, ht.strength_user, ht.strength_official,
+                       ht.flavor_tags, ht.total_reviews, ht.url_path as htr_url
+                FROM scraper.ali_products a
+                LEFT JOIN scraper.htr_tobaccos ht ON
+                    NULLIF(regexp_replace(a.htreviews_id,'[^0-9]','','g'),'')::int = ht.htreviews_id
+                WHERE a.id = ANY($1::int[])
+                  AND (NOT $2 OR a.in_stock = TRUE)
+                  AND ($3 = '' OR ht.strength_user ILIKE '%'||$3||'%' OR ht.strength_official ILIKE '%'||$3||'%')
+                LIMIT 2500
+                """,
+                cab_ids, in_stock, strength_like,
+            )
+        else:
+            rows = await conn.fetch(
+                """
+                SELECT a.id, a.name, a.brand_name as brand, a.line, a.weight,
+                       a.price, a.has_discount, a.price_before_discount,
+                       a.in_stock, a.stores_count, a.total_amount,
+                       a.one_c_id,
+                       a.image_url, a.is_bestseller,
+                       ht.avg_rating, ht.strength_user, ht.strength_official,
+                       ht.flavor_tags, ht.total_reviews, ht.url_path as htr_url
+                FROM scraper.ali_products a
+                LEFT JOIN scraper.htr_tobaccos ht ON
+                    NULLIF(regexp_replace(a.htreviews_id,'[^0-9]','','g'),'')::int = ht.htreviews_id
+                WHERE (NOT $1 OR a.in_stock = TRUE)
+                  AND ($2 = '' OR ht.strength_user ILIKE '%'||$2||'%' OR ht.strength_official ILIKE '%'||$2||'%')
+                LIMIT 5000
+                """,
+                in_stock, strength_like,
+            )
+
+    terms = _tokenize_ai_query(q)
+    for source in (ai.get("clean_query"), ai.get("search_query")):
+        terms.extend(_tokenize_ai_query(str(source or "")))
+    for tag in (ai.get("tags") or []):
+        terms.extend(_tokenize_ai_query(str(tag)))
+
+    uniq_terms: list[str] = []
+    for t in terms:
+        if t not in uniq_terms:
+            uniq_terms.append(t)
+    terms = uniq_terms[:18]
+
+    clean_query = str(ai.get("clean_query") or q).lower()
+    search_query = str(ai.get("search_query") or clean_query).lower()
+
+    scored: list[tuple[float, dict]] = []
+    for r in rows:
+        item = dict(r)
+        name = str(item.get("name") or "")
+        brand = str(item.get("brand") or "")
+        line = str(item.get("line") or "")
+        tags = " ".join(item.get("flavor_tags") or [])
+        text = f"{name} {brand} {line} {tags}".lower()
+
+        score = 0.0
+        if clean_query and clean_query in text:
+            score += 5.0
+        if search_query and search_query in text:
+            score += 4.0
+        if q.lower() in text:
+            score += 3.2
+
+        for t in terms:
+            if t in text:
+                score += 0.9
+                if t in name.lower():
+                    score += 0.45
+                if t in tags.lower():
+                    score += 0.3
+
+        rating = item.get("avg_rating")
+        if rating is not None:
+            score += float(rating) / 6.0
+        score += min(int(item.get("total_reviews") or 0), 350) / 700.0
+        if item.get("in_stock"):
+            score += 0.45
+        if item.get("is_bestseller"):
+            score += 0.3
+
+        if strength_like:
+            st = f"{item.get('strength_user') or ''} {item.get('strength_official') or ''}".lower()
+            if strength_like in st:
+                score += 0.7
+
+        if score > 0.5:
+            item["_ai_score"] = round(score, 5)
+            scored.append((score, item))
+
+    scored.sort(key=lambda x: x[0], reverse=True)
+    return ai, [x[1] for x in scored]
 
 @app.on_event("startup")
 async def startup():
@@ -131,14 +453,6 @@ async def startup():
             "ALTER TABLE hl_likes DROP CONSTRAINT IF EXISTS hl_likes_mix_id_fkey",
             "ALTER TABLE hl_saves DROP CONSTRAINT IF EXISTS hl_saves_mix_id_fkey",
             "ALTER TABLE hl_comments DROP CONSTRAINT IF EXISTS hl_comments_mix_id_fkey",
-            "ALTER TABLE hl_user_setup ADD COLUMN IF NOT EXISTS coal_size TEXT DEFAULT ''",
-            "ALTER TABLE hl_user_setup ADD COLUMN IF NOT EXISTS coal_warmup TEXT DEFAULT ''",
-            "ALTER TABLE hl_mixes ADD COLUMN IF NOT EXISTS is_llm BOOLEAN DEFAULT FALSE",
-            "ALTER TABLE hl_mixes ADD COLUMN IF NOT EXISTS llm_prompt TEXT DEFAULT ''",
-            "ALTER TABLE hl_mix_items ADD COLUMN IF NOT EXISTS ali_id INT",
-            "ALTER TABLE hl_mix_items ADD COLUMN IF NOT EXISTS sort_order INT DEFAULT 0",
-            "ALTER TABLE hl_mixes ADD COLUMN IF NOT EXISTS is_llm BOOLEAN DEFAULT FALSE",
-            "ALTER TABLE hl_mixes ADD COLUMN IF NOT EXISTS llm_prompt TEXT DEFAULT ''",
         ]:
             await conn.execute(sql)
 
@@ -168,8 +482,6 @@ CREATE TABLE IF NOT EXISTS hl_user_setup (
     user_id     INT PRIMARY KEY REFERENCES hl_users(id) ON DELETE CASCADE,
     hookah      TEXT DEFAULT '',
     bowl        TEXT DEFAULT '',
-    coal_size   TEXT DEFAULT '',
-    coal_warmup TEXT DEFAULT '',
     bowl_type   TEXT DEFAULT '',
     coal        TEXT DEFAULT '',
     foil        TEXT DEFAULT '',
@@ -363,7 +675,7 @@ async def update_me(request: Request, user=Depends(req_user)):
                 d.get("bio"), d.get("avatar"), user["id"])
         # map "notes" → "foil" for backward compat
         if "notes" in d: d["foil"] = d.pop("notes")
-        setup_fields = {k: d[k] for k in ("hookah","bowl","bowl_type","coal","coal_size","coal_warmup","foil","flask_shape","flask_color") if k in d}
+        setup_fields = {k: d[k] for k in ("hookah","bowl","bowl_type","coal","foil","flask_shape","flask_color") if k in d}
         if setup_fields:
             sets = ", ".join(f"{k}=${i+2}" for i, k in enumerate(setup_fields))
             vals = list(setup_fields.values())
@@ -509,21 +821,10 @@ async def remove_from_cabinet(ali_id: int, user=Depends(req_user)):
 
 # ── MIXES ────────────────────────────────────────────────────────────────────
 
-def _s(val, default=""):
-    """Remove lone surrogates (broken emoji) that crash asyncpg."""
-    if val is None:
-        return default
-    if not isinstance(val, str):
-        return val
-    try:
-        return val.encode("utf-8", "surrogatepass").decode("utf-8", "ignore")
-    except Exception:
-        return default
-
 @app.post("/api/mixes")
 async def create_mix(request: Request, user=Depends(req_user)):
     d = await request.json()
-    name  = _s(d.get("name") or "Без названия").strip()
+    name  = (d.get("name") or "Без названия").strip()
     items = d.get("items", [])
     if not items:
         raise HTTPException(400, "Добавь хотя бы один табак")
@@ -532,11 +833,11 @@ async def create_mix(request: Request, user=Depends(req_user)):
             INSERT INTO hl_mixes (user_id,name,description,bowl_type,bowl_grams,
                                   pack_method,coal_tip,strength,is_public,is_llm,llm_prompt)
             VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11) RETURNING id
-        """, user["id"], name, _s(d.get("description","")),
-            _s(d.get("bowl_type","убивашка")), d.get("bowl_grams",20),
-            _s(d.get("pack_method","секторами")), _s(d.get("coal_tip","")),
-            _s(d.get("strength","средний")), d.get("is_public",True),
-            d.get("is_llm",False), _s(d.get("llm_prompt","")))
+        """, user["id"], name, d.get("description",""),
+            d.get("bowl_type","убивашка"), d.get("bowl_grams",20),
+            d.get("pack_method","секторами"), d.get("coal_tip",""),
+            d.get("strength","средний"), d.get("is_public",True),
+            d.get("is_llm",False), d.get("llm_prompt",""))
         for i, item in enumerate(items):
             await conn.execute("""
                 INSERT INTO hl_mix_items (mix_id,ali_id,tobacco_name,brand,percentage,sort_order)
@@ -611,9 +912,7 @@ async def toggle_save(mix_id: int, user=Depends(req_user)):
 # ── FEED ─────────────────────────────────────────────────────────────────────
 
 @app.get("/api/feed")
-async def get_feed(offset: int = 0, limit: int = 20, authorization: Optional[str] = Header(None)):
-    u = await get_user(authorization)
-    user_id = u["id"] if u else None
+async def get_feed(offset: int = 0, limit: int = 20):
     async with pool.acquire() as conn:
         rows = await conn.fetch("""
             SELECT m.id, m.name, m.description, m.bowl_type, m.bowl_grams,
@@ -621,17 +920,13 @@ async def get_feed(offset: int = 0, limit: int = 20, authorization: Optional[str
                    u.username, u.avatar,
                    (SELECT COUNT(*) FROM hl_likes l WHERE l.mix_id=m.id) as likes,
                    (SELECT COUNT(*) FROM hl_saves s WHERE s.mix_id=m.id) as saves,
-                   (SELECT COUNT(*) FROM hl_comments c WHERE c.mix_id=m.id) as comments,
-                   ($3::int IS NOT NULL AND EXISTS(
-                       SELECT 1 FROM hl_likes WHERE user_id=$3 AND mix_id=m.id)) as i_liked,
-                   ($3::int IS NOT NULL AND EXISTS(
-                       SELECT 1 FROM hl_saves WHERE user_id=$3 AND mix_id=m.id)) as i_saved
+                   (SELECT COUNT(*) FROM hl_comments c WHERE c.mix_id=m.id) as comments
             FROM hl_mixes m
             JOIN hl_users u ON u.id=m.user_id
             WHERE m.is_public=TRUE
             ORDER BY m.created_at DESC
             OFFSET $1 LIMIT $2
-        """, offset, limit, user_id)
+        """, offset, limit)
         result = []
         for row in rows:
             items = await _mix_items(conn, row["id"])
@@ -819,22 +1114,9 @@ async def rate_mix(mix_id: int, request: Request, user=Depends(req_user)):
 
 # ── CATALOG ───────────────────────────────────────────────────────────────────
 
-@app.get("/api/flavor-tags")
-async def get_flavor_tags(limit: int = 20):
-    async with pool.acquire() as conn:
-        rows = await conn.fetch("""
-            SELECT unnest(flavor_tags) as tag, COUNT(*) as cnt
-            FROM scraper.htr_tobaccos
-            WHERE flavor_tags IS NOT NULL AND array_length(flavor_tags,1) > 0
-            GROUP BY tag
-            ORDER BY cnt DESC
-            LIMIT $1
-        """, limit)
-        return [{"tag": r["tag"], "count": int(r["cnt"])} for r in rows]
-
 @app.get("/api/catalog")
 async def get_catalog(
-    q: str = "", brand: str = "", strength: str = "", tag: str = "",
+    q: str = "", brand: str = "", strength: str = "",
     in_stock: bool = False, min_rating: float = 0,
     sort: str = "rating", offset: int = 0, limit: int = 40
 ):
@@ -854,7 +1136,6 @@ async def get_catalog(
               AND (NOT $3 OR a.in_stock = TRUE)
               AND ($4 = 0 OR ht.avg_rating >= $4)
               AND ($5 = '' OR ht.strength_user ILIKE '%'||$5||'%' OR ht.strength_official ILIKE '%'||$5||'%')
-              AND ($9 = '' OR $9 = ANY(ht.flavor_tags))
             ORDER BY
                 CASE WHEN $6='rating'    THEN COALESCE(ht.avg_rating,0) END DESC NULLS LAST,
                 CASE WHEN $6='price_asc' THEN a.price END ASC NULLS LAST,
@@ -862,7 +1143,7 @@ async def get_catalog(
                 CASE WHEN $6='reviews'   THEN COALESCE(ht.total_reviews,0) END DESC NULLS LAST,
                 a.is_bestseller DESC, a.brand_name, a.name
             LIMIT $7 OFFSET $8
-        """, q, brand, in_stock, min_rating, strength, sort, limit, offset, tag)
+        """, q, brand, in_stock, min_rating, strength, sort, limit, offset)
         total = await conn.fetchval("""
             SELECT COUNT(*) FROM scraper.ali_products a
             LEFT JOIN scraper.htr_tobaccos ht ON
@@ -871,43 +1152,48 @@ async def get_catalog(
               AND ($2='' OR a.brand_name ILIKE '%'||$2||'%')
               AND (NOT $3 OR a.in_stock=TRUE)
               AND ($4=0 OR ht.avg_rating>=$4)
-              AND ($5='' OR $5=ANY(ht.flavor_tags))
-        """, q, brand, in_stock, min_rating, tag)
+        """, q, brand, in_stock, min_rating)
         return {"items": [dict(r) for r in rows], "total": total}
 
-@app.get("/api/catalog/mixes")
-async def get_catalog_mixes(
-    q: str = "", strength: str = "", bowl_type: str = "",
-    sort: str = "new", offset: int = 0, limit: int = 20
+
+@app.get("/api/catalog/ai-search")
+async def ai_catalog_search(
+    q: str = "", in_stock: bool = False, strength: str = "",
+    sort: str = "relevance", offset: int = 0, limit: int = 40
 ):
-    order_by = "m.created_at DESC" if sort == "new" else "likes DESC, m.created_at DESC"
-    async with pool.acquire() as conn:
-        rows = await conn.fetch(f"""
-            SELECT m.id, m.name, m.description, m.bowl_type, m.pack_method,
-                   m.strength, m.created_at, m.is_llm,
-                   u.username, u.avatar,
-                   (SELECT COUNT(*) FROM hl_likes l WHERE l.mix_id=m.id) as likes
-            FROM hl_mixes m
-            JOIN hl_users u ON u.id=m.user_id
-            WHERE m.is_public=TRUE
-              AND ($1='' OR m.name ILIKE '%'||$1||'%' OR m.description ILIKE '%'||$1||'%')
-              AND ($2='' OR m.strength ILIKE '%'||$2||'%')
-              AND ($3='' OR m.bowl_type ILIKE '%'||$3||'%')
-            ORDER BY {order_by}
-            OFFSET $4 LIMIT $5
-        """, q, strength, bowl_type, offset, limit)
-        total = await conn.fetchval("""
-            SELECT COUNT(*) FROM hl_mixes m
-            WHERE m.is_public=TRUE
-              AND ($1='' OR m.name ILIKE '%'||$1||'%' OR m.description ILIKE '%'||$1||'%')
-              AND ($2='' OR m.strength ILIKE '%'||$2||'%')
-              AND ($3='' OR m.bowl_type ILIKE '%'||$3||'%')
-        """, q, strength, bowl_type)
-        result = []
-        for row in rows:
-            items = await _mix_items(conn, row["id"])
-            result.append({**dict(row), "items": items})
-        return {"items": result, "total": total}
+    query = (q or "").strip()
+    if len(query) < 2:
+        return {
+            "items": [],
+            "total": 0,
+            "ai": {
+                "clean_query": query,
+                "search_query": query,
+                "tags": [],
+                "strength_pref": "любой",
+            },
+        }
+
+    limit = max(1, min(80, int(limit or 40)))
+    offset = max(0, int(offset or 0))
+    ai, ranked = await _run_ai_catalog_search(query, in_stock=in_stock, strength=strength)
+    ranked = _sort_ai_ranked_items(ranked, sort)
+
+    total = len(ranked)
+    page = ranked[offset: offset + limit]
+    for it in page:
+        it.pop("_ai_score", None)
+
+    return {
+        "items": page,
+        "total": total,
+        "ai": {
+            "clean_query": ai.get("clean_query") or query,
+            "search_query": ai.get("search_query") or query,
+            "tags": ai.get("tags") or [],
+            "strength_pref": ai.get("strength_pref") or "любой",
+        },
+    }
 
 @app.get("/api/community-mixes")
 async def get_community_mixes(limit: int = 20):
@@ -999,97 +1285,138 @@ async def search_equipment(q: str = "", type: str = "", limit: int = 30):
 
 # ── LLM ──────────────────────────────────────────────────────────────────────
 
+def _map_tabak_mix_card(mix: dict, prompt: str) -> dict:
+    parts = mix.get("parts") or []
+    items = []
+    for p in parts:
+        title = p.get("title") or ""
+        brand, name = _extract_brand_name_from_title(title)
+        items.append({
+            "ali_id": None,
+            "tobacco_name": name or _clean_tobacco_name(title),
+            "brand": brand,
+            "percentage": int(round(float(p.get("percent") or 0))),
+            "strength": _strength_from_score(p.get("strength_score")),
+            "description": p.get("flavor_desc") or "",
+            "rating": p.get("rating"),
+            "shop_url": p.get("url"),
+            "review_url": None,
+        })
+
+    return {
+        "name": (mix.get("title") or "ИИ микс").strip(),
+        "description": mix.get("description") or "",
+        "strength": _strength_from_score(mix.get("strength_score")),
+        "bowl_type": (mix.get("bowl") or "фанел"),
+        "pack_method": "секторами",
+        "coal_tip": _coal_tip_from_heat(mix.get("heat") or ""),
+        "items": items,
+        "why": "Собрано из вашей RAG-базы tabak_openai (эмбеддинги + FAISS + mix-логика).",
+        "is_llm": True,
+        "llm_prompt": prompt,
+        "source": "tabak_openai_mix",
+        "heat": mix.get("heat") or "",
+        "bowl_capacity_hint": mix.get("bowl_capacity_hint") or "",
+    }
+
+
+@app.post("/api/llm/search")
+async def llm_search(request: Request):
+    d = await request.json()
+    prompt = (d.get("prompt") or "").strip()
+    mode = (d.get("mode") or "mix").strip().lower()
+    mix_parts = int(d.get("mix_parts") or 0)
+    max_results = max(1, min(8, int(d.get("max_results") or 4)))
+    cabinet_items = d.get("cabinet_items") if isinstance(d.get("cabinet_items"), list) else []
+    use_cabinet = bool(d.get("use_cabinet")) and bool(cabinet_items)
+    cab_names, cab_pairs = _cabinet_matchers(cabinet_items if use_cabinet else [])
+
+    if not prompt or len(prompt) < 3:
+        raise HTTPException(400, "Опиши желаемый вкус")
+    if mode not in ("single", "mix"):
+        mode = "mix"
+
+    try:
+        payload = await _tabak_openai_search(prompt, mode=mode)
+        cards = payload.get("items") or []
+        if mode == "single":
+            out = []
+            for c in cards:
+                if c.get("card_type") != "single":
+                    continue
+                title = c.get("title") or ""
+                brand, name = _extract_brand_name_from_title(title)
+                if use_cabinet and not _is_in_cabinet(name or title, brand, cab_names, cab_pairs):
+                    continue
+                out.append({
+                    "card_type": "single",
+                    "id": c.get("id"),
+                    "brand": brand,
+                    "name": name or _clean_tobacco_name(title),
+                    "title": title,
+                    "description": c.get("flavor_desc") or "",
+                    "strength": c.get("strength_label") or _strength_from_score(c.get("strength_score")),
+                    "rating": c.get("rating"),
+                    "grams": c.get("grams"),
+                    "shop_url": c.get("url"),
+                    "bowl_type": c.get("bowl"),
+                    "coal_tip": _coal_tip_from_heat(c.get("heat") or ""),
+                    "tags": c.get("tags") or "",
+                })
+                if len(out) >= max_results:
+                    break
+            return {
+                "mode": "single",
+                "query": prompt,
+                "results": out,
+                "source": "tabak_openai_single",
+                "cabinet_filtered": use_cabinet,
+            }
+
+        mixes = [c for c in cards if c.get("card_type") == "mix" and (c.get("parts") or [])]
+        if mix_parts in (2, 3, 4):
+            mixes = [m for m in mixes if len(m.get("parts") or []) == mix_parts]
+        if use_cabinet:
+            filtered = []
+            for m in mixes:
+                parts = m.get("parts") or []
+                ok = True
+                for p in parts:
+                    ptitle = p.get("title") or ""
+                    pbrand, pname = _extract_brand_name_from_title(ptitle)
+                    if not _is_in_cabinet(pname or ptitle, pbrand, cab_names, cab_pairs):
+                        ok = False
+                        break
+                if ok:
+                    filtered.append(m)
+            mixes = filtered
+        mixes = mixes[:max_results]
+        return {
+            "mode": "mix",
+            "query": prompt,
+            "results": [_map_tabak_mix_card(m, prompt) for m in mixes],
+            "source": "tabak_openai_mix",
+            "cabinet_filtered": use_cabinet,
+        }
+    except Exception as e:
+        raise HTTPException(502, f"tabak_openai недоступен: {e}")
+
+
 @app.post("/api/llm/generate")
 async def llm_generate(request: Request):
     d = await request.json()
     prompt = (d.get("prompt") or "").strip()
     if not prompt or len(prompt) < 5:
         raise HTTPException(400, "Опиши желаемый вкус")
-
-    # Берём топ-80 табаков из наличия для контекста
-    async with pool.acquire() as conn:
-        cabinet_ids = d.get("cabinet_ids") or []
-        if cabinet_ids:
-            rows = await conn.fetch("""
-                SELECT a.id, a.brand_name, a.name,
-                       COALESCE(a.line,'') as line, COALESCE(a.weight,'') as weight,
-                       a.price,
-                       COALESCE(ht.strength_user, ht.strength_official, '') as strength,
-                       COALESCE(array_to_string(ht.flavor_tags,', '),'') as tags
-                FROM scraper.ali_products a
-                LEFT JOIN scraper.htr_tobaccos ht ON
-                    NULLIF(regexp_replace(a.htreviews_id,'[^0-9]','','g'),'')::int = ht.htreviews_id
-                WHERE a.id = ANY($1::int[])
-            """, cabinet_ids)
-        else:
-            rows = await conn.fetch("""
-                SELECT a.id, a.brand_name, a.name,
-                       COALESCE(a.line,'') as line, COALESCE(a.weight,'') as weight,
-                       a.price,
-                       COALESCE(ht.strength_user, ht.strength_official, '') as strength,
-                       COALESCE(array_to_string(ht.flavor_tags,', '),'') as tags
-                FROM scraper.ali_products a
-                LEFT JOIN scraper.htr_tobaccos ht ON
-                    NULLIF(regexp_replace(a.htreviews_id,'[^0-9]','','g'),'')::int = ht.htreviews_id
-                WHERE a.in_stock = TRUE
-                ORDER BY ht.avg_rating DESC NULLS LAST, a.is_bestseller DESC
-                LIMIT 100
-            """)
-        tobaccos_ctx = "\n".join(
-            f"ID:{r['id']} | {r['brand_name']} {r['name']} | {r['strength']} | {r['tags']} | {r['price']}р"
-            for r in rows
-        )
-
-    system_prompt = """Ты эксперт по кальянным миксам. Пользователь описывает желаемый вкус/сессию.
-Твоя задача — создать идеальный микс из КОНКРЕТНЫХ табаков из предоставленного списка.
-
-Правила:
-1. Используй ТОЛЬКО табаки из списка (обязательно укажи их ID)
-2. 2-4 табака в миксе
-3. Сумма процентов = 100
-4. Отвечай СТРОГО в JSON формате
-
-JSON формат ответа:
-{
-  "name": "Название микса",
-  "description": "Описание вкусового профиля (2-3 предложения)",
-  "strength": "лёгкий|средний|крепкий",
-  "bowl_type": "убивашка|фанел|чаша-обратная|стандарт",
-  "pack_method": "секторами|слоями|компот|центр+края",
-  "coal_tip": "2 угля под колпаком|3 угля|2 угля стандарт",
-  "items": [
-    {"ali_id": 123, "tobacco_name": "Название вкуса", "brand": "Бренд", "percentage": 60},
-    {"ali_id": 456, "tobacco_name": "Название вкуса", "brand": "Бренд", "percentage": 40}
-  ],
-  "why": "Почему этот микс подойдёт (1-2 предложения)"
-}"""
-
-    user_msg = f"Запрос пользователя: {prompt}\n\nДоступные табаки:\n{tobaccos_ctx}"
-
     try:
-        async with httpx.AsyncClient(timeout=30) as client:
-            resp = await client.post(GROQ_URL, json={
-                "model": GROQ_MODEL,
-                "messages": [
-                    {"role": "system", "content": system_prompt},
-                    {"role": "user", "content": user_msg}
-                ],
-                "temperature": 0.7,
-                "max_tokens": 1000,
-            }, headers={"Authorization": f"Bearer {GROQ_KEY}"})
-
-        content = resp.json()["choices"][0]["message"]["content"]
-        # Извлекаем JSON из ответа
-        json_match = re.search(r'\{.*\}', content, re.DOTALL)
-        if not json_match:
-            raise ValueError("No JSON in response")
-        mix_data = json.loads(json_match.group())
-        mix_data["is_llm"] = True
-        mix_data["llm_prompt"] = prompt
-        return mix_data
-
+        payload = await _tabak_openai_search(prompt, mode="mix")
+        mixes = payload.get("items") or []
+        mix = next((m for m in mixes if m.get("card_type") == "mix" and (m.get("parts") or [])), None)
+        if not mix:
+            raise ValueError("No mix card from tabak_openai")
+        return _map_tabak_mix_card(mix, prompt)
     except Exception as e:
-        raise HTTPException(500, f"Ошибка генерации: {str(e)}")
+        raise HTTPException(502, f"tabak_openai недоступен: {e}")
 
 # ── INTERNAL ─────────────────────────────────────────────────────────────────
 
