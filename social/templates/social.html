@@ -638,7 +638,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Space 
                 <div class="bowl-size-toggle">
                   <button class="bowl-size-btn active" onclick="setBowlSize(20,this)">Убивашка</button>
                   <button class="bowl-size-btn" onclick="setBowlSize(15,this)">Фанел</button>
-                  <button class="bowl-size-btn" onclick="setBowlSize(10,this)">Сифон</button>
+                  <button class="bowl-size-btn" onclick="setBowlSize(10,this)">Турка</button>
                 </div>
                 <div id="labSetupBowlHint" style="display:none;width:100%">
                   <button class="lab-setup-bowl" id="labSetupBowlBtn" onclick="applySetupBowl()">🏺 <span id="labSetupBowlName">Моя чаша</span></button>
@@ -941,7 +941,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Space 
             <span onclick="pickChip('setupBowlType',this)">Фанел</span>
             <span onclick="pickChip('setupBowlType',this)">Обратный фанел</span>
             <span onclick="pickChip('setupBowlType',this)">Triton</span>
-            <span onclick="pickChip('setupBowlType',this)">Сифон</span>
+            <span onclick="pickChip('setupBowlType',this)">Турка</span>
             <span onclick="pickChip('setupBowlType',this)">Стандарт</span>
           </div>
           <input type="hidden" id="setupBowlType">
@@ -1204,7 +1204,7 @@ function setBowlSize(g, btn) {
   lab.bowlSize = g;
   document.querySelectorAll('.bowl-size-btn').forEach(b=>b.classList.remove('active'));
   btn.classList.add('active');
-  const lbl = {20:'Убивашка',15:'Фанел',10:'Сифон'}[g]||g+'г';
+  const lbl = {20:'Убивашка',15:'Фанел',10:'Турка'}[g]||g+'г';
   document.getElementById('labBowlLbl').textContent = lbl;
   const applyBtn = document.getElementById('labSetupBowlBtn');
   if (applyBtn) applyBtn.classList.remove('active');
@@ -1238,7 +1238,7 @@ function applySetupBowl() {
   const BOWL_TYPE_TO_SIZE = {
     'убивашка': 20, 'стандарт': 20,
     'фанел': 15, 'обратный фанел': 15,
-    'сифон': 10, 'triton': 10
+    'турка': 10, 'сифон': 10, 'triton': 10
   };
   const type = (lab.setupBowl.bowl_type || 'убивашка').toLowerCase();
   const size = BOWL_TYPE_TO_SIZE[type] || 20;
@@ -1246,11 +1246,11 @@ function applySetupBowl() {
   // активируем нужную кнопку размера
   document.querySelectorAll('.bowl-size-btn').forEach(b => {
     const btnLabel = b.textContent.trim().toLowerCase();
-    const btnSize = {убивашка:20,фанел:15,сифон:10}[btnLabel] || 0;
+    const btnSize = {убивашка:20,фанел:15,турка:10,сифон:10}[btnLabel] || 0;
     b.classList.toggle('active', btnSize === size);
   });
   // обновляем метку чаши с названием из сетапа
-  const bowlType = lab.setupBowl.bowl_type || {20:'Убивашка',15:'Фанел',10:'Сифон'}[size] || 'Убивашка';
+  const bowlType = lab.setupBowl.bowl_type || {20:'Убивашка',15:'Фанел',10:'Турка'}[size] || 'Убивашка';
   const bowlName = lab.setupBowl.bowl;
   document.getElementById('labBowlLbl').textContent = bowlName
     ? `${bowlType} · ${bowlName}`
@@ -1521,7 +1521,7 @@ async function saveMix() {
   try {
     const res = await api('/api/mixes','POST',{
       name,
-      bowl_type: {20:'убивашка',15:'фанел',10:'сифон'}[lab.bowlSize]||'убивашка',
+      bowl_type: {20:'убивашка',15:'фанел',10:'турка'}[lab.bowlSize]||'убивашка',
       bowl_grams: lab.bowlSize,
       pack_method: lab.packMethod,
       coal_tip: document.getElementById('labCoalLbl').textContent,
@@ -2591,7 +2591,7 @@ function loadHistoryMix(i) {
   document.getElementById('labMixName').value = m.mixName||'';
   activatePackMethod(lab.packMethod);
   document.querySelectorAll('.bowl-size-btn').forEach(b=>b.classList.remove('active'));
-  document.querySelectorAll('.bowl-size-btn').forEach(b=>{ if(b.textContent.includes(lab.bowlSize===20?'Убивашка':lab.bowlSize===15?'Фанел':'Сифон')) b.classList.add('active'); });
+  document.querySelectorAll('.bowl-size-btn').forEach(b=>{ if(b.textContent.includes(lab.bowlSize===20?'Убивашка':lab.bowlSize===15?'Фанел':'Турка')) b.classList.add('active'); });
   renderTobList(); renderBowl(); updateLabDetails();
   showToast('Микс загружен из истории');
 }
