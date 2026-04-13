@@ -507,6 +507,10 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Space 
 .tob-card-img img{width:100%;height:100%;object-fit:cover;transition:transform 0.3s}
 .tob-card:hover .tob-card-img img{transform:scale(1.05)}
 .catalog-load-more{width:100%;padding:13px;margin-top:16px;background:var(--bg3);border:1px solid var(--border);border-radius:14px;color:var(--text2);font-family:inherit;font-size:0.88rem;font-weight:600;cursor:pointer;transition:all 0.2s}
+.flavor-tags-row{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px;min-height:28px}
+.flavor-chip{padding:5px 13px;border-radius:50px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.09);color:var(--text3);font-size:0.72rem;font-weight:600;cursor:pointer;font-family:inherit;transition:all 0.18s;white-space:nowrap}
+.flavor-chip:hover{background:rgba(157,111,255,0.1);color:var(--text2);border-color:rgba(157,111,255,0.25)}
+.flavor-chip.active{background:rgba(157,111,255,0.18);border-color:rgba(157,111,255,0.45);color:var(--purple)}
 .catalog-load-more:hover{background:var(--bg4)}
 
 /* ── CATALOG TABS ── */
@@ -788,6 +792,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Space 
             </select>
             <button class="filter-toggle" id="catInStock" onclick="toggleCatInStock()">В наличии</button>
           </div>
+          <div class="flavor-tags-row" id="flavorTagsRow"></div>
           <div class="catalog-grid" id="catalogGrid">
             <div class="loading"><div class="spinner"></div>Загрузка...</div>
           </div>
@@ -1180,6 +1185,21 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Space 
 </div>
 
 <!-- Mix rating modal -->
+<!-- Comments modal -->
+<div class="modal-overlay" id="commentsModal" onclick="if(event.target===this)closeComments()">
+  <div class="modal-sheet" style="max-width:620px;display:flex;flex-direction:column;max-height:85vh">
+    <div class="modal-handle"></div>
+    <div class="modal-header">
+      <h3>💬 Комментарии</h3>
+      <button class="modal-close" onclick="closeComments()">✕</button>
+    </div>
+    <div class="modal-body" style="flex:1;overflow-y:auto;padding-bottom:0">
+      <div id="commentsModalList"></div>
+    </div>
+    <div id="commentsModalInput" style="padding:12px 20px;border-top:1px solid var(--border);flex-shrink:0"></div>
+  </div>
+</div>
+
 <div class="modal-overlay" id="rateModal" onclick="if(event.target===this)closeRateModal()">
   <div class="modal-sheet" style="max-width:360px">
     <div class="modal-handle"></div>
@@ -1256,6 +1276,7 @@ function navigate(page, el) {
   if (page === 'lab') loadLabSetup();
   if (page === 'catalog') {
     loadBrandFilter();
+    loadFlavorTags();
     if (activeCatTab === 'mixes') loadMixCatalog(0);
     else loadCatalog(0);
   }
@@ -1898,7 +1919,7 @@ function renderPost(p, opts={}) {
     <button class="act-btn${p.i_liked?' liked':''}" id="lbtn${p.id}" onclick="toggleLike(${p.id},this)">
       ${p.i_liked?'❤️':'🤍'} <span id="lcnt${p.id}">${p.likes||0}</span>
     </button>
-    <button class="act-btn" id="cbtn${p.id}" onclick="toggleComments(this,${p.id})">💬 <span id="ccnt${p.id}">${p.comments||0}</span></button>
+    <button class="act-btn" id="cbtn${p.id}" onclick="openComments(${p.id})">💬 <span id="ccnt${p.id}">${p.comments||0}</span></button>
     ${opts.communityActions
       ? `<button class="act-btn" onclick="${opts.labOnclick}">⚗️ Лаба</button>`
       : `<button class="act-btn" onclick="openRateModal(${p.id},'${(p.name||'').replace(/'/g,"&apos;")}')">⭐</button>`
@@ -2560,6 +2581,7 @@ function timeAgo(iso) {
 let catOffset = 0;
 let catInStock = false;
 let catBrand = '';
+let catTag = '';
 let catTimer = null;
 let activeCatTab = 'tobaccos';
 let mixCatOffset = 0;
@@ -2577,6 +2599,26 @@ async function loadBrandFilter() {
       sel.appendChild(opt);
     });
   } catch(e) {}
+}
+
+async function loadFlavorTags() {
+  const row = document.getElementById('flavorTagsRow');
+  if (!row || row.children.length > 0) return;
+  try {
+    const tags = await api('/api/flavor-tags?limit=18');
+    row.innerHTML = tags.map(t =>
+      `<button class="flavor-chip" onclick="setCatTag('${t.tag.replace(/'/g,"\\'")}')">${t.tag}</button>`
+    ).join('');
+  } catch(e) {}
+}
+
+function setCatTag(tag) {
+  const prev = catTag;
+  catTag = prev === tag ? '' : tag;
+  document.querySelectorAll('.flavor-chip').forEach(b => {
+    b.classList.toggle('active', b.textContent.trim() === catTag);
+  });
+  loadCatalog(0);
 }
 
 function switchCatTab(tab) {
@@ -2611,7 +2653,7 @@ async function loadCatalog(offset=0) {
   const grid = document.getElementById('catalogGrid');
   if (offset === 0) grid.innerHTML = '<div class="loading"><div class="spinner"></div>Загрузка...</div>';
   try {
-    const params = new URLSearchParams({q,sort,strength,brand:catBrand,in_stock:catInStock,limit:40,offset});
+    const params = new URLSearchParams({q,sort,strength,brand:catBrand,tag:catTag,in_stock:catInStock,limit:40,offset});
     const data = await api('/api/catalog?' + params);
     document.getElementById('catalogTotal').textContent = data.total.toLocaleString('ru') + ' табаков';
     document.getElementById('catalogMore').style.display = data.items.length===40 ? 'block' : 'none';
@@ -2778,58 +2820,90 @@ function openMixDetail(el, m) {
 }
 function closeMixDetail() { document.getElementById('mixDetailModal').classList.remove('open'); }
 
-// ── COMMENTS ─────────────────────────────────────────────────────
-async function toggleComments(btn, mixId) {
-  const post = btn.closest('.feed-post') || btn.closest('.card');
-  let section = post.querySelector('.comments-section');
-  if (section) { section.remove(); return; }
-  section = document.createElement('div');
-  section.className = 'comments-section';
-  section.innerHTML = '<div class="loading" style="padding:12px 0"><div class="spinner"></div></div>';
-  post.appendChild(section);
+// ── COMMENTS MODAL ───────────────────────────────────────────────
+let _commentsMixId = null;
+
+async function openComments(mixId) {
+  _commentsMixId = mixId;
+  const modal = document.getElementById('commentsModal');
+  const listEl = document.getElementById('commentsModalList');
+  const inputEl = document.getElementById('commentsModalInput');
+  listEl.innerHTML = '<div class="loading" style="padding:24px 0"><div class="spinner"></div></div>';
+  inputEl.innerHTML = '';
+  modal.classList.add('open');
   try {
     const data = await api('/api/mixes/'+mixId+'/comments');
-    const list = data.map(c => `<div class="comment-item">
-      <div class="comment-ava">${c.avatar||'🧔'}</div>
-      <div class="comment-body">
-        <div class="comment-user">@${c.username}</div>
-        <div class="comment-text">${escHtml(c.text)}</div>
-        <div class="comment-time">${timeAgo(c.created_at)}</div>
-      </div>
-    </div>`).join('');
-    const inputRow = token ? `<div class="comment-input-row">
-      <input class="comment-inp" id="ci${mixId}" placeholder="Напиши комментарий..." onkeydown="if(event.key==='Enter')sendComment(${mixId})">
-      <button class="comment-send" onclick="sendComment(${mixId})">→</button>
-    </div>` : `<div style="font-size:0.78rem;color:var(--text3);padding:8px 0">Войди чтобы комментировать</div>`;
-    section.innerHTML = `<div class="comments-list">${list||'<div style="padding:10px 0;color:var(--text3);font-size:0.8rem">Будь первым!</div>'}</div>${inputRow}`;
-  } catch(e) { section.innerHTML = '<div style="color:var(--red);font-size:0.8rem;padding:8px">Ошибка загрузки</div>'; }
+    _renderCommentsList(data, mixId);
+  } catch(e) {
+    listEl.innerHTML = '<div style="color:var(--red);padding:16px;font-size:0.84rem">Ошибка загрузки</div>';
+  }
 }
-async function sendComment(mixId) {
-  if (!token) { openAuth(); return; }
-  const inp = document.getElementById('ci'+mixId);
+
+function _renderCommentsList(data, mixId) {
+  const listEl = document.getElementById('commentsModalList');
+  const inputEl = document.getElementById('commentsModalInput');
+  if (data.length === 0) {
+    listEl.innerHTML = '<div style="padding:40px 20px;text-align:center;color:var(--text3)"><div style="font-size:2rem;margin-bottom:10px">💬</div><div style="font-size:0.9rem;font-weight:600;margin-bottom:4px">Пока нет комментариев</div><div style="font-size:0.78rem">Будь первым!</div></div>';
+  } else {
+    listEl.innerHTML = '<div class="comments-list" style="padding:12px 0">' + data.map(c => {
+      const isOwn = currentUser?.username === c.username;
+      return `<div class="comment-item" id="cmt-${c.id}">
+        <div class="comment-ava">${c.avatar||'🧔'}</div>
+        <div class="comment-body">
+          <div class="comment-user">@${c.username}
+            ${isOwn ? `<button onclick="deleteComment(${c.id},${mixId})" style="background:none;border:none;color:var(--text3);cursor:pointer;font-size:0.65rem;margin-left:8px;padding:0;font-family:inherit;transition:color 0.15s" onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='var(--text3)'">удалить</button>` : ''}
+          </div>
+          <div class="comment-text">${escHtml(c.text)}</div>
+          <div class="comment-time">${timeAgo(c.created_at)}</div>
+        </div>
+      </div>`;
+    }).join('') + '</div>';
+    // scroll to bottom
+    setTimeout(() => { listEl.scrollTop = listEl.scrollHeight; }, 50);
+  }
+  inputEl.innerHTML = token
+    ? `<div class="comment-input-row">
+         <input class="comment-inp" id="commentsInp" placeholder="Комментарий..." onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendCommentModal()}">
+         <button class="comment-send" onclick="sendCommentModal()">→</button>
+       </div>`
+    : `<div style="font-size:0.8rem;color:var(--text3);padding:6px 0"><a style="color:var(--purple);cursor:pointer" onclick="closeComments();openAuth()">Войди</a>, чтобы написать</div>`;
+  setTimeout(() => document.getElementById('commentsInp')?.focus(), 100);
+}
+
+function closeComments() {
+  document.getElementById('commentsModal').classList.remove('open');
+  _commentsMixId = null;
+}
+
+async function sendCommentModal() {
+  const mixId = _commentsMixId;
+  if (!mixId || !token) return;
+  const inp = document.getElementById('commentsInp');
   const text = inp?.value?.trim();
   if (!text) return;
+  inp.disabled = true;
   try {
-    await api('/api/mixes/'+mixId+'/comments','POST',{text});
+    await api('/api/mixes/'+mixId+'/comments', 'POST', {text});
     inp.value = '';
-    const section = inp.closest('.comments-section');
-    const list = section?.querySelector('.comments-list');
-    if (list) {
-      const empty = list.querySelector('[style*="Будь первым"]');
-      if (empty) empty.remove();
-      const div = document.createElement('div');
-      div.className = 'comment-item';
-      div.innerHTML = `<div class="comment-ava">${currentUser.avatar||'🧔'}</div>
-        <div class="comment-body"><div class="comment-user">@${currentUser.username}</div>
-        <div class="comment-text">${escHtml(text)}</div><div class="comment-time">только что</div></div>`;
-      list.appendChild(div);
-    }
-    // обновить счётчик на кнопке
+    const data = await api('/api/mixes/'+mixId+'/comments');
+    _renderCommentsList(data, mixId);
     const cntEl = document.getElementById('ccnt'+mixId);
-    if (cntEl) cntEl.textContent = parseInt(cntEl.textContent||0) + 1;
-    showToast('Комментарий добавлен 💬');
+    if (cntEl) cntEl.textContent = data.length;
+  } catch(e) { showToast('Ошибка: '+e.message); }
+  finally { inp.disabled = false; inp.focus(); }
+}
+
+async function deleteComment(commentId, mixId) {
+  if (!confirm('Удалить комментарий?')) return;
+  try {
+    await api('/api/comments/'+commentId, 'DELETE');
+    const data = await api('/api/mixes/'+mixId+'/comments');
+    _renderCommentsList(data, mixId);
+    const cntEl = document.getElementById('ccnt'+mixId);
+    if (cntEl) cntEl.textContent = data.length;
   } catch(e) { showToast('Ошибка: '+e.message); }
 }
+
 function escHtml(s) { return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 
 // ── NOTIFICATIONS ─────────────────────────────────────────────────
@@ -3084,7 +3158,7 @@ document.addEventListener('wheel', function(e) {
   }
 }, { passive: false });
 renderHistoryWidget();
-if(document.getElementById("catalogPage")) loadCatalog(0);
+if(document.getElementById("catalogPage")) { loadBrandFilter(); loadFlavorTags(); loadCatalog(0); }
 </script>
 </body>
 </html>
