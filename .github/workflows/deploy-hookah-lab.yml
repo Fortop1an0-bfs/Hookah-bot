@@ -22,6 +22,7 @@ jobs:
           username: ${{ secrets.PROD_USER }}
           key: ${{ secrets.PROD_SSH_KEY }}
           port: 22
+          debug: true
           script_stop: true
           command_timeout: 20m
           script: |
