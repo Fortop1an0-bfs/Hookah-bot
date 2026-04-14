@@ -14,18 +14,31 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    env:
+      PROD_HOST: ${{ secrets.PROD_HOST }}
+      PROD_USER: ${{ secrets.PROD_USER }}
     steps:
-      - name: Deploy to production server via SSH
-        uses: appleboy/ssh-action@v1.2.0
+      - name: Validate secrets
+        run: |
+          set -euo pipefail
+          test -n "${PROD_HOST}"
+          test -n "${PROD_USER}"
+
+      - name: Start ssh-agent and add deploy key
+        uses: webfactory/ssh-agent@v0.9.0
         with:
-          host: ${{ secrets.PROD_HOST }}
-          username: ${{ secrets.PROD_USER }}
-          key: ${{ secrets.PROD_SSH_KEY }}
-          port: 22
-          debug: true
-          script_stop: true
-          command_timeout: 20m
-          script: |
+          ssh-private-key: ${{ secrets.PROD_SSH_KEY }}
+
+      - name: Add server to known_hosts
+        run: |
+          set -euo pipefail
+          mkdir -p ~/.ssh
+          ssh-keyscan -H "${PROD_HOST}" >> ~/.ssh/known_hosts
+
+      - name: Deploy on server
+        run: |
+          set -euo pipefail
+          ssh "${PROD_USER}@${PROD_HOST}" <<'EOSSH'
             set -euo pipefail
 
             echo "[deploy] sync git repo"
@@ -44,3 +57,4 @@ jobs:
             systemctl --no-pager --full status hookah-lab.service | sed -n '1,20p'
 
             echo "[deploy] done"
+          EOSSH
