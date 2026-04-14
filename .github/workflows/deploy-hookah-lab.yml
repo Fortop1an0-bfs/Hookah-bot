@@ -1,0 +1,45 @@
+name: Deploy HookahLab
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-hookah-lab-main
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Deploy to production server via SSH
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.PROD_HOST }}
+          username: ${{ secrets.PROD_USER }}
+          key: ${{ secrets.PROD_SSH_KEY }}
+          port: 22
+          script_stop: true
+          command_timeout: 20m
+          script: |
+            set -euo pipefail
+
+            echo "[deploy] sync git repo"
+            cd /opt/hookah
+            git fetch origin
+            git checkout main
+            git reset --hard origin/main
+
+            echo "[deploy] copy runtime files"
+            cp /opt/hookah/social/backend.py /opt/hookah-lab/backend.py
+            cp /opt/hookah/social/templates/social.html /opt/hookah-lab/templates/social.html
+
+            echo "[deploy] restart service"
+            systemctl restart hookah-lab.service
+            systemctl is-active --quiet hookah-lab.service
+            systemctl --no-pager --full status hookah-lab.service | sed -n '1,20p'
+
+            echo "[deploy] done"
