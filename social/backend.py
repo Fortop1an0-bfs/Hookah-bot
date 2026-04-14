@@ -131,6 +131,14 @@ async def startup():
             "ALTER TABLE hl_likes DROP CONSTRAINT IF EXISTS hl_likes_mix_id_fkey",
             "ALTER TABLE hl_saves DROP CONSTRAINT IF EXISTS hl_saves_mix_id_fkey",
             "ALTER TABLE hl_comments DROP CONSTRAINT IF EXISTS hl_comments_mix_id_fkey",
+            "ALTER TABLE hl_user_setup ADD COLUMN IF NOT EXISTS coal_size TEXT DEFAULT ''",
+            "ALTER TABLE hl_user_setup ADD COLUMN IF NOT EXISTS coal_warmup TEXT DEFAULT ''",
+            "ALTER TABLE hl_mixes ADD COLUMN IF NOT EXISTS is_llm BOOLEAN DEFAULT FALSE",
+            "ALTER TABLE hl_mixes ADD COLUMN IF NOT EXISTS llm_prompt TEXT DEFAULT ''",
+            "ALTER TABLE hl_mix_items ADD COLUMN IF NOT EXISTS ali_id INT",
+            "ALTER TABLE hl_mix_items ADD COLUMN IF NOT EXISTS sort_order INT DEFAULT 0",
+            "ALTER TABLE hl_mixes ADD COLUMN IF NOT EXISTS is_llm BOOLEAN DEFAULT FALSE",
+            "ALTER TABLE hl_mixes ADD COLUMN IF NOT EXISTS llm_prompt TEXT DEFAULT ''",
         ]:
             await conn.execute(sql)
 
@@ -160,6 +168,8 @@ CREATE TABLE IF NOT EXISTS hl_user_setup (
     user_id     INT PRIMARY KEY REFERENCES hl_users(id) ON DELETE CASCADE,
     hookah      TEXT DEFAULT '',
     bowl        TEXT DEFAULT '',
+    coal_size   TEXT DEFAULT '',
+    coal_warmup TEXT DEFAULT '',
     bowl_type   TEXT DEFAULT '',
     coal        TEXT DEFAULT '',
     foil        TEXT DEFAULT '',
@@ -353,7 +363,7 @@ async def update_me(request: Request, user=Depends(req_user)):
                 d.get("bio"), d.get("avatar"), user["id"])
         # map "notes" → "foil" for backward compat
         if "notes" in d: d["foil"] = d.pop("notes")
-        setup_fields = {k: d[k] for k in ("hookah","bowl","bowl_type","coal","foil","flask_shape","flask_color") if k in d}
+        setup_fields = {k: d[k] for k in ("hookah","bowl","bowl_type","coal","coal_size","coal_warmup","foil","flask_shape","flask_color") if k in d}
         if setup_fields:
             sets = ", ".join(f"{k}=${i+2}" for i, k in enumerate(setup_fields))
             vals = list(setup_fields.values())
@@ -499,10 +509,21 @@ async def remove_from_cabinet(ali_id: int, user=Depends(req_user)):
 
 # ── MIXES ────────────────────────────────────────────────────────────────────
 
+def _s(val, default=""):
+    """Remove lone surrogates (broken emoji) that crash asyncpg."""
+    if val is None:
+        return default
+    if not isinstance(val, str):
+        return val
+    try:
+        return val.encode("utf-8", "surrogatepass").decode("utf-8", "ignore")
+    except Exception:
+        return default
+
 @app.post("/api/mixes")
 async def create_mix(request: Request, user=Depends(req_user)):
     d = await request.json()
-    name  = (d.get("name") or "Без названия").strip()
+    name  = _s(d.get("name") or "Без названия").strip()
     items = d.get("items", [])
     if not items:
         raise HTTPException(400, "Добавь хотя бы один табак")
@@ -511,11 +532,11 @@ async def create_mix(request: Request, user=Depends(req_user)):
             INSERT INTO hl_mixes (user_id,name,description,bowl_type,bowl_grams,
                                   pack_method,coal_tip,strength,is_public,is_llm,llm_prompt)
             VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11) RETURNING id
-        """, user["id"], name, d.get("description",""),
-            d.get("bowl_type","убивашка"), d.get("bowl_grams",20),
-            d.get("pack_method","секторами"), d.get("coal_tip",""),
-            d.get("strength","средний"), d.get("is_public",True),
-            d.get("is_llm",False), d.get("llm_prompt",""))
+        """, user["id"], name, _s(d.get("description","")),
+            _s(d.get("bowl_type","убивашка")), d.get("bowl_grams",20),
+            _s(d.get("pack_method","секторами")), _s(d.get("coal_tip","")),
+            _s(d.get("strength","средний")), d.get("is_public",True),
+            d.get("is_llm",False), _s(d.get("llm_prompt","")))
         for i, item in enumerate(items):
             await conn.execute("""
                 INSERT INTO hl_mix_items (mix_id,ali_id,tobacco_name,brand,percentage,sort_order)
@@ -590,7 +611,9 @@ async def toggle_save(mix_id: int, user=Depends(req_user)):
 # ── FEED ─────────────────────────────────────────────────────────────────────
 
 @app.get("/api/feed")
-async def get_feed(offset: int = 0, limit: int = 20):
+async def get_feed(offset: int = 0, limit: int = 20, authorization: Optional[str] = Header(None)):
+    u = await get_user(authorization)
+    user_id = u["id"] if u else None
     async with pool.acquire() as conn:
         rows = await conn.fetch("""
             SELECT m.id, m.name, m.description, m.bowl_type, m.bowl_grams,
@@ -598,13 +621,17 @@ async def get_feed(offset: int = 0, limit: int = 20):
                    u.username, u.avatar,
                    (SELECT COUNT(*) FROM hl_likes l WHERE l.mix_id=m.id) as likes,
                    (SELECT COUNT(*) FROM hl_saves s WHERE s.mix_id=m.id) as saves,
-                   (SELECT COUNT(*) FROM hl_comments c WHERE c.mix_id=m.id) as comments
+                   (SELECT COUNT(*) FROM hl_comments c WHERE c.mix_id=m.id) as comments,
+                   ($3::int IS NOT NULL AND EXISTS(
+                       SELECT 1 FROM hl_likes WHERE user_id=$3 AND mix_id=m.id)) as i_liked,
+                   ($3::int IS NOT NULL AND EXISTS(
+                       SELECT 1 FROM hl_saves WHERE user_id=$3 AND mix_id=m.id)) as i_saved
             FROM hl_mixes m
             JOIN hl_users u ON u.id=m.user_id
             WHERE m.is_public=TRUE
             ORDER BY m.created_at DESC
             OFFSET $1 LIMIT $2
-        """, offset, limit)
+        """, offset, limit, user_id)
         result = []
         for row in rows:
             items = await _mix_items(conn, row["id"])
@@ -792,9 +819,22 @@ async def rate_mix(mix_id: int, request: Request, user=Depends(req_user)):
 
 # ── CATALOG ───────────────────────────────────────────────────────────────────
 
+@app.get("/api/flavor-tags")
+async def get_flavor_tags(limit: int = 20):
+    async with pool.acquire() as conn:
+        rows = await conn.fetch("""
+            SELECT unnest(flavor_tags) as tag, COUNT(*) as cnt
+            FROM scraper.htr_tobaccos
+            WHERE flavor_tags IS NOT NULL AND array_length(flavor_tags,1) > 0
+            GROUP BY tag
+            ORDER BY cnt DESC
+            LIMIT $1
+        """, limit)
+        return [{"tag": r["tag"], "count": int(r["cnt"])} for r in rows]
+
 @app.get("/api/catalog")
 async def get_catalog(
-    q: str = "", brand: str = "", strength: str = "",
+    q: str = "", brand: str = "", strength: str = "", tag: str = "",
     in_stock: bool = False, min_rating: float = 0,
     sort: str = "rating", offset: int = 0, limit: int = 40
 ):
@@ -814,6 +854,7 @@ async def get_catalog(
               AND (NOT $3 OR a.in_stock = TRUE)
               AND ($4 = 0 OR ht.avg_rating >= $4)
               AND ($5 = '' OR ht.strength_user ILIKE '%'||$5||'%' OR ht.strength_official ILIKE '%'||$5||'%')
+              AND ($9 = '' OR $9 = ANY(ht.flavor_tags))
             ORDER BY
                 CASE WHEN $6='rating'    THEN COALESCE(ht.avg_rating,0) END DESC NULLS LAST,
                 CASE WHEN $6='price_asc' THEN a.price END ASC NULLS LAST,
@@ -821,7 +862,7 @@ async def get_catalog(
                 CASE WHEN $6='reviews'   THEN COALESCE(ht.total_reviews,0) END DESC NULLS LAST,
                 a.is_bestseller DESC, a.brand_name, a.name
             LIMIT $7 OFFSET $8
-        """, q, brand, in_stock, min_rating, strength, sort, limit, offset)
+        """, q, brand, in_stock, min_rating, strength, sort, limit, offset, tag)
         total = await conn.fetchval("""
             SELECT COUNT(*) FROM scraper.ali_products a
             LEFT JOIN scraper.htr_tobaccos ht ON
@@ -830,8 +871,43 @@ async def get_catalog(
               AND ($2='' OR a.brand_name ILIKE '%'||$2||'%')
               AND (NOT $3 OR a.in_stock=TRUE)
               AND ($4=0 OR ht.avg_rating>=$4)
-        """, q, brand, in_stock, min_rating)
+              AND ($5='' OR $5=ANY(ht.flavor_tags))
+        """, q, brand, in_stock, min_rating, tag)
         return {"items": [dict(r) for r in rows], "total": total}
+
+@app.get("/api/catalog/mixes")
+async def get_catalog_mixes(
+    q: str = "", strength: str = "", bowl_type: str = "",
+    sort: str = "new", offset: int = 0, limit: int = 20
+):
+    order_by = "m.created_at DESC" if sort == "new" else "likes DESC, m.created_at DESC"
+    async with pool.acquire() as conn:
+        rows = await conn.fetch(f"""
+            SELECT m.id, m.name, m.description, m.bowl_type, m.pack_method,
+                   m.strength, m.created_at, m.is_llm,
+                   u.username, u.avatar,
+                   (SELECT COUNT(*) FROM hl_likes l WHERE l.mix_id=m.id) as likes
+            FROM hl_mixes m
+            JOIN hl_users u ON u.id=m.user_id
+            WHERE m.is_public=TRUE
+              AND ($1='' OR m.name ILIKE '%'||$1||'%' OR m.description ILIKE '%'||$1||'%')
+              AND ($2='' OR m.strength ILIKE '%'||$2||'%')
+              AND ($3='' OR m.bowl_type ILIKE '%'||$3||'%')
+            ORDER BY {order_by}
+            OFFSET $4 LIMIT $5
+        """, q, strength, bowl_type, offset, limit)
+        total = await conn.fetchval("""
+            SELECT COUNT(*) FROM hl_mixes m
+            WHERE m.is_public=TRUE
+              AND ($1='' OR m.name ILIKE '%'||$1||'%' OR m.description ILIKE '%'||$1||'%')
+              AND ($2='' OR m.strength ILIKE '%'||$2||'%')
+              AND ($3='' OR m.bowl_type ILIKE '%'||$3||'%')
+        """, q, strength, bowl_type)
+        result = []
+        for row in rows:
+            items = await _mix_items(conn, row["id"])
+            result.append({**dict(row), "items": items})
+        return {"items": result, "total": total}
 
 @app.get("/api/community-mixes")
 async def get_community_mixes(limit: int = 20):
