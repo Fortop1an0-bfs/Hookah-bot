@@ -439,6 +439,7 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);fon
         <span class="search-icon">🔍</span>
         <input class="search-input" id="tobaccoSearchInput" placeholder="Поиск табака..." oninput="filterTobaccos(this.value)" autofocus>
       </div>
+      <div id="brandPills" style="display:flex;flex-wrap:wrap;gap:6px;margin:8px 0 4px"></div>
       <div class="search-results" id="tobaccoResults"></div>
     </div>
   </div>
@@ -553,6 +554,11 @@ function navigate(page, navEl) {
   document.getElementById(page + 'Page').classList.add('active');
   navEl.classList.add('active');
   if (page === 'profile') renderProfile();
+  if (page === 'lab') {
+    clearInterval(_mobDraftTimer);
+    _mobDraftTimer = setInterval(_mobDraftSave, 4000);
+    if (_mobDraftLoad()) showToast('📋 Черновик восстановлен');
+  }
 }
 
 // ── BOWL SVG ──
@@ -787,30 +793,56 @@ function updateLabDetails() {
 }
 
 // ── TOBACCO SEARCH ──
+const BRAND_ICON_MAP = {'MustHave':'🍋','Darkside':'🌑','Хулиган':'💥','Black Burn':'🔥','Bonche':'🌸','Tangiers':'🌿','Сарма':'🫐','Duft':'🍇'};
+let _activeBrandFilter = '';
+
 function openTobaccoSearch() {
   document.getElementById('tobaccoModal').classList.add('open');
   document.getElementById('tobaccoSearchInput').value = '';
+  _activeBrandFilter = '';
+  _renderBrandPills();
   filterTobaccos('');
   setTimeout(() => document.getElementById('tobaccoSearchInput').focus(), 300);
 }
 function closeTobaccoSearch() {
   document.getElementById('tobaccoModal').classList.remove('open');
 }
+
+function _renderBrandPills() {
+  const brands = [...new Set(TOBACCO_DB.map(t => t.brand))].sort();
+  const el = document.getElementById('brandPills');
+  el.innerHTML = ['Все', ...brands].map(b => {
+    const active = (b === 'Все' && !_activeBrandFilter) || b === _activeBrandFilter;
+    const icon = BRAND_ICON_MAP[b] || '';
+    return `<span onclick="_setBrandFilter('${b === 'Все' ? '' : b}')" style="padding:4px 10px;border-radius:50px;font-size:0.7rem;font-weight:600;cursor:pointer;background:${active ? 'rgba(157,111,255,0.25)' : 'rgba(255,255,255,0.06)'};color:${active ? 'var(--purple)' : 'var(--text3)'};border:1px solid ${active ? 'rgba(157,111,255,0.4)' : 'transparent'};transition:all 0.15s">${icon ? icon + ' ' : ''}${b}</span>`;
+  }).join('');
+}
+
+function _setBrandFilter(brand) {
+  _activeBrandFilter = brand;
+  _renderBrandPills();
+  filterTobaccos(document.getElementById('tobaccoSearchInput').value);
+}
+
 function filterTobaccos(query) {
   const q = query.toLowerCase().trim();
-  const results = q ? TOBACCO_DB.filter(t =>
+  let results = TOBACCO_DB;
+  if (_activeBrandFilter) results = results.filter(t => t.brand === _activeBrandFilter);
+  if (q) results = results.filter(t =>
     t.name.toLowerCase().includes(q) || t.brand.toLowerCase().includes(q)
-  ) : TOBACCO_DB;
+  );
   const container = document.getElementById('tobaccoResults');
-  container.innerHTML = results.slice(0, 20).map(t => `
-    <div class="search-result-item" onclick="addTobacco(${JSON.stringify(t).replace(/"/g,'&quot;')})">
-      <div class="search-result-icon">${t.brand === 'MustHave' ? '🍋' : t.brand === 'Darkside' ? '🌑' : t.brand === 'Хулиган' ? '💥' : t.brand === 'Black Burn' ? '🔥' : t.brand === 'Bonche' ? '🌸' : t.brand === 'Tangiers' ? '🌿' : '🪴'}</div>
+  container.innerHTML = results.slice(0, 20).map(t => {
+    const icon = BRAND_ICON_MAP[t.brand] || '🪴';
+    return `<div class="search-result-item" onclick="addTobacco(${JSON.stringify(t).replace(/"/g,'&quot;')})">
+      <div class="search-result-icon">${icon}</div>
       <div class="search-result-main">
         <div class="search-result-name">${t.name}</div>
         <div class="search-result-brand">${t.brand}${t.line ? ' · ' + t.line : ''}</div>
       </div>
       <span class="search-result-badge str-badge-${t.strength}">${t.strength}</span>
-    </div>`).join('');
+    </div>`;
+  }).join('');
 }
 
 // ── PREVIEW CARD ──
@@ -866,8 +898,42 @@ function previewCard() {
 }
 function closePreview() { document.getElementById('previewModal').classList.remove('open'); }
 
+// ── LAB DRAFT (mobile) ──
+const MOB_DRAFT_KEY = 'hl_lab_draft';
+let _mobDraftTimer = null;
+
+function _mobDraftSave() {
+  if (!lab.tobaccos.length) return;
+  try {
+    localStorage.setItem(MOB_DRAFT_KEY, JSON.stringify({
+      tobaccos: lab.tobaccos,
+      bowlSize: lab.bowlSize,
+      packMethod: lab.packMethod,
+      mixName: '',
+      ts: Date.now(),
+    }));
+  } catch(e) {}
+}
+
+function _mobDraftLoad() {
+  try {
+    const raw = localStorage.getItem(MOB_DRAFT_KEY);
+    if (!raw) return false;
+    const d = JSON.parse(raw);
+    if (!d.tobaccos?.length || lab.tobaccos.length) return false;
+    lab.tobaccos = d.tobaccos;
+    lab.bowlSize = d.bowlSize || 20;
+    lab.packMethod = d.packMethod || 'секторами';
+    renderTobaccoList();
+    renderBowl();
+    updateLabDetails();
+    return true;
+  } catch(e) { return false; }
+}
+
 function saveMix() {
   if (lab.tobaccos.length === 0) { showToast('Добавь хотя бы один табак'); return; }
+  localStorage.removeItem(MOB_DRAFT_KEY);
   showToast('✦ Микс сохранён!');
 }
 
@@ -1030,9 +1096,24 @@ function renderProfile() {
     </div>
 
     <div class="profile-section">
-      <div class="section-title">Миксы</div>
-      <div class="mix-grid" id="myMixGrid">
-        ${renderMiniGrid()}
+      <div style="display:flex;gap:0;border-bottom:1px solid var(--border);margin-bottom:12px">
+        <button onclick="switchMobileProfileTab('mixes',this)" class="profile-tab active" id="mobTabMixes" style="flex:1;padding:8px;background:none;border:none;border-bottom:2px solid var(--purple);color:var(--purple);font-size:0.82rem;font-weight:600;cursor:pointer;font-family:inherit;transition:all 0.2s">Миксы</button>
+        <button onclick="switchMobileProfileTab('saved',this)" class="profile-tab" id="mobTabSaved" style="flex:1;padding:8px;background:none;border:none;border-bottom:2px solid transparent;color:var(--text3);font-size:0.82rem;font-weight:600;cursor:pointer;font-family:inherit;transition:all 0.2s">Сохранённые (${savedPosts.length})</button>
+      </div>
+      <div id="mobMixesPanel">
+        <div class="mix-grid" id="myMixGrid">${renderMiniGrid()}</div>
+      </div>
+      <div id="mobSavedPanel" style="display:none">
+        ${savedPosts.length === 0
+          ? '<div style="padding:24px;text-align:center;color:var(--text3);font-size:0.82rem">🔖 Сохранённых миксов нет</div>'
+          : savedPosts.map(id => {
+              const post = MOCK_POSTS.find(p => p.id === id);
+              if (!post) return '';
+              return `<div style="padding:10px 0;border-bottom:1px solid var(--border)">
+                <div style="font-size:0.85rem;font-weight:600">${post.mix.name}</div>
+                <div style="font-size:0.72rem;color:var(--text3)">от ${post.user} · ${post.mix.tobaccos.map(t=>t.name).join(', ')}</div>
+              </div>`;
+            }).join('')}
       </div>
     </div>`;
 }
@@ -1057,6 +1138,16 @@ function renderMiniGrid() {
       <div class="mix-grid-overlay"><div class="mix-grid-name">${m.name}</div></div>
     </div>`;
   }).join('');
+}
+
+function switchMobileProfileTab(tab, btn) {
+  document.getElementById('mobMixesPanel').style.display = tab === 'mixes' ? '' : 'none';
+  document.getElementById('mobSavedPanel').style.display = tab === 'saved' ? '' : 'none';
+  document.querySelectorAll('.profile-tab').forEach(b => {
+    const active = b === btn;
+    b.style.color = active ? 'var(--purple)' : 'var(--text3)';
+    b.style.borderBottom = active ? '2px solid var(--purple)' : '2px solid transparent';
+  });
 }
 
 function editSetup() {
