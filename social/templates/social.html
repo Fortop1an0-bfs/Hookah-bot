@@ -189,13 +189,16 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Space 
 .bowl-size-toggle{display:flex;border:1px solid var(--border);border-radius:50px;overflow:hidden;background:var(--bg3)}
 .bowl-size-btn{padding:6px 14px;font-family:inherit;font-size:0.72rem;font-weight:600;color:var(--text3);background:transparent;border:none;cursor:pointer;transition:all 0.2s;white-space:nowrap}
 .bowl-size-btn.active{background:var(--bg5);color:var(--text)}
+.lab-setup-bowl{width:100%;display:flex;align-items:center;justify-content:center;gap:7px;margin-top:8px;padding:7px 12px;background:rgba(157,111,255,0.08);border:1px solid rgba(157,111,255,0.2);border-radius:50px;color:var(--purple);font-family:inherit;font-size:0.78rem;font-weight:600;cursor:pointer;transition:all 0.2s;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.lab-setup-bowl:hover{background:rgba(157,111,255,0.16);border-color:var(--purple)}
+.lab-setup-bowl.active{background:rgba(157,111,255,0.2);border-color:var(--purple);box-shadow:0 0 8px rgba(157,111,255,0.25)}
 
 /* Pack methods */
 .pack-methods{display:grid;grid-template-columns:1fr 1fr;gap:8px;width:100%}
 .pack-btn{padding:10px 12px;border:1px solid var(--border);border-radius:12px;background:var(--bg3);display:flex;align-items:center;gap:8px;cursor:pointer;transition:all 0.2s;text-align:left;font-family:inherit;width:100%}
 .pack-btn:hover{background:var(--bg4)}
 .pack-btn.active{border-color:var(--purple);background:rgba(157,111,255,0.1);box-shadow:0 0 14px rgba(157,111,255,0.1)}
-.pack-btn-icon{font-size:1rem;flex-shrink:0}
+.pack-btn-icon{width:32px;height:32px;flex-shrink:0;display:flex;align-items:center;justify-content:center}
 .pack-btn-name{font-size:0.8rem;font-weight:600;color:var(--text)}
 .pack-btn-hint{font-size:0.62rem;color:var(--text3);margin-top:1px}
 
@@ -568,6 +571,41 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Space 
 .catalog-load-more{width:100%;padding:13px;margin-top:16px;background:var(--bg3);border:1px solid var(--border);border-radius:14px;color:var(--text2);font-family:inherit;font-size:0.88rem;font-weight:600;cursor:pointer;transition:all 0.2s}
 .catalog-load-more:hover{background:var(--bg4)}
 
+/* ── CATALOG TABS ── */
+.cat-tabs{display:flex;gap:0;border-bottom:1px solid var(--border);padding:0 32px;background:var(--bg1);flex-shrink:0}
+.cat-tab{padding:11px 20px;background:transparent;border:none;border-bottom:2px solid transparent;margin-bottom:-1px;font-family:inherit;font-size:0.88rem;font-weight:600;color:var(--text3);cursor:pointer;transition:all 0.2s}
+.cat-tab:hover{color:var(--text)}
+.cat-tab.active{color:var(--purple);border-bottom-color:var(--purple)}
+
+/* ── TOBACCO DETAIL MODAL ── */
+.tob-detail-panel{background:var(--bg1);border-radius:20px;padding:24px;max-height:88vh;overflow-y:auto;position:relative;width:100%;max-width:580px}
+.tob-detail-close{position:absolute;top:14px;right:14px}
+.tob-detail-rating-row{display:flex;align-items:center;gap:12px;margin:12px 0}
+.tob-detail-score{font-size:2.2rem;font-weight:800;color:var(--gold);line-height:1}
+.tob-detail-meta{font-size:0.73rem;color:var(--text3);line-height:1.7}
+.tob-detail-recommend{color:#4ade80;font-weight:600}
+.review-list{margin-top:4px}
+.review-item{padding:12px 0;border-bottom:1px solid var(--border)}
+.review-item:last-child{border-bottom:none;padding-bottom:0}
+.review-header{display:flex;align-items:center;gap:8px;margin-bottom:6px;flex-wrap:wrap}
+.review-rating-badge{background:var(--gold);color:#000;font-size:0.7rem;font-weight:800;padding:2px 8px;border-radius:50px;flex-shrink:0}
+.review-user{font-size:0.78rem;font-weight:600}
+.review-date{font-size:0.67rem;color:var(--text3);margin-left:auto}
+.review-text{font-size:0.84rem;color:var(--text2);line-height:1.6}
+.review-likes{font-size:0.68rem;color:var(--text3);margin-top:4px}
+
+/* ── MIX CATALOG CARD ── */
+.mix-cat-card{background:var(--bg2);border:1px solid var(--border);border-radius:16px;padding:14px;transition:all 0.2s;cursor:pointer;display:flex;gap:12px;align-items:flex-start}
+.mix-cat-card:hover{border-color:var(--border2);transform:translateY(-2px);box-shadow:0 8px 24px rgba(0,0,0,0.3)}
+.mix-cat-body{flex:1;min-width:0}
+.mix-cat-name{font-size:0.9rem;font-weight:700;margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mix-cat-author{font-size:0.67rem;color:var(--text3);margin-bottom:5px}
+.mix-cat-items{font-size:0.74rem;color:var(--text2);margin-bottom:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mix-cat-footer{display:flex;align-items:center;justify-content:space-between;margin-top:6px}
+.mix-cat-likes{font-size:0.73rem;color:var(--text3)}
+.mix-cat-btn{padding:5px 12px;background:rgba(157,111,255,0.1);border:1px solid rgba(157,111,255,0.25);border-radius:50px;color:var(--purple);font-size:0.72rem;font-weight:600;cursor:pointer;font-family:inherit;transition:all 0.2s;white-space:nowrap}
+.mix-cat-btn:hover{background:rgba(157,111,255,0.2)}
+
 /* ── COMMENTS ── */
 .comments-section{padding:0 16px 14px;border-top:1px solid var(--border)}
 .comments-list{display:flex;flex-direction:column;gap:10px;padding:12px 0 8px}
@@ -708,24 +746,35 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Space 
                 <div class="bowl-size-toggle">
                   <button class="bowl-size-btn active" onclick="setBowlSize(20,this)">Убивашка</button>
                   <button class="bowl-size-btn" onclick="setBowlSize(15,this)">Фанел</button>
-                  <button class="bowl-size-btn" onclick="setBowlSize(10,this)">Сифон</button>
+                  <button class="bowl-size-btn" onclick="setBowlSize(10,this)">Турка</button>
+                </div>
+                <div id="labSetupBowlHint" style="display:none;width:100%">
+                  <button class="lab-setup-bowl" id="labSetupBowlBtn" onclick="applySetupBowl()">🏺 <span id="labSetupBowlName">Моя чаша</span></button>
                 </div>
               </div>
               <div class="pack-methods">
                 <button class="pack-btn active" data-method="секторами" onclick="setPackMethod('секторами',this)">
-                  <span class="pack-btn-icon">🥧</span>
+                  <span class="pack-btn-icon">
+                    <svg width="32" height="32" viewBox="0 0 32 32"><circle cx="16" cy="16" r="13" fill="#161320"/><path d="M16,16 L16,3 A13,13,0,0,1,27.3,22.5 Z" fill="#9d6fff"/><path d="M16,16 L27.3,22.5 A13,13,0,0,1,4.7,22.5 Z" fill="#e8a23b"/><path d="M16,16 L4.7,22.5 A13,13,0,0,1,16,3 Z" fill="#3dd6ac"/><circle cx="16" cy="16" r="5" fill="#0f0d1a"/></svg>
+                  </span>
                   <div><div class="pack-btn-name">Секторами</div><div class="pack-btn-hint">каждый в свой сектор</div></div>
                 </button>
                 <button class="pack-btn" data-method="слоями" onclick="setPackMethod('слоями',this)">
-                  <span class="pack-btn-icon">📑</span>
+                  <span class="pack-btn-icon">
+                    <svg width="32" height="32" viewBox="0 0 32 32"><defs><clipPath id="pci-layers"><circle cx="16" cy="16" r="13"/></clipPath></defs><circle cx="16" cy="16" r="13" fill="#161320"/><rect x="3" y="3" width="26" height="9" fill="#9d6fff" clip-path="url(#pci-layers)"/><rect x="3" y="12" width="26" height="8" fill="#e8a23b" clip-path="url(#pci-layers)"/><rect x="3" y="20" width="26" height="9" fill="#3dd6ac" clip-path="url(#pci-layers)"/></svg>
+                  </span>
                   <div><div class="pack-btn-name">Слоями</div><div class="pack-btn-hint">нежный вниз, стойкий наверх</div></div>
                 </button>
                 <button class="pack-btn" data-method="компот" onclick="setPackMethod('компот',this)">
-                  <span class="pack-btn-icon">🔀</span>
+                  <span class="pack-btn-icon">
+                    <svg width="32" height="32" viewBox="0 0 32 32"><circle cx="16" cy="16" r="13" fill="#161320"/><circle cx="11" cy="11" r="3.5" fill="#9d6fff"/><circle cx="22" cy="12" r="3" fill="#e8a23b"/><circle cx="9" cy="20" r="3" fill="#3dd6ac"/><circle cx="22" cy="21" r="3.5" fill="#f472b6"/><circle cx="16" cy="16" r="2.5" fill="#60a5fa"/></svg>
+                  </span>
                   <div><div class="pack-btn-name">Компот</div><div class="pack-btn-hint">всё перемешать</div></div>
                 </button>
                 <button class="pack-btn" data-method="центр+края" onclick="setPackMethod('центр+края',this)">
-                  <span class="pack-btn-icon">🎯</span>
+                  <span class="pack-btn-icon">
+                    <svg width="32" height="32" viewBox="0 0 32 32"><circle cx="16" cy="16" r="13" fill="#e8a23b" opacity="0.85"/><circle cx="16" cy="16" r="8" fill="#9d6fff" opacity="0.9"/><circle cx="16" cy="16" r="4" fill="#3dd6ac" opacity="0.95"/></svg>
+                  </span>
                   <div><div class="pack-btn-name">Центр+края</div><div class="pack-btn-hint">акцент в центр</div></div>
                 </button>
               </div>
@@ -780,7 +829,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Space 
           <span class="search-ico">🔍</span>
           <input class="search-inp" id="catSearch" placeholder="Поиск по названию, бренду..." oninput="debounceCatalog()">
         </div>
-        <span style="font-size:0.78rem;color:var(--text3);flex-shrink:0;margin-left:auto" id="catalogTotal">2837 табаков</span>
+        <span style="font-size:0.78rem;color:var(--text3);flex-shrink:0;margin-left:auto" id="catalogTotal"></span>
       </div>
       <div class="catalog-layout">
         <div class="catalog-filters">
@@ -805,6 +854,60 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Space 
         </div>
         <button class="catalog-load-more" id="catalogMore" style="display:none" onclick="loadCatalogMore()">Показать ещё</button>
       </div>
+
+      <!-- Раздел: Табаки -->
+      <div id="catSection-tobaccos">
+        <div class="catalog-layout">
+          <div class="catalog-filters">
+            <select class="filter-select" id="catSort" onchange="loadCatalog(0)">
+              <option value="rating">По рейтингу</option>
+              <option value="reviews">По отзывам</option>
+              <option value="price_asc">Дешевле</option>
+              <option value="price_desc">Дороже</option>
+            </select>
+            <select class="filter-select" id="catStrength" onchange="loadCatalog(0)">
+              <option value="">Любая крепость</option>
+              <option value="лёгк">Лёгкая</option>
+              <option value="средн">Средняя</option>
+              <option value="крепк">Крепкая</option>
+            </select>
+            <button class="filter-toggle" id="catInStock" onclick="toggleCatInStock()">В наличии</button>
+          </div>
+          <div class="catalog-grid" id="catalogGrid">
+            <div class="loading"><div class="spinner"></div>Загрузка...</div>
+          </div>
+          <button class="catalog-load-more" id="catalogMore" style="display:none" onclick="loadCatalogMore()">Показать ещё</button>
+        </div>
+      </div>
+
+      <!-- Раздел: Миксы -->
+      <div id="catSection-mixes" style="display:none">
+        <div class="catalog-layout">
+          <div class="catalog-filters">
+            <select class="filter-select" id="mixCatSort" onchange="loadMixCatalog(0)">
+              <option value="new">Новые</option>
+              <option value="top">Популярные</option>
+            </select>
+            <select class="filter-select" id="mixCatStrength" onchange="loadMixCatalog(0)">
+              <option value="">Любая крепость</option>
+              <option value="лёгк">Лёгкий</option>
+              <option value="средн">Средний</option>
+              <option value="крепк">Крепкий</option>
+            </select>
+            <select class="filter-select" id="mixCatBowl" onchange="loadMixCatalog(0)">
+              <option value="">Любая чаша</option>
+              <option value="убивашка">Убивашка</option>
+              <option value="фанел">Фанел</option>
+              <option value="турка">Турка</option>
+            </select>
+          </div>
+          <div class="catalog-grid" id="mixCatalogGrid">
+            <div class="loading"><div class="spinner"></div>Загрузка...</div>
+          </div>
+          <button class="catalog-load-more" id="mixCatalogMore" style="display:none" onclick="loadMixCatalogMore()">Показать ещё</button>
+        </div>
+      </div>
+
     </div>
   </div>
 
@@ -853,6 +956,27 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Space 
   </div>
 
   </div><!-- /content-wrap -->
+
+  <!-- ── TOBACCO DETAIL MODAL ── -->
+  <div id="tobDetailModal" class="modal-overlay" onclick="if(event.target===this)closeTobDetail()">
+    <div class="tob-detail-panel">
+      <button class="modal-close tob-detail-close" onclick="closeTobDetail()">✕</button>
+      <div id="tobDetailContent">
+        <div class="loading" style="padding:40px 20px"><div class="spinner"></div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── MIX DETAIL MODAL ── -->
+  <div id="mixDetailModal" class="modal-overlay" onclick="if(event.target===this)closeMixDetail()">
+    <div class="modal-sheet" style="max-width:560px">
+      <div class="modal-header">
+        <h3 id="mixDetailTitle">Микс</h3>
+        <button class="modal-close" onclick="closeMixDetail()">✕</button>
+      </div>
+      <div class="modal-body" id="mixDetailContent"></div>
+    </div>
+  </div>
 
   <!-- ── FEED SIDEBAR (desktop right panel) ── -->
   <div class="feed-sidebar" id="feedSidebar">
@@ -1050,7 +1174,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Space 
             <span onclick="pickChip('setupBowlType',this)">Фанел</span>
             <span onclick="pickChip('setupBowlType',this)">Обратный фанел</span>
             <span onclick="pickChip('setupBowlType',this)">Triton</span>
-            <span onclick="pickChip('setupBowlType',this)">Сифон</span>
+            <span onclick="pickChip('setupBowlType',this)">Турка</span>
             <span onclick="pickChip('setupBowlType',this)">Стандарт</span>
           </div>
           <input type="hidden" id="setupBowlType">
@@ -1067,6 +1191,26 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Space 
             <div class="equip-results" id="coal-results"></div>
           </div>
           <div class="equip-photo-wrap" id="coal-preview"></div>
+        </div>
+        <div class="setup-field-sub">
+          <label class="setup-field-sublabel">Размер угля</label>
+          <div class="setup-chips" id="chips-coal-size">
+            <span onclick="pickChip('setupCoalSize',this)">22мм</span>
+            <span onclick="pickChip('setupCoalSize',this)">25мм</span>
+            <span onclick="pickChip('setupCoalSize',this)">26мм</span>
+          </div>
+          <input type="hidden" id="setupCoalSize">
+        </div>
+        <div class="setup-field-sub">
+          <label class="setup-field-sublabel">🧢 Прогрев с колпаком</label>
+          <div class="setup-chips" id="chips-coal-warmup">
+            <span onclick="pickChip('setupCoalWarmup',this)">1.5 мин</span>
+            <span onclick="pickChip('setupCoalWarmup',this)">2 мин</span>
+            <span onclick="pickChip('setupCoalWarmup',this)">3 мин</span>
+            <span onclick="pickChip('setupCoalWarmup',this)">4 мин</span>
+            <span onclick="pickChip('setupCoalWarmup',this)">5 мин</span>
+          </div>
+          <input type="hidden" id="setupCoalWarmup">
         </div>
       </div>
 
@@ -1191,7 +1335,7 @@ const BRAND_ICONS = {'Must have':'🍋','Dark Side':'🌑','Burn Black':'🔥','
 // ── STATE ──
 let token = localStorage.getItem('hl_token');
 let currentUser = JSON.parse(localStorage.getItem('hl_user') || 'null');
-const lab = { mixName:'', bowlSize:20, packMethod:'секторами', tobaccos:[] };
+const lab = { mixName:'', bowlSize:20, packMethod:'секторами', tobaccos:[], setupBowl:null };
 let _pendingAIMix = null;
 let _pendingAISearchResults = [];
 let aiPageMode = 'mix';
@@ -1322,8 +1466,59 @@ function setBowlSize(g, btn) {
   lab.bowlSize = g;
   document.querySelectorAll('.bowl-size-btn').forEach(b=>b.classList.remove('active'));
   btn.classList.add('active');
-  const lbl = {20:'Убивашка',15:'Фанел',10:'Сифон'}[g]||g+'г';
+  const lbl = {20:'Убивашка',15:'Фанел',10:'Турка'}[g]||g+'г';
   document.getElementById('labBowlLbl').textContent = lbl;
+  const applyBtn = document.getElementById('labSetupBowlBtn');
+  if (applyBtn) applyBtn.classList.remove('active');
+  renderTobList();
+}
+
+async function loadLabSetup() {
+  const hint = document.getElementById('labSetupBowlHint');
+  if (!hint) return;
+  if (!currentUser || !token) { hint.style.display = 'none'; return; }
+  try {
+    const me = await api('/api/me');
+    const setup = me.setup || {};
+    if (setup.bowl || setup.bowl_type) {
+      lab.setupBowl = { bowl: setup.bowl || '', bowl_type: setup.bowl_type || '' };
+      const nameEl = document.getElementById('labSetupBowlName');
+      if (nameEl) {
+        const parts = [setup.bowl_type, setup.bowl].filter(Boolean);
+        nameEl.textContent = parts.join(' · ') || 'Моя чаша';
+      }
+      hint.style.display = '';
+    } else {
+      lab.setupBowl = null;
+      hint.style.display = 'none';
+    }
+  } catch(e) { hint.style.display = 'none'; }
+}
+
+function applySetupBowl() {
+  if (!lab.setupBowl) return;
+  const BOWL_TYPE_TO_SIZE = {
+    'убивашка': 20, 'стандарт': 20,
+    'фанел': 15, 'обратный фанел': 15,
+    'турка': 10, 'сифон': 10, 'triton': 10
+  };
+  const type = (lab.setupBowl.bowl_type || 'убивашка').toLowerCase();
+  const size = BOWL_TYPE_TO_SIZE[type] || 20;
+  lab.bowlSize = size;
+  // активируем нужную кнопку размера
+  document.querySelectorAll('.bowl-size-btn').forEach(b => {
+    const btnLabel = b.textContent.trim().toLowerCase();
+    const btnSize = {убивашка:20,фанел:15,турка:10,сифон:10}[btnLabel] || 0;
+    b.classList.toggle('active', btnSize === size);
+  });
+  // обновляем метку чаши с названием из сетапа
+  const bowlType = lab.setupBowl.bowl_type || {20:'Убивашка',15:'Фанел',10:'Турка'}[size] || 'Убивашка';
+  const bowlName = lab.setupBowl.bowl;
+  document.getElementById('labBowlLbl').textContent = bowlName
+    ? `${bowlType} · ${bowlName}`
+    : bowlType;
+  const applyBtn = document.getElementById('labSetupBowlBtn');
+  if (applyBtn) applyBtn.classList.add('active');
   renderTobList();
 }
 function setPackMethod(m, btn) {
@@ -1588,7 +1783,7 @@ async function saveMix() {
   try {
     const res = await api('/api/mixes','POST',{
       name,
-      bowl_type: {20:'убивашка',15:'фанел',10:'сифон'}[lab.bowlSize]||'убивашка',
+      bowl_type: {20:'убивашка',15:'фанел',10:'турка'}[lab.bowlSize]||'убивашка',
       bowl_grams: lab.bowlSize,
       pack_method: lab.packMethod,
       coal_tip: document.getElementById('labCoalLbl').textContent,
@@ -2271,7 +2466,7 @@ function buildProfileHTML(d) {
         <div class="p-widget-title">Сетап <span class="p-widget-add" onclick="openSetupModal()">изменить</span></div>
         ${buildSetupRow('🔱','hookah','Кальян',d.setup?.hookah,d.setup?.flask_shape,d.setup?.flask_color)}
         ${buildSetupRow('🏺','bowl','Чаша',d.setup?.bowl,d.setup?.bowl_type)}
-        ${buildSetupRow('🔥','coal','Угли',d.setup?.coal)}
+        ${buildSetupRow('🔥','coal','Угли',d.setup?.coal,d.setup?.coal_size,d.setup?.coal_warmup?'🧢 '+d.setup.coal_warmup:undefined)}
         ${buildSetupRow('🌸','hmd','Калауд / ХМД',d.setup?.foil)}
       </div>
       <div class="p-widget">
@@ -2330,6 +2525,8 @@ function openSetupModal() {
     document.getElementById('setupFlaskShape').value= s.flask_shape||'';
     document.getElementById('setupFlaskColor').value= s.flask_color||'';
     document.getElementById('setupBowlType').value  = s.bowl_type||'';
+    document.getElementById('setupCoalSize').value   = s.coal_size||'';
+    document.getElementById('setupCoalWarmup').value = s.coal_warmup||'';
     // restore previews for saved values (or show defaults)
     [['hookah','hookah','hookah-preview'],['bowl','bowl','bowl-preview'],
      ['coal','coal','coal-preview'],['foil','hmd','foil-preview']].forEach(([field,type,prevId])=>{
@@ -2445,6 +2642,8 @@ function syncChips() {
     ['setupFlaskShape','chips-flask-shape'],
     ['setupFlaskColor','chips-flask-color'],
     ['setupBowlType','chips-bowl-type'],
+    ['setupCoalSize','chips-coal-size'],
+    ['setupCoalWarmup','chips-coal-warmup'],
     ['setupFoil','chips-foil'],
   ].forEach(([inp,chips]) => {
     const val = document.getElementById(inp)?.value?.trim().toLowerCase();
@@ -2461,6 +2660,8 @@ async function saveSetupModal() {
       bowl:        document.getElementById('setupBowl').value.trim(),
       bowl_type:   document.getElementById('setupBowlType').value.trim(),
       coal:        document.getElementById('setupCoal').value.trim(),
+      coal_size:   document.getElementById('setupCoalSize').value.trim(),
+      coal_warmup: document.getElementById('setupCoalWarmup').value.trim(),
       foil:        document.getElementById('setupFoil').value.trim(),
       flask_shape: document.getElementById('setupFlaskShape').value.trim(),
       flask_color: document.getElementById('setupFlaskColor').value.trim(),
@@ -2551,7 +2752,29 @@ let catOffset = 0;
 let catInStock = false;
 let catAISearch = false;
 let catTimer = null;
-function debounceCatalog() { clearTimeout(catTimer); catTimer = setTimeout(()=>loadCatalog(0),400); }
+let activeCatTab = 'tobaccos';
+let mixCatOffset = 0;
+const _tobCache = {};
+
+function switchCatTab(tab) {
+  activeCatTab = tab;
+  document.querySelectorAll('.cat-tab').forEach(b => b.classList.remove('active'));
+  document.getElementById('catTab-' + tab).classList.add('active');
+  document.getElementById('catSection-tobaccos').style.display = tab === 'tobaccos' ? '' : 'none';
+  document.getElementById('catSection-mixes').style.display   = tab === 'mixes'    ? '' : 'none';
+  const ph = tab === 'tobaccos' ? 'Поиск по названию, бренду...' : 'Поиск по названию микса...';
+  document.getElementById('catSearch').placeholder = ph;
+  if (tab === 'tobaccos') loadCatalog(0);
+  else loadMixCatalog(0);
+}
+
+function debounceCatalog() {
+  clearTimeout(catTimer);
+  catTimer = setTimeout(() => {
+    if (activeCatTab === 'mixes') loadMixCatalog(0);
+    else loadCatalog(0);
+  }, 400);
+}
 function toggleCatInStock() {
   catInStock = !catInStock;
   document.getElementById('catInStock').classList.toggle('active', catInStock);
@@ -2606,6 +2829,7 @@ async function loadCatalog(offset=0) {
     moreEl.style.display = data.items.length===40 ? 'block' : 'none';
     renderCatalogAISummary(data.ai, q);
     const cards = data.items.map(t => {
+      _tobCache[t.id] = t;
       const tags = (t.flavor_tags||[]).slice(0,3).map(g=>`<span class="tob-card-tag">${g}</span>`).join('');
       const strCol = t.strength_user||t.strength_official||'';
       const disc = t.has_discount && t.price_before_discount ? `<span class="tob-card-price-old">${t.price_before_discount}₽</span>` : '';
@@ -2643,7 +2867,130 @@ function addFromCatalog(t) {
   navigate('lab', document.getElementById('snav-lab'));
   showToast('Добавлено в лабораторию ⚗️');
 }
-function showTobaccoDetail(id) { /* TODO: открыть страницу табака с отзывами */ }
+async function showTobaccoDetail(id) {
+  const modal = document.getElementById('tobDetailModal');
+  const content = document.getElementById('tobDetailContent');
+  modal.classList.add('open');
+  content.innerHTML = '<div class="loading" style="padding:40px 20px"><div class="spinner"></div></div>';
+  const cached = _tobCache[id] || {};
+  try {
+    const data = await api(`/api/tobaccos/${id}/reviews`);
+    const info = data.htr_info || {};
+    const tob = cached;
+
+    const cleanName = (tob.name||'').replace(/Табак для кальяна\s*/i,'');
+    const tagHtml = (info.flavor_tags || tob.flavor_tags || [])
+      .map(t=>`<span class="tob-card-tag">${t}</span>`).join('');
+    const strength = info.strength_user || info.strength_official || tob.strength_user || tob.strength_official || '';
+
+    const ratingBlock = info.avg_rating ? `
+      <div class="tob-detail-rating-row">
+        <div class="tob-detail-score">⭐ ${info.avg_rating}</div>
+        <div class="tob-detail-meta">
+          <div>${info.total_reviews||0} отзывов · ${info.total_ratings||0} оценок</div>
+          ${info.pct_recommend?`<div class="tob-detail-recommend">👍 ${info.pct_recommend}% рекомендуют</div>`:''}
+          ${strength?`<div>${strength}</div>`:''}
+        </div>
+      </div>` : (tob.avg_rating ? `<div class="tob-detail-rating-row"><div class="tob-detail-score">⭐ ${tob.avg_rating}</div></div>` : '');
+
+    const reviewsHtml = data.reviews.length
+      ? data.reviews.map(r => `<div class="review-item">
+          <div class="review-header">
+            <span class="review-rating-badge">★ ${r.rating}</span>
+            <span class="review-user">@${r.username||'аноним'}</span>
+            <span class="review-date">${r.reviewed_at ? new Date(r.reviewed_at).toLocaleDateString('ru') : ''}</span>
+          </div>
+          <div class="review-text">${escHtml(r.review_text||'')}</div>
+          ${r.likes?`<div class="review-likes">👍 ${r.likes}</div>`:''}
+        </div>`).join('')
+      : `<div style="color:var(--text3);font-size:0.85rem;padding:12px 0">Отзывов пока нет</div>`;
+
+    content.innerHTML = `
+      <div style="font-size:0.67rem;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px">${tob.brand||''}</div>
+      <div style="font-size:1.15rem;font-weight:700;line-height:1.3;margin-bottom:10px">${cleanName}</div>
+      ${tob.price ? `<div style="font-size:1rem;font-weight:700;color:var(--gold);margin-bottom:8px">${tob.price}₽ <span style="font-size:0.73rem;font-weight:400;color:var(--text3)">${tob.weight||''}</span></div>` : ''}
+      ${ratingBlock}
+      <div style="display:flex;flex-wrap:wrap;gap:5px;margin-bottom:14px">${tagHtml}</div>
+      <button class="tob-card-add" style="margin-bottom:16px;width:100%;padding:11px" onclick="addFromCatalog(${JSON.stringify(tob).replace(/"/g,'&quot;')});closeTobDetail()">⚗️ Добавить в микс</button>
+      <div style="font-size:0.7rem;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;border-top:1px solid var(--border);padding-top:14px">
+        Отзывы HTReviews (${data.reviews.length})
+      </div>
+      <div class="review-list">${reviewsHtml}</div>
+    `;
+  } catch(e) {
+    content.innerHTML = '<div style="color:var(--red);padding:20px">Ошибка загрузки данных</div>';
+  }
+}
+function closeTobDetail() { document.getElementById('tobDetailModal').classList.remove('open'); }
+
+// ── MIXES CATALOG ─────────────────────────────────────────────────
+async function loadMixCatalog(offset = 0) {
+  mixCatOffset = offset;
+  const q        = document.getElementById('catSearch').value;
+  const sort     = document.getElementById('mixCatSort').value;
+  const strength = document.getElementById('mixCatStrength').value;
+  const bowl     = document.getElementById('mixCatBowl').value;
+  const grid     = document.getElementById('mixCatalogGrid');
+  if (offset === 0) grid.innerHTML = '<div class="loading"><div class="spinner"></div>Загрузка...</div>';
+  try {
+    const params = new URLSearchParams({q, sort, strength, bowl_type: bowl, limit: 20, offset});
+    const data = await api('/api/catalog/mixes?' + params);
+    document.getElementById('catalogTotal').textContent = data.total + ' миксов';
+    document.getElementById('mixCatalogMore').style.display = data.items.length === 20 ? 'block' : 'none';
+    const cards = data.items.map(m => renderMixCatCard(m)).join('');
+    if (offset === 0) grid.innerHTML = cards || '<div style="padding:40px;text-align:center;color:var(--text3)">Пока нет миксов</div>';
+    else grid.innerHTML += cards;
+  } catch(e) { grid.innerHTML = '<div style="padding:40px;text-align:center;color:var(--red)">Ошибка загрузки</div>'; }
+}
+function loadMixCatalogMore() { loadMixCatalog(mixCatOffset + 20); }
+
+function renderMixCatCard(m) {
+  const colors = m.items.map((_,i) => COLORS[i % COLORS.length]);
+  const items  = m.items.map((it,i) => ({...it, color: colors[i]}));
+  const total  = items.reduce((s,t) => s + (t.percentage||0), 0);
+  const svg    = buildMiniSvg(items, total, 64, 32, 32, 28, 10, m.pack_method||'секторами');
+  const packIcon = PACK_ICONS[m.pack_method] || '🥧';
+  const preview  = m.items.slice(0,3).map(i => `${i.brand} ${i.tobacco_name}`).join(' · ');
+  const mEnc     = JSON.stringify(m).replace(/"/g,'&quot;');
+  return `<div class="mix-cat-card" onclick="openMixDetail(this,${mEnc})">
+    ${svg}
+    <div class="mix-cat-body">
+      <div class="mix-cat-name">${escHtml(m.name)}</div>
+      <div class="mix-cat-author">@${m.username} · ${timeAgo(m.created_at)}</div>
+      <div class="mix-cat-items">${escHtml(preview)}${m.items.length>3?' +ещё':''}</div>
+      <div class="tob-card-tags" style="margin:4px 0 0">
+        ${m.bowl_type?`<span class="tob-card-tag">☕ ${m.bowl_type}</span>`:''}
+        <span class="tob-card-tag">${packIcon} ${m.pack_method||'секторами'}</span>
+        ${m.strength?`<span class="tob-card-tag">${m.strength}</span>`:''}
+      </div>
+      <div class="mix-cat-footer">
+        <span class="mix-cat-likes">❤️ ${m.likes||0}</span>
+        <button class="mix-cat-btn" onclick="event.stopPropagation();addMixItemsToLab(${mEnc})">⚗️ В лабу</button>
+      </div>
+    </div>
+  </div>`;
+}
+
+function addMixItemsToLab(m) {
+  const colors = m.items.map((_,i) => COLORS[i % COLORS.length]);
+  lab.tobaccos = m.items.map((it,i) => ({
+    ali_id: it.ali_id||null, name: it.tobacco_name, brand: it.brand,
+    percentage: it.percentage, color: colors[i], strength: 'средний'
+  }));
+  document.getElementById('labMixName').value = m.name;
+  navigate('lab', document.getElementById('snav-lab'));
+  renderTobList(); renderBowl(); updateLabDetails();
+  showToast('Микс загружен в лабораторию ⚗️');
+}
+
+function openMixDetail(el, m) {
+  const colors = m.items.map((_,i) => COLORS[i % COLORS.length]);
+  const postData = {...m, items: m.items.map((it,i) => ({...it, color: colors[i], strength: it.strength||'средний'}))};
+  document.getElementById('mixDetailTitle').textContent = m.name;
+  document.getElementById('mixDetailContent').innerHTML = renderPost(postData, {communityActions: false, bowlGrams: m.bowl_grams||20});
+  document.getElementById('mixDetailModal').classList.add('open');
+}
+function closeMixDetail() { document.getElementById('mixDetailModal').classList.remove('open'); }
 
 // ── COMMENTS ─────────────────────────────────────────────────────
 async function toggleComments(btn, mixId) {
@@ -2854,7 +3201,7 @@ function loadHistoryMix(i) {
   document.getElementById('labMixName').value = m.mixName||'';
   activatePackMethod(lab.packMethod);
   document.querySelectorAll('.bowl-size-btn').forEach(b=>b.classList.remove('active'));
-  document.querySelectorAll('.bowl-size-btn').forEach(b=>{ if(b.textContent.includes(lab.bowlSize===20?'Убивашка':lab.bowlSize===15?'Фанел':'Сифон')) b.classList.add('active'); });
+  document.querySelectorAll('.bowl-size-btn').forEach(b=>{ if(b.textContent.includes(lab.bowlSize===20?'Убивашка':lab.bowlSize===15?'Фанел':'Турка')) b.classList.add('active'); });
   renderTobList(); renderBowl(); updateLabDetails();
   showToast('Микс загружен из истории');
 }
