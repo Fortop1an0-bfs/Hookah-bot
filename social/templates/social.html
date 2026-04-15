@@ -1366,6 +1366,7 @@ function navigate(page, el) {
   if (fs) fs.style.display = page === 'feed' ? '' : 'none';
   if (page === 'profile') renderProfile();
   if (page === 'feed') loadFeed();
+  if (page === 'lab') loadLabSetup();
   if (page === 'ai') {
     const cabinetToggle = document.getElementById('aiPageCabinetToggle');
     if (cabinetToggle) cabinetToggle.style.display = currentUser ? 'flex' : 'none';
