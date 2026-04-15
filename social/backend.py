@@ -455,6 +455,8 @@ async def startup():
             "ALTER TABLE hl_comments DROP CONSTRAINT IF EXISTS hl_comments_mix_id_fkey",
             "ALTER TABLE hl_user_setup ADD COLUMN IF NOT EXISTS coal_size TEXT DEFAULT ''",
             "ALTER TABLE hl_user_setup ADD COLUMN IF NOT EXISTS coal_warmup TEXT DEFAULT ''",
+            "ALTER TABLE scraper.htr_tobaccos ADD COLUMN IF NOT EXISTS image_url TEXT",
+            "ALTER TABLE scraper.htr_brands ADD COLUMN IF NOT EXISTS logo_url TEXT",
         ]:
             await conn.execute(sql)
 
@@ -1129,12 +1131,21 @@ async def get_catalog(
             SELECT a.id, a.name, a.brand_name as brand, a.line, a.weight,
                    a.price, a.has_discount, a.price_before_discount,
                    a.in_stock, a.stores_count, a.total_amount,
-                   a.image_url, a.is_bestseller,
+                   CASE
+                     WHEN a.image_url IS NOT NULL AND a.image_url LIKE '/%'
+                       THEN 'https://alibaba-market.ru' || a.image_url
+                     WHEN a.image_url IS NOT NULL
+                       THEN a.image_url
+                     ELSE ht.image_url
+                   END AS image_url,
+                   a.is_bestseller,
                    ht.avg_rating, ht.strength_user, ht.strength_official,
-                   ht.flavor_tags, ht.total_reviews, ht.url_path as htr_url
+                   ht.flavor_tags, ht.total_reviews, ht.url_path as htr_url,
+                   hb.logo_url AS brand_logo_url
             FROM scraper.ali_products a
             LEFT JOIN scraper.htr_tobaccos ht ON
                 NULLIF(regexp_replace(a.htreviews_id,'[^0-9]','','g'),'')::int = ht.htreviews_id
+            LEFT JOIN scraper.htr_brands hb ON hb.id = ht.brand_id
             WHERE ($1 = '' OR a.name ILIKE '%'||$1||'%' OR a.brand_name ILIKE '%'||$1||'%')
               AND ($2 = '' OR a.brand_name ILIKE '%'||$2||'%')
               AND (NOT $3 OR a.in_stock = TRUE)

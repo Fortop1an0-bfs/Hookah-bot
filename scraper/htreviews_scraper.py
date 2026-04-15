@@ -53,6 +53,7 @@ CREATE TABLE IF NOT EXISTS htr_brands (
     founded_year    INT,
     website         TEXT,
     description     TEXT,
+    logo_url        TEXT,
     avg_rating      NUMERIC(3,2),
     total_ratings   INT DEFAULT 0,
     total_reviews   INT DEFAULT 0,
@@ -99,6 +100,7 @@ CREATE TABLE IF NOT EXISTS htr_tobaccos (
     total_reviews       INT DEFAULT 0,
     total_views         INT DEFAULT 0,
     pct_recommend       INT,
+    image_url           TEXT,
     reviews_scraped     BOOLEAN DEFAULT FALSE,
     scraped_at          TIMESTAMPTZ DEFAULT NOW()
 );
@@ -133,6 +135,11 @@ CREATE INDEX IF NOT EXISTS idx_htr_tobaccos_rating ON htr_tobaccos(avg_rating DE
 CREATE INDEX IF NOT EXISTS idx_htr_reviews_tobacco ON htr_reviews(tobacco_id);
 CREATE INDEX IF NOT EXISTS idx_htr_reviews_reviewer ON htr_reviews(reviewer_id);
 CREATE INDEX IF NOT EXISTS idx_htr_reviews_date ON htr_reviews(reviewed_at DESC NULLS LAST);
+"""
+
+MIGRATIONS = """
+ALTER TABLE htr_brands ADD COLUMN IF NOT EXISTS logo_url TEXT;
+ALTER TABLE htr_tobaccos ADD COLUMN IF NOT EXISTS image_url TEXT;
 """
 
 
@@ -253,6 +260,11 @@ def parse_brand_page(html: str, slug: str) -> dict:
         if m:
             result['pct_recommend'] = int(m.group(1))
 
+    # Brand logo
+    img_el = soup.select_one('.object_image img')
+    if img_el and img_el.get('src'):
+        result['logo_url'] = img_el['src']
+
     return result
 
 
@@ -356,6 +368,11 @@ def parse_tobacco_page(html: str, url_path: str) -> dict:
                 m = re.search(r'(\d+)', pct_el)
                 if m:
                     result['pct_recommend'] = int(m.group(1))
+
+    # Tobacco image
+    img_el = soup.select_one('.object_image img')
+    if img_el and img_el.get('src'):
+        result['image_url'] = img_el['src']
 
     return result
 
@@ -470,15 +487,18 @@ async def scrape_brand(client: httpx.AsyncClient, pool: asyncpg.Pool, slug: str)
     async with pool.acquire() as conn:
         brand_id = await conn.fetchval("""
             INSERT INTO htr_brands (slug, name, country, founded_year, website, description,
-                                     avg_rating, total_ratings, total_reviews, total_views, pct_recommend)
-            VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)
+                                     logo_url, avg_rating, total_ratings, total_reviews, total_views, pct_recommend)
+            VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)
             ON CONFLICT (slug) DO UPDATE SET
                 name=EXCLUDED.name, country=EXCLUDED.country, avg_rating=EXCLUDED.avg_rating,
                 total_ratings=EXCLUDED.total_ratings, total_reviews=EXCLUDED.total_reviews,
-                total_views=EXCLUDED.total_views, scraped_at=NOW()
+                total_views=EXCLUDED.total_views,
+                logo_url=COALESCE(EXCLUDED.logo_url, htr_brands.logo_url),
+                scraped_at=NOW()
             RETURNING id
         """, slug, data.get('name', slug), data.get('country'),
             data.get('founded_year'), data.get('website'), data.get('description'),
+            data.get('logo_url'),
             data.get('avg_rating'), data.get('total_ratings', 0),
             data.get('total_reviews', 0), data.get('total_views', 0),
             data.get('pct_recommend'))
@@ -553,14 +573,16 @@ async def scrape_tobacco_page(client: httpx.AsyncClient, pool: asyncpg.Pool,
                 htreviews_id, brand_id, line_id, slug, name, url_path,
                 description, strength_official, strength_user, status, country,
                 flavor_tags, added_to_site, avg_rating, total_ratings, total_reviews,
-                total_views, pct_recommend
-            ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18)
+                total_views, pct_recommend, image_url
+            ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19)
             ON CONFLICT (htreviews_id) DO UPDATE SET
                 name=EXCLUDED.name, avg_rating=EXCLUDED.avg_rating,
                 total_ratings=EXCLUDED.total_ratings, total_reviews=EXCLUDED.total_reviews,
                 total_views=EXCLUDED.total_views, flavor_tags=EXCLUDED.flavor_tags,
                 strength_official=EXCLUDED.strength_official, strength_user=EXCLUDED.strength_user,
-                status=EXCLUDED.status, pct_recommend=EXCLUDED.pct_recommend, scraped_at=NOW()
+                status=EXCLUDED.status, pct_recommend=EXCLUDED.pct_recommend,
+                image_url=COALESCE(EXCLUDED.image_url, htr_tobaccos.image_url),
+                scraped_at=NOW()
             RETURNING id
         """, htid, brand_id, line_id, tobacco_slug, data.get('name', tobacco_slug),
             url_path, data.get('description'), data.get('strength_official'),
@@ -568,7 +590,7 @@ async def scrape_tobacco_page(client: httpx.AsyncClient, pool: asyncpg.Pool,
             data.get('flavor_tags'), data.get('added_to_site'),
             data.get('avg_rating'), data.get('total_ratings', 0),
             data.get('total_reviews', 0), data.get('total_views', 0),
-            data.get('pct_recommend'))
+            data.get('pct_recommend'), data.get('image_url'))
 
     log.info(f"  Tobacco: {data.get('name')} (htr_id={htid}, db_id={tobacco_id})")
     return tobacco_id
@@ -662,6 +684,7 @@ async def main():
     log.info("Creating tables...")
     async with pool.acquire() as conn:
         await conn.execute(CREATE_TABLES)
+        await conn.execute(MIGRATIONS)
 
     async with httpx.AsyncClient() as client:
         # Step 1: Get all brand slugs
