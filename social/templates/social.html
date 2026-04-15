@@ -553,26 +553,22 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Space 
 .filter-select{padding:9px 14px;background:var(--bg3);border:1px solid var(--border);border-radius:50px;color:var(--text);font-family:inherit;font-size:0.85rem;outline:none;cursor:pointer;appearance:none;min-width:140px}
 .filter-toggle{padding:8px 16px;background:var(--bg3);border:1px solid var(--border);border-radius:50px;color:var(--text2);font-family:inherit;font-size:0.82rem;cursor:pointer;transition:all 0.2s;font-weight:500}
 .filter-toggle.active{background:rgba(157,111,255,0.12);border-color:var(--purple);color:var(--purple)}
-.catalog-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px;align-items:start}
-.tob-card{background:var(--bg2);border:1px solid var(--border);border-radius:16px;overflow:hidden;transition:all 0.2s;cursor:pointer;position:relative;display:flex;flex-direction:column}
+.catalog-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px;align-items:start}
+.tob-card{background:var(--bg2);border:1px solid var(--border);border-radius:14px;overflow:hidden;transition:all 0.2s;cursor:pointer;display:flex;flex-direction:column}
 .tob-card:hover{border-color:var(--border2);transform:translateY(-2px);box-shadow:0 8px 24px rgba(0,0,0,0.3)}
-.tob-card-img{width:100%;height:120px;flex-shrink:0;background:var(--bg3);display:flex;align-items:center;justify-content:center;overflow:hidden;position:relative}
+.tob-card-img{width:100%;height:160px;flex-shrink:0;background:var(--bg3);display:flex;align-items:center;justify-content:center;overflow:hidden;position:relative}
 .tob-card-img img{width:100%;height:100%;object-fit:cover;transition:transform 0.3s}
 .tob-card:hover .tob-card-img img{transform:scale(1.05)}
-.tob-card-img-placeholder{font-size:2.2rem;letter-spacing:-2px;opacity:0.25;user-select:none;filter:blur(0.5px)}
-.tob-card-body{padding:12px 14px 14px;display:flex;flex-direction:column;flex:1}
-.tob-card-brand{font-size:0.63rem;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:3px}
-.tob-card-name{font-size:0.88rem;font-weight:600;line-height:1.35;flex:1;margin-bottom:8px}
-.tob-card-tags{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:10px;min-height:20px}
-.tob-card-tag{font-size:0.6rem;padding:2px 7px;border-radius:50px;background:rgba(157,111,255,0.1);color:var(--purple)}
-.tob-card-reviews{font-size:0.65rem;color:var(--text3);margin-top:-6px;margin-bottom:8px}
-.tob-card-footer{display:flex;align-items:center;gap:6px;border-top:1px solid var(--border);padding-top:10px;margin-top:auto}
-.tob-card-price{font-size:0.95rem;font-weight:700;color:var(--gold)}
-.tob-card-price-old{font-size:0.68rem;color:var(--text3);text-decoration:line-through}
-.tob-card-rating{font-size:0.72rem;color:var(--gold);display:flex;align-items:center;gap:2px;white-space:nowrap}
-.tob-card-strength{font-size:0.63rem;padding:2px 7px;border-radius:50px;background:var(--bg4);color:var(--text2);white-space:nowrap}
-.tob-card-stock{position:absolute;top:10px;right:10px;width:7px;height:7px;border-radius:50%;z-index:2;box-shadow:0 0 0 2px rgba(0,0,0,0.4)}
-.tob-card-add{margin-left:auto;padding:5px 11px;background:rgba(157,111,255,0.1);border:1px solid rgba(157,111,255,0.25);border-radius:50px;color:var(--purple);font-size:0.72rem;font-weight:600;cursor:pointer;transition:all 0.2s;font-family:inherit;white-space:nowrap;flex-shrink:0}
+.tob-card-img-placeholder{font-size:2.6rem;opacity:0.15;user-select:none}
+.tob-card-stock{position:absolute;top:8px;right:8px;width:7px;height:7px;border-radius:50%;z-index:2;box-shadow:0 0 0 2px rgba(0,0,0,0.5)}
+.tob-card-body{padding:9px 12px 11px;display:flex;flex-direction:column;gap:5px}
+.tob-card-name{font-size:0.82rem;font-weight:600;line-height:1.35;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tob-card-meta{display:flex;align-items:center;gap:5px;flex-wrap:nowrap;min-width:0}
+.tob-card-price{font-size:0.88rem;font-weight:700;color:var(--gold);white-space:nowrap;flex-shrink:0}
+.tob-card-price-old{font-size:0.62rem;color:var(--text3);text-decoration:line-through;white-space:nowrap;flex-shrink:0}
+.tob-card-revs{font-size:0.65rem;color:var(--text3);white-space:nowrap;flex-shrink:0}
+.tob-card-strength{font-size:0.6rem;padding:2px 6px;border-radius:50px;background:var(--bg4);color:var(--text2);white-space:nowrap;flex-shrink:0}
+.tob-card-add{margin-left:auto;padding:4px 10px;background:rgba(157,111,255,0.1);border:1px solid rgba(157,111,255,0.25);border-radius:50px;color:var(--purple);font-size:0.7rem;font-weight:600;cursor:pointer;transition:all 0.2s;font-family:inherit;white-space:nowrap;flex-shrink:0}
 .tob-card-add:hover{background:rgba(157,111,255,0.22)}
 .catalog-load-more{width:100%;padding:13px;margin-top:16px;background:var(--bg3);border:1px solid var(--border);border-radius:14px;color:var(--text2);font-family:inherit;font-size:0.88rem;font-weight:600;cursor:pointer;transition:all 0.2s}
 .catalog-load-more:hover{background:var(--bg4)}
@@ -2820,37 +2816,24 @@ async function loadCatalog(offset=0) {
     renderCatalogAISummary(data.ai, q);
     const cards = data.items.map(t => {
       _tobCache[t.id] = t;
-      const tags = (t.flavor_tags||[]).slice(0,3).map(g=>`<span class="tob-card-tag">${g}</span>`).join('');
       const strCol = t.strength_user||t.strength_official||'';
       const disc = t.has_discount && t.price_before_discount ? `<span class="tob-card-price-old">${t.price_before_discount}₽</span>` : '';
       const stock = t.in_stock ? '#4ade80' : '#f06b6b';
       const brandEmoji = {'Darkside':'🟣','Must':'🔵','Satyr':'🟤','Tangiers':'🟠','Al Fakher':'🟡','WTO':'🟢','Fumari':'🔴','Brusko':'⚫'}[t.brand] || '🍃';
-      const placeholderImg = t.brand_logo_url
-        ? `<img src="${t.brand_logo_url}" alt="" loading="lazy" style="width:64px;height:64px;object-fit:contain;opacity:0.35" onerror="this.outerHTML='<span class=\\'tob-card-img-placeholder\\'>${brandEmoji}</span>'">`
-        : `<span class="tob-card-img-placeholder">${brandEmoji}</span>`;
-      const reviewLine = t.avg_rating
-        ? `<div class="tob-card-reviews">⭐ ${t.avg_rating}${t.total_reviews?' · '+t.total_reviews+' отзывов':''}</div>`
-        : '';
+      const revs = t.avg_rating ? `<span class="tob-card-revs">⭐ ${parseFloat(t.avg_rating).toFixed(1)}${t.total_reviews?' · '+t.total_reviews+' отз.':''}</span>` : '';
       return `<div class="tob-card" onclick="showTobaccoDetail(${t.id})">
         <div class="tob-card-img">
           <div class="tob-card-stock" style="background:${stock}"></div>
           ${t.image_url
             ? `<img src="${t.image_url}" alt="" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">`
             : ''}
-          <div style="display:${t.image_url?'none':'flex'};position:absolute;inset:0;align-items:center;justify-content:center">${placeholderImg}</div>
+          <div style="display:${t.image_url?'none':'flex'};position:absolute;inset:0;align-items:center;justify-content:center"><span class="tob-card-img-placeholder">${brandEmoji}</span></div>
         </div>
         <div class="tob-card-body">
-          <div class="tob-card-brand">${t.brand}${t.line?' · '+t.line:''}</div>
-          <div class="tob-card-name">${t.name.replace(/Табак для кальяна\s*/i,'')}</div>
-          <div class="tob-card-tags">${tags}</div>
-          ${reviewLine}
-          <div class="tob-card-footer">
-            <div>
-              <div style="display:flex;align-items:baseline;gap:4px">
-                <span class="tob-card-price">${t.price}₽</span>${disc}
-              </div>
-              <div style="font-size:0.62rem;color:var(--text3)">${t.weight||''}</div>
-            </div>
+          <div class="tob-card-name">${cleanTobName(t.name)}</div>
+          <div class="tob-card-meta">
+            <span class="tob-card-price">${t.price}₽</span>${disc}
+            ${revs}
             ${strCol?`<span class="tob-card-strength">${strCol}</span>`:''}
             <button class="tob-card-add" onclick="event.stopPropagation();addFromCatalog(${JSON.stringify(t).replace(/"/g,'&quot;')})">+ В микс</button>
           </div>
