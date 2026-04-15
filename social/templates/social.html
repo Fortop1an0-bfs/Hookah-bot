@@ -831,28 +831,10 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Space 
         </div>
         <span style="font-size:0.78rem;color:var(--text3);flex-shrink:0;margin-left:auto" id="catalogTotal"></span>
       </div>
-      <div class="catalog-layout">
-        <div class="catalog-filters">
-          <select class="filter-select" id="catSort" onchange="loadCatalog(0)">
-            <option value="rating">По рейтингу</option>
-            <option value="reviews">По отзывам</option>
-            <option value="price_asc">Дешевле</option>
-            <option value="price_desc">Дороже</option>
-          </select>
-          <select class="filter-select" id="catStrength" onchange="loadCatalog(0)">
-            <option value="">Любая крепость</option>
-            <option value="лёгк">Лёгкая</option>
-            <option value="средн">Средняя</option>
-            <option value="крепк">Крепкая</option>
-          </select>
-          <button class="filter-toggle" id="catInStock" onclick="toggleCatInStock()">В наличии</button>
-          <button class="filter-toggle" id="catAISearch" onclick="toggleCatAISearch()">ИИ поиск</button>
-        </div>
-        <div class="catalog-ai-summary" id="catAISummary"></div>
-        <div class="catalog-grid" id="catalogGrid">
-          <div class="loading"><div class="spinner"></div>Загрузка...</div>
-        </div>
-        <button class="catalog-load-more" id="catalogMore" style="display:none" onclick="loadCatalogMore()">Показать ещё</button>
+      <!-- Переключатель разделов -->
+      <div class="cat-tabs">
+        <button class="cat-tab active" id="catTab-tobaccos" onclick="switchCatTab('tobaccos')">🌿 Табаки</button>
+        <button class="cat-tab" id="catTab-mixes" onclick="switchCatTab('mixes')">⚗️ Миксы</button>
       </div>
 
       <!-- Раздел: Табаки -->
@@ -872,7 +854,9 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Space 
               <option value="крепк">Крепкая</option>
             </select>
             <button class="filter-toggle" id="catInStock" onclick="toggleCatInStock()">В наличии</button>
+            <button class="filter-toggle" id="catAISearch" onclick="toggleCatAISearch()">ИИ поиск</button>
           </div>
+          <div class="catalog-ai-summary" id="catAISummary"></div>
           <div class="catalog-grid" id="catalogGrid">
             <div class="loading"><div class="spinner"></div>Загрузка...</div>
           </div>
