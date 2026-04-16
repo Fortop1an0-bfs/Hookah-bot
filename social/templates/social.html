@@ -844,6 +844,12 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Space 
       <div id="catSection-tobaccos">
         <div class="catalog-layout">
           <div class="catalog-filters">
+            <select class="filter-select" id="catBrand" onchange="onCatBrandChange()">
+              <option value="">Все бренды</option>
+            </select>
+            <select class="filter-select" id="catLine" onchange="loadCatalog(0)" style="display:none">
+              <option value="">Все линейки</option>
+            </select>
             <select class="filter-select" id="catSort" onchange="loadCatalog(0)">
               <option value="rating">По рейтингу</option>
               <option value="reviews">По отзывам</option>
@@ -1371,6 +1377,7 @@ function navigate(page, el) {
   if (page === 'profile') renderProfile();
   if (page === 'feed') loadFeed();
   if (page === 'lab') loadLabSetup();
+  if (page === 'catalog') loadCatalogBrands();
   if (page === 'ai') {
     const cabinetToggle = document.getElementById('aiPageCabinetToggle');
     if (cabinetToggle) cabinetToggle.style.display = currentUser ? 'flex' : 'none';
@@ -2791,6 +2798,35 @@ function toggleCatAISearch() {
   document.getElementById('catAISearch').classList.toggle('active', catAISearch);
   loadCatalog(0);
 }
+async function loadCatalogBrands() {
+  const sel = document.getElementById('catBrand');
+  if (!sel || sel.dataset.loaded) return;
+  try {
+    const brands = await api('/api/catalog/brands');
+    sel.innerHTML = '<option value="">Все бренды</option>' +
+      brands.map(b => `<option value="${escHtml(b)}">${escHtml(b)}</option>`).join('');
+    sel.dataset.loaded = '1';
+  } catch(e) {}
+}
+async function onCatBrandChange() {
+  const brand = document.getElementById('catBrand').value;
+  const lineSel = document.getElementById('catLine');
+  lineSel.innerHTML = '<option value="">Все линейки</option>';
+  if (brand) {
+    try {
+      const lines = await api('/api/catalog/lines?brand=' + encodeURIComponent(brand));
+      if (lines.length) {
+        lineSel.innerHTML += lines.map(l => `<option value="${escHtml(l)}">${escHtml(l)}</option>`).join('');
+        lineSel.style.display = '';
+      } else {
+        lineSel.style.display = 'none';
+      }
+    } catch(e) { lineSel.style.display = 'none'; }
+  } else {
+    lineSel.style.display = 'none';
+  }
+  loadCatalog(0);
+}
 function renderCatalogAISummary(ai, rawQuery) {
   const box = document.getElementById('catAISummary');
   if (!catAISearch || !ai) {
@@ -2814,6 +2850,8 @@ async function loadCatalog(offset=0) {
   const q = document.getElementById('catSearch').value.trim();
   const sort = document.getElementById('catSort').value;
   const strength = document.getElementById('catStrength').value;
+  const brand = document.getElementById('catBrand').value;
+  const line = document.getElementById('catLine').value;
   const grid = document.getElementById('catalogGrid');
   const totalEl = document.getElementById('catalogTotal');
   const moreEl = document.getElementById('catalogMore');
@@ -2829,7 +2867,7 @@ async function loadCatalog(offset=0) {
 
   try {
     const endpoint = catAISearch ? '/api/catalog/ai-search' : '/api/catalog';
-    const params = new URLSearchParams({q,sort,strength,in_stock:catInStock,limit:40,offset});
+    const params = new URLSearchParams({q,sort,strength,brand,line,in_stock:catInStock,limit:40,offset});
     const data = await api(endpoint + '?' + params);
     totalEl.textContent = data.total + ' табаков';
     moreEl.style.display = data.items.length===40 ? 'block' : 'none';

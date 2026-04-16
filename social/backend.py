@@ -1121,9 +1121,30 @@ async def rate_mix(mix_id: int, request: Request, user=Depends(req_user)):
 
 # ── CATALOG ───────────────────────────────────────────────────────────────────
 
+@app.get("/api/catalog/brands")
+async def get_catalog_brands():
+    async with pool.acquire() as conn:
+        rows = await conn.fetch("""
+            SELECT brand_name FROM scraper.ali_products
+            WHERE brand_name IS NOT NULL AND brand_name != ''
+            GROUP BY brand_name ORDER BY COUNT(*) DESC LIMIT 300
+        """)
+        return [r["brand_name"] for r in rows]
+
+@app.get("/api/catalog/lines")
+async def get_catalog_lines(brand: str = ""):
+    async with pool.acquire() as conn:
+        rows = await conn.fetch("""
+            SELECT DISTINCT line FROM scraper.ali_products
+            WHERE line IS NOT NULL AND line != ''
+              AND ($1 = '' OR brand_name ILIKE '%'||$1||'%')
+            ORDER BY line LIMIT 150
+        """, brand)
+        return [r["line"] for r in rows]
+
 @app.get("/api/catalog")
 async def get_catalog(
-    q: str = "", brand: str = "", strength: str = "",
+    q: str = "", brand: str = "", line: str = "", strength: str = "",
     in_stock: bool = False, min_rating: float = 0,
     sort: str = "rating", offset: int = 0, limit: int = 40
 ):
@@ -1149,26 +1170,28 @@ async def get_catalog(
             LEFT JOIN scraper.htr_brands hb ON hb.id = ht.brand_id
             WHERE ($1 = '' OR a.name ILIKE '%'||$1||'%' OR a.brand_name ILIKE '%'||$1||'%')
               AND ($2 = '' OR a.brand_name ILIKE '%'||$2||'%')
-              AND (NOT $3 OR a.in_stock = TRUE)
-              AND ($4 = 0 OR ht.avg_rating >= $4)
-              AND ($5 = '' OR ht.strength_user ILIKE '%'||$5||'%' OR ht.strength_official ILIKE '%'||$5||'%')
+              AND ($3 = '' OR a.line ILIKE '%'||$3||'%')
+              AND (NOT $4 OR a.in_stock = TRUE)
+              AND ($5 = 0 OR ht.avg_rating >= $5)
+              AND ($6 = '' OR ht.strength_user ILIKE '%'||$6||'%' OR ht.strength_official ILIKE '%'||$6||'%')
             ORDER BY
-                CASE WHEN $6='rating'    THEN COALESCE(ht.avg_rating,0) END DESC NULLS LAST,
-                CASE WHEN $6='price_asc' THEN a.price END ASC NULLS LAST,
-                CASE WHEN $6='price_desc' THEN a.price END DESC NULLS LAST,
-                CASE WHEN $6='reviews'   THEN COALESCE(ht.total_reviews,0) END DESC NULLS LAST,
+                CASE WHEN $7='rating'    THEN COALESCE(ht.avg_rating,0) END DESC NULLS LAST,
+                CASE WHEN $7='price_asc' THEN a.price END ASC NULLS LAST,
+                CASE WHEN $7='price_desc' THEN a.price END DESC NULLS LAST,
+                CASE WHEN $7='reviews'   THEN COALESCE(ht.total_reviews,0) END DESC NULLS LAST,
                 a.is_bestseller DESC, a.brand_name, a.name
-            LIMIT $7 OFFSET $8
-        """, q, brand, in_stock, min_rating, strength, sort, limit, offset)
+            LIMIT $8 OFFSET $9
+        """, q, brand, line, in_stock, min_rating, strength, sort, limit, offset)
         total = await conn.fetchval("""
             SELECT COUNT(*) FROM scraper.ali_products a
             LEFT JOIN scraper.htr_tobaccos ht ON
                 NULLIF(regexp_replace(a.htreviews_id,'[^0-9]','','g'),'')::int = ht.htreviews_id
             WHERE ($1='' OR a.name ILIKE '%'||$1||'%' OR a.brand_name ILIKE '%'||$1||'%')
               AND ($2='' OR a.brand_name ILIKE '%'||$2||'%')
-              AND (NOT $3 OR a.in_stock=TRUE)
-              AND ($4=0 OR ht.avg_rating>=$4)
-        """, q, brand, in_stock, min_rating)
+              AND ($3='' OR a.line ILIKE '%'||$3||'%')
+              AND (NOT $4 OR a.in_stock=TRUE)
+              AND ($5=0 OR ht.avg_rating>=$5)
+        """, q, brand, line, in_stock, min_rating)
         return {"items": [dict(r) for r in rows], "total": total}
 
 
