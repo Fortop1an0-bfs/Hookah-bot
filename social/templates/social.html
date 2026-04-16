@@ -300,6 +300,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Space 
 .setup-v{font-size:0.83rem;font-weight:500;margin-top:1px}
 .setup-v.empty{color:var(--text3);font-style:italic;font-weight:400}
 .setup-sub-tag{display:inline-block;font-size:0.64rem;background:rgba(157,111,255,0.1);border:1px solid rgba(157,111,255,0.2);color:var(--purple);border-radius:20px;padding:1px 7px}
+.setup-bowl-item{display:flex;align-items:center;gap:8px;padding:8px 12px;background:var(--bg3);border-radius:10px;margin-bottom:5px}
 .tob-cabinet{display:flex;flex-wrap:wrap;gap:6px}
 .tob-chip{padding:4px 10px;background:var(--bg3);border:1px solid var(--border);border-radius:50px;font-size:0.72rem;display:flex;align-items:center;gap:5px;cursor:pointer;transition:all 0.2s}
 .tob-chip:hover{border-color:var(--purple)}
@@ -1144,26 +1145,29 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Space 
 
       <!-- BOWL -->
       <div class="setup-field">
-        <label class="setup-field-label">🏺 Чаша</label>
-        <div style="display:flex;gap:10px;align-items:flex-start">
-          <div style="flex:1">
-            <input class="form-input" id="setupBowl" placeholder="Бренд/название (напр. Oblako Phunnel M)..."
-              oninput="searchEquip('bowl','setupBowl','bowl-preview','bowl-results')">
-            <div class="equip-results" id="bowl-results"></div>
+        <label class="setup-field-label" style="display:flex;align-items:center;justify-content:space-between">
+          🏺 Чаши
+          <span style="font-size:0.72rem;color:var(--purple);cursor:pointer;font-weight:600;text-transform:none;letter-spacing:0" onclick="showAddBowlForm()">+ Добавить</span>
+        </label>
+        <div id="setupBowlsList"></div>
+        <div id="setupBowlAddForm" style="display:none;background:var(--bg3);border-radius:12px;padding:12px;margin-top:6px">
+          <input class="form-input" id="setupBowlNew" placeholder="Бренд/название (напр. Oblako Phunnel M)...">
+          <div class="setup-field-sub" style="margin-top:8px">
+            <label class="setup-field-sublabel">Форма чаши</label>
+            <div class="setup-chips" id="chips-bowl-new-type">
+              <span onclick="pickChip('setupBowlNewType',this)">Убивашка</span>
+              <span onclick="pickChip('setupBowlNewType',this)">Фанел</span>
+              <span onclick="pickChip('setupBowlNewType',this)">Обратный фанел</span>
+              <span onclick="pickChip('setupBowlNewType',this)">Triton</span>
+              <span onclick="pickChip('setupBowlNewType',this)">Турка</span>
+              <span onclick="pickChip('setupBowlNewType',this)">Стандарт</span>
+            </div>
+            <input type="hidden" id="setupBowlNewType">
           </div>
-          <div class="equip-photo-wrap" id="bowl-preview"></div>
-        </div>
-        <div class="setup-field-sub">
-          <label class="setup-field-sublabel">Форма чаши</label>
-          <div class="setup-chips" id="chips-bowl-type">
-            <span onclick="pickChip('setupBowlType',this)">Убивашка</span>
-            <span onclick="pickChip('setupBowlType',this)">Фанел</span>
-            <span onclick="pickChip('setupBowlType',this)">Обратный фанел</span>
-            <span onclick="pickChip('setupBowlType',this)">Triton</span>
-            <span onclick="pickChip('setupBowlType',this)">Турка</span>
-            <span onclick="pickChip('setupBowlType',this)">Стандарт</span>
+          <div style="display:flex;gap:8px;margin-top:10px">
+            <button class="btn-ghost" style="width:auto;padding:8px 16px;flex-shrink:0" onclick="cancelAddBowl()">Отмена</button>
+            <button class="btn-gold" style="flex:1" onclick="confirmAddBowl()">Добавить</button>
           </div>
-          <input type="hidden" id="setupBowlType">
         </div>
       </div>
 
@@ -1463,49 +1467,31 @@ function setBowlSize(g, btn) {
 async function loadLabSetup() {
   const hint = document.getElementById('labSetupBowlHint');
   if (!hint) return;
-  if (!currentUser || !token) { hint.style.display = 'none'; return; }
+  if (!currentUser || !token) { hint.style.display='none'; return; }
   try {
     const me = await api('/api/me');
-    const setup = me.setup || {};
-    if (setup.bowl || setup.bowl_type) {
-      lab.setupBowl = { bowl: setup.bowl || '', bowl_type: setup.bowl_type || '' };
-      const nameEl = document.getElementById('labSetupBowlName');
-      if (nameEl) {
-        const parts = [setup.bowl_type, setup.bowl].filter(Boolean);
-        nameEl.textContent = parts.join(' · ') || 'Моя чаша';
-      }
-      hint.style.display = '';
-    } else {
-      lab.setupBowl = null;
-      hint.style.display = 'none';
-    }
-  } catch(e) { hint.style.display = 'none'; }
+    const s = me.setup||{};
+    let bowls=[]; try{bowls=JSON.parse(s.bowls_json||'[]');}catch(e){}
+    if(!bowls.length&&(s.bowl||s.bowl_type)) bowls=[{name:s.bowl||'',type:s.bowl_type||''}];
+    if(bowls.length){
+      lab.setupBowls=bowls;
+      hint.style.cssText='display:flex;flex-direction:column;gap:5px;width:100%';
+      hint.innerHTML=bowls.map((b,i)=>`<button class="lab-setup-bowl" onclick="applySetupBowlAt(${i})">🏺 <span>${[b.type,b.name].filter(Boolean).join(' · ')||'Моя чаша'}</span></button>`).join('');
+    } else { lab.setupBowls=[]; hint.style.display='none'; }
+  } catch(e){ hint.style.display='none'; }
 }
 
-function applySetupBowl() {
-  if (!lab.setupBowl) return;
-  const BOWL_TYPE_TO_SIZE = {
-    'убивашка': 20, 'стандарт': 20,
-    'фанел': 15, 'обратный фанел': 15,
-    'турка': 10, 'сифон': 10, 'triton': 10
-  };
-  const type = (lab.setupBowl.bowl_type || 'убивашка').toLowerCase();
-  const size = BOWL_TYPE_TO_SIZE[type] || 20;
-  lab.bowlSize = size;
-  // активируем нужную кнопку размера
-  document.querySelectorAll('.bowl-size-btn').forEach(b => {
-    const btnLabel = b.textContent.trim().toLowerCase();
-    const btnSize = {убивашка:20,фанел:15,турка:10,сифон:10}[btnLabel] || 0;
-    b.classList.toggle('active', btnSize === size);
+function applySetupBowlAt(i) {
+  const b=(lab.setupBowls||[])[i]; if(!b) return;
+  const SZ={'убивашка':20,'стандарт':20,'фанел':15,'обратный фанел':15,'турка':10,'сифон':10,'triton':10};
+  const size=SZ[(b.type||'').toLowerCase()]||lab.bowlSize;
+  lab.bowlSize=size;
+  document.querySelectorAll('.bowl-size-btn').forEach(btn=>{
+    const btnLabel=btn.textContent.trim().toLowerCase();
+    btn.classList.toggle('active',({убивашка:20,фанел:15,турка:10}[btnLabel]||0)===size);
   });
-  // обновляем метку чаши с названием из сетапа
-  const bowlType = lab.setupBowl.bowl_type || {20:'Убивашка',15:'Фанел',10:'Турка'}[size] || 'Убивашка';
-  const bowlName = lab.setupBowl.bowl;
-  document.getElementById('labBowlLbl').textContent = bowlName
-    ? `${bowlType} · ${bowlName}`
-    : bowlType;
-  const applyBtn = document.getElementById('labSetupBowlBtn');
-  if (applyBtn) applyBtn.classList.add('active');
+  document.getElementById('labBowlLbl').textContent=b.name?`${b.type||'Чаша'} · ${b.name}`:(b.type||'Чаша');
+  document.getElementById('labSetupBowlHint').querySelectorAll('.lab-setup-bowl').forEach((btn,j)=>btn.classList.toggle('active',j===i));
   renderTobList();
 }
 function setPackMethod(m, btn) {
@@ -2452,7 +2438,9 @@ function buildProfileHTML(d) {
       <div class="p-widget">
         <div class="p-widget-title">Сетап <span class="p-widget-add" onclick="openSetupModal()">изменить</span></div>
         ${buildSetupRow('🔱','hookah','Кальян',d.setup?.hookah,d.setup?.flask_shape,d.setup?.flask_color)}
-        ${buildSetupRow('🏺','bowl','Чаша',d.setup?.bowl,d.setup?.bowl_type)}
+        ${(()=>{let bb=[];try{bb=JSON.parse(d.setup?.bowls_json||'[]');}catch(e){}
+        if(!bb.length&&(d.setup?.bowl||d.setup?.bowl_type))bb=[{name:d.setup.bowl||'',type:d.setup.bowl_type||''}];
+        return bb.length?bb.map((b,i)=>buildSetupRow('🏺',i===0?'bowl':'bowl'+i,i===0?'Чаша':'↳',b.name,b.type)).join(''):buildSetupRow('🏺','bowl','Чаша','');})()}
         ${buildSetupRow('🔥','coal','Угли',d.setup?.coal,d.setup?.coal_size,d.setup?.coal_warmup?'🧢 '+d.setup.coal_warmup:undefined)}
         ${buildSetupRow('🌸','hmd','Калауд / ХМД',d.setup?.foil)}
       </div>
@@ -2498,7 +2486,36 @@ async function removeTobFromCabinet(id) {
 
 // ── SETUP MODAL ──
 let _setupData = {};
+let _setupBowls = [];
 let _equipTimers = {};
+
+function renderSetupBowlsList() {
+  const el = document.getElementById('setupBowlsList');
+  if (!el) return;
+  el.innerHTML = _setupBowls.length
+    ? _setupBowls.map((b,i) => `<div class="setup-bowl-item">
+        <span style="font-size:1rem">🏺</span>
+        <div style="flex:1"><div style="font-size:0.85rem;font-weight:600">${b.name||b.type||'Без названия'}</div>${b.type&&b.name?`<div style="font-size:0.7rem;color:var(--text3)">${b.type}</div>`:''}</div>
+        <span style="cursor:pointer;color:var(--text3);font-size:0.75rem;padding:4px" onclick="removeSetupBowl(${i})">✕</span>
+      </div>`).join('')
+    : '<div style="font-size:0.78rem;color:var(--text3);padding:4px 0">Нет чаш — нажми + Добавить</div>';
+}
+function showAddBowlForm() {
+  document.getElementById('setupBowlAddForm').style.display='';
+  document.getElementById('setupBowlNew').value='';
+  document.getElementById('setupBowlNewType').value='';
+  document.querySelectorAll('#chips-bowl-new-type span').forEach(s=>s.classList.remove('active'));
+}
+function cancelAddBowl() { document.getElementById('setupBowlAddForm').style.display='none'; }
+function confirmAddBowl() {
+  const name=document.getElementById('setupBowlNew').value.trim();
+  const type=document.getElementById('setupBowlNewType').value.trim();
+  if(!name&&!type){showToast('Введи название или выбери тип');return;}
+  _setupBowls.push({name,type});
+  renderSetupBowlsList();
+  cancelAddBowl();
+}
+function removeSetupBowl(i) { _setupBowls.splice(i,1); renderSetupBowlsList(); }
 let _equipCache  = {};
 
 function openSetupModal() {
@@ -2506,18 +2523,20 @@ function openSetupModal() {
   api(`/api/profile/${currentUser.username}`).then(d=>{
     const s = d.setup||{};
     document.getElementById('setupHookah').value    = s.hookah||'';
-    document.getElementById('setupBowl').value      = s.bowl||'';
     document.getElementById('setupCoal').value      = s.coal||'';
     document.getElementById('setupFoil').value      = s.foil||s.notes||'';
     document.getElementById('setupFlaskShape').value= s.flask_shape||'';
     document.getElementById('setupFlaskColor').value= s.flask_color||'';
-    document.getElementById('setupBowlType').value  = s.bowl_type||'';
     document.getElementById('setupCoalSize').value   = s.coal_size||'';
     document.getElementById('setupCoalWarmup').value = s.coal_warmup||'';
+    // load bowls list
+    let _bparsed=[]; try{_bparsed=JSON.parse(s.bowls_json||'[]');}catch(e){}
+    if(!_bparsed.length&&(s.bowl||s.bowl_type)) _bparsed=[{name:s.bowl||'',type:s.bowl_type||''}];
+    _setupBowls=_bparsed; renderSetupBowlsList();
     // restore previews for saved values (or show defaults)
-    [['hookah','hookah','hookah-preview'],['bowl','bowl','bowl-preview'],
+    [['hookah','hookah','hookah-preview'],
      ['coal','coal','coal-preview'],['foil','hmd','foil-preview']].forEach(([field,type,prevId])=>{
-      const inpMap = {hookah:'setupHookah',bowl:'setupBowl',coal:'setupCoal',foil:'setupFoil'};
+      const inpMap = {hookah:'setupHookah',coal:'setupCoal',foil:'setupFoil'};
       const val = document.getElementById(inpMap[field]).value;
       _showEquipPreview(type, val, prevId);
     });
@@ -2628,7 +2647,6 @@ function syncChips() {
   [
     ['setupFlaskShape','chips-flask-shape'],
     ['setupFlaskColor','chips-flask-color'],
-    ['setupBowlType','chips-bowl-type'],
     ['setupCoalSize','chips-coal-size'],
     ['setupCoalWarmup','chips-coal-warmup'],
     ['setupFoil','chips-foil'],
@@ -2644,8 +2662,9 @@ async function saveSetupModal() {
   try {
     await api('/api/me','PATCH',{
       hookah:      document.getElementById('setupHookah').value.trim(),
-      bowl:        document.getElementById('setupBowl').value.trim(),
-      bowl_type:   document.getElementById('setupBowlType').value.trim(),
+      bowl:        (_setupBowls[0]?.name||''),
+      bowl_type:   (_setupBowls[0]?.type||''),
+      bowls_json:  JSON.stringify(_setupBowls),
       coal:        document.getElementById('setupCoal').value.trim(),
       coal_size:   document.getElementById('setupCoalSize').value.trim(),
       coal_warmup: document.getElementById('setupCoalWarmup').value.trim(),
