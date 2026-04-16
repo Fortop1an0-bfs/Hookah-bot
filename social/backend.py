@@ -1321,6 +1321,56 @@ async def get_top_mixes(period: str = "week", limit: int = 10):
             result.append({**dict(row), "items": items})
         return result
 
+@app.get("/api/catalog/mixes")
+async def get_catalog_mixes(
+    q: str = "",
+    sort: str = "new",
+    strength: str = "",
+    bowl_type: str = "",
+    limit: int = 20,
+    offset: int = 0,
+):
+    limit  = max(1, min(50, limit))
+    offset = max(0, offset)
+    order  = "m.created_at DESC" if sort != "top" else "likes DESC, avg_rating DESC"
+    async with pool.acquire() as conn:
+        rows = await conn.fetch(f"""
+            SELECT m.id, m.name, m.description, m.bowl_type, m.bowl_grams,
+                   m.pack_method, m.coal_tip, m.strength, m.created_at, m.is_llm,
+                   u.username, u.avatar,
+                   (SELECT COUNT(*) FROM hl_likes    l WHERE l.mix_id = m.id) AS likes,
+                   (SELECT COUNT(*) FROM hl_saves    s WHERE s.mix_id = m.id) AS saves,
+                   (SELECT COUNT(*) FROM hl_comments c WHERE c.mix_id = m.id) AS comments,
+                   COALESCE(ROUND(AVG(r.rating), 1), 0) AS avg_rating
+            FROM hl_mixes m
+            JOIN hl_users u ON u.id = m.user_id
+            LEFT JOIN hl_mix_ratings r ON r.mix_id = m.id
+            WHERE m.is_public = TRUE
+              AND ($1 = '' OR m.name        ILIKE '%'||$1||'%'
+                           OR m.description ILIKE '%'||$1||'%')
+              AND ($2 = '' OR m.strength  ILIKE '%'||$2||'%')
+              AND ($3 = '' OR m.bowl_type ILIKE '%'||$3||'%')
+            GROUP BY m.id, u.username, u.avatar
+            ORDER BY {order}
+            LIMIT $4 OFFSET $5
+        """, q, strength, bowl_type, limit, offset)
+
+        total = await conn.fetchval("""
+            SELECT COUNT(*)
+            FROM hl_mixes m
+            WHERE m.is_public = TRUE
+              AND ($1 = '' OR m.name        ILIKE '%'||$1||'%'
+                           OR m.description ILIKE '%'||$1||'%')
+              AND ($2 = '' OR m.strength  ILIKE '%'||$2||'%')
+              AND ($3 = '' OR m.bowl_type ILIKE '%'||$3||'%')
+        """, q, strength, bowl_type)
+
+        result = []
+        for row in rows:
+            items = await _mix_items(conn, row["id"])
+            result.append({**dict(row), "items": items})
+        return {"items": result, "total": total}
+
 # ── EQUIPMENT ─────────────────────────────────────────────────────────────────
 
 @app.get("/api/equipment")
