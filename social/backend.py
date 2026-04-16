@@ -1150,36 +1150,44 @@ async def get_catalog(
 ):
     async with pool.acquire() as conn:
         rows = await conn.fetch("""
-            SELECT a.id, a.name, a.brand_name as brand, a.line, a.weight,
-                   a.price, a.has_discount, a.price_before_discount,
-                   a.in_stock, a.stores_count, a.total_amount,
-                   CASE
-                     WHEN a.image_url IS NOT NULL AND a.image_url LIKE '/%'
-                       THEN 'https://alibaba-market.ru' || a.image_url
-                     WHEN a.image_url IS NOT NULL
-                       THEN a.image_url
-                     ELSE ht.image_url
-                   END AS image_url,
-                   a.is_bestseller,
-                   ht.avg_rating, ht.strength_user, ht.strength_official,
-                   ht.flavor_tags, ht.total_reviews, ht.url_path as htr_url,
-                   hb.logo_url AS brand_logo_url
-            FROM scraper.ali_products a
-            LEFT JOIN scraper.htr_tobaccos ht ON
-                NULLIF(regexp_replace(a.htreviews_id,'[^0-9]','','g'),'')::int = ht.htreviews_id
-            LEFT JOIN scraper.htr_brands hb ON hb.id = ht.brand_id
-            WHERE ($1 = '' OR a.name ILIKE '%'||$1||'%' OR a.brand_name ILIKE '%'||$1||'%')
-              AND ($2 = '' OR a.brand_name ILIKE '%'||$2||'%')
-              AND ($3 = '' OR a.line ILIKE '%'||$3||'%')
-              AND (NOT $4 OR a.in_stock = TRUE)
-              AND ($5 = 0 OR ht.avg_rating >= $5)
-              AND ($6 = '' OR ht.strength_user ILIKE '%'||$6||'%' OR ht.strength_official ILIKE '%'||$6||'%')
+            SELECT * FROM (
+                SELECT DISTINCT ON (lower(brand_name), lower(coalesce(line,'')), flavor_key)
+                       a.id, a.name, a.brand_name as brand, a.line, a.weight,
+                       a.price, a.has_discount, a.price_before_discount,
+                       a.in_stock, a.stores_count, a.total_amount,
+                       COALESCE(
+                         ht.image_url,
+                         CASE WHEN a.image_url LIKE '/%'
+                              THEN 'https://alibaba-market.ru' || a.image_url
+                              ELSE a.image_url END
+                       ) AS image_url,
+                       a.is_bestseller,
+                       ht.avg_rating, ht.strength_user, ht.strength_official,
+                       ht.flavor_tags, ht.total_reviews, ht.url_path as htr_url,
+                       hb.logo_url AS brand_logo_url
+                FROM (
+                    SELECT *,
+                      lower(trim(regexp_replace(regexp_replace(name,'\\s*\\(уп.*?\\)','','gi'),'\\s*\\([^)]*\\)','','gi'))) AS flavor_key
+                    FROM scraper.ali_products
+                    WHERE ($1 = '' OR name ILIKE '%'||$1||'%' OR brand_name ILIKE '%'||$1||'%')
+                      AND ($2 = '' OR brand_name ILIKE '%'||$2||'%')
+                      AND ($3 = '' OR line ILIKE '%'||$3||'%')
+                      AND (NOT $4 OR in_stock = TRUE)
+                ) a
+                LEFT JOIN scraper.htr_tobaccos ht ON
+                    NULLIF(regexp_replace(a.htreviews_id,'[^0-9]','','g'),'')::int = ht.htreviews_id
+                LEFT JOIN scraper.htr_brands hb ON hb.id = ht.brand_id
+                WHERE ($5 = 0 OR ht.avg_rating >= $5)
+                  AND ($6 = '' OR ht.strength_user ILIKE '%'||$6||'%' OR ht.strength_official ILIKE '%'||$6||'%')
+                ORDER BY lower(brand_name), lower(coalesce(line,'')), flavor_key,
+                         a.in_stock DESC NULLS LAST, a.price ASC NULLS LAST
+            ) deduped
             ORDER BY
-                CASE WHEN $7='rating'    THEN COALESCE(ht.avg_rating,0) END DESC NULLS LAST,
-                CASE WHEN $7='price_asc' THEN a.price END ASC NULLS LAST,
-                CASE WHEN $7='price_desc' THEN a.price END DESC NULLS LAST,
-                CASE WHEN $7='reviews'   THEN COALESCE(ht.total_reviews,0) END DESC NULLS LAST,
-                a.is_bestseller DESC, a.brand_name, a.name
+                CASE WHEN $7='rating'    THEN COALESCE(avg_rating,0) END DESC NULLS LAST,
+                CASE WHEN $7='price_asc' THEN price END ASC NULLS LAST,
+                CASE WHEN $7='price_desc' THEN price END DESC NULLS LAST,
+                CASE WHEN $7='reviews'   THEN COALESCE(total_reviews,0) END DESC NULLS LAST,
+                is_bestseller DESC, brand, name
             LIMIT $8 OFFSET $9
         """, q, brand, line, in_stock, min_rating, strength, sort, limit, offset)
         total = await conn.fetchval("""
