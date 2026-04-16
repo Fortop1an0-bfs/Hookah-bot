@@ -287,7 +287,7 @@ PRIORITY_BRANDS = [
     'chabacco','sarma','trofimoffs','starline','overdose','adalya',
     'banger','duft','bonche','original-virginia','hit','leteam',
     'fumari','al-fakher','tangiers','satyr','jookah','cobra',
-    'hooligan','nash', 'wto',
+    'khuligan','nash', 'wto',
 ]
 
 # Extra brand slugs to try directly (not on /tobaccos/brands page)
@@ -296,7 +296,7 @@ EXTRA_BRANDS = [
     'darkside','musthave','sebero','black-burn','spectrum','brusko',
     'chabacco','sarma','trofimoffs','starline','overdose','adalya',
     'banger','duft','bonche','hit','leteam','fumari','al-fakher',
-    'hooligan','nash','jookah','cobra','bonche','overdosed','brume',
+    'khuligan','nash','jookah','cobra','bonche','overdosed','brume',
     'burn','element','true-passion','must',
 ]
 
