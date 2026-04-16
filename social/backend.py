@@ -998,7 +998,13 @@ async def get_saved(user=Depends(req_user)):
 # ── PROFILE ──────────────────────────────────────────────────────────────────
 
 @app.get("/api/profile/{username}")
-async def get_profile(username: str):
+async def get_profile(username: str, authorization: Optional[str] = Header(None)):
+    viewer = None
+    if authorization and authorization.startswith("Bearer "):
+        async with pool.acquire() as conn:
+            viewer = await conn.fetchrow(
+                "SELECT u.id FROM hl_sessions s JOIN hl_users u ON u.id=s.user_id WHERE s.token=$1",
+                authorization[7:])
     async with pool.acquire() as conn:
         user = await conn.fetchrow("SELECT * FROM hl_users WHERE lower(username)=$1", username.lower())
         if not user:
@@ -1010,10 +1016,16 @@ async def get_profile(username: str):
             "SELECT COUNT(*) FROM hl_follows WHERE following_id=$1", user["id"])
         following = await conn.fetchval(
             "SELECT COUNT(*) FROM hl_follows WHERE follower_id=$1", user["id"])
+        is_following = False
+        if viewer and viewer["id"] != user["id"]:
+            is_following = bool(await conn.fetchval(
+                "SELECT 1 FROM hl_follows WHERE follower_id=$1 AND following_id=$2",
+                viewer["id"], user["id"]))
         mixes = await _fetch_mixes(user["id"])
     return {
         "id": user["id"], "username": user["username"],
         "bio": user["bio"], "avatar": user["avatar"],
+        "is_following": is_following,
         "setup": dict(setup) if setup else {},
         "tobaccos": [dict(t) for t in tobaccos],
         "mixes": mixes,

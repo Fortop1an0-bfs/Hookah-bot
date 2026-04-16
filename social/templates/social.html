@@ -3148,15 +3148,22 @@ async function loadUserModal(username) {
   try {
     const d = await api('/api/profile/'+username);
     const isMe = currentUser && currentUser.username === username;
-    const followBtn = !isMe && token ? `<button class="icon-btn" onclick="toggleFollowUser('${username}',this)" style="margin-top:10px">Подписаться</button>` : '';
+    const following = d.is_following;
+    const followLabel = following ? 'Отписаться' : 'Подписаться';
+    const followStyle = following
+      ? 'margin-top:10px;opacity:0.6'
+      : 'margin-top:10px';
+    const followBtn = !isMe && token
+      ? `<button class="icon-btn" id="followBtn_${username}" onclick="toggleFollowUser('${username}',this)" style="${followStyle}">${followLabel}</button>`
+      : '';
     el.innerHTML = `
       <div style="text-align:center;padding:16px 0">
         <div style="font-size:2.5rem;margin-bottom:8px">${d.avatar||'🧔'}</div>
         <div style="font-size:1.1rem;font-weight:700">@${d.username}</div>
-        ${d.bio?`<div style="font-size:0.82rem;color:var(--text2);margin-top:5px">${d.bio}</div>`:''}
+        ${d.bio?`<div style="font-size:0.82rem;color:var(--text2);margin-top:5px">${escHtml(d.bio)}</div>`:''}
         <div style="display:flex;justify-content:center;gap:24px;margin-top:12px">
           <div><div style="font-size:1.1rem;font-weight:700">${d.stats.mixes}</div><div style="font-size:0.65rem;color:var(--text3)">Миксов</div></div>
-          <div><div style="font-size:1.1rem;font-weight:700">${d.stats.followers}</div><div style="font-size:0.65rem;color:var(--text3)">Подписчиков</div></div>
+          <div id="followerCount_${username}"><div style="font-size:1.1rem;font-weight:700">${d.stats.followers}</div><div style="font-size:0.65rem;color:var(--text3)">Подписчиков</div></div>
         </div>
         ${followBtn}
       </div>
@@ -3170,11 +3177,21 @@ async function loadUserModal(username) {
 }
 async function toggleFollowUser(username, btn) {
   if (!token) { openAuth(); return; }
+  btn.disabled = true;
   try {
     const r = await api('/api/follow/'+username,'POST');
     btn.textContent = r.following ? 'Отписаться' : 'Подписаться';
-    showToast(r.following ? 'Подписан!' : 'Отписан');
-  } catch(e) {}
+    btn.style.opacity = r.following ? '0.6' : '1';
+    showToast(r.following ? 'Подписан! 🔔' : 'Отписан');
+    // Update follower counter in the modal without reload
+    const counterEl = document.getElementById('followerCount_'+username);
+    if (counterEl) {
+      const cur = parseInt(counterEl.querySelector('div').textContent) || 0;
+      const next = r.following ? cur + 1 : Math.max(0, cur - 1);
+      counterEl.innerHTML = `<div style="font-size:1.1rem;font-weight:700">${next}</div><div style="font-size:0.65rem;color:var(--text3)">Подписчиков</div>`;
+    }
+  } catch(e) { showToast('Ошибка'); }
+  finally { btn.disabled = false; }
 }
 
 // ── EDIT PROFILE ─────────────────────────────────────────────────
@@ -3332,6 +3349,10 @@ renderBowl();
 loadFeed();
 loadNotifCount();
 loadTopMixes();
+// Poll notifications every 30s (only when tab is visible and user is logged in)
+setInterval(() => {
+  if (token && document.visibilityState === 'visible') loadNotifCount();
+}, 30000);
 
 // Колёсико работает везде — перебрасываем на content-wrap
 document.addEventListener('wheel', function(e) {
