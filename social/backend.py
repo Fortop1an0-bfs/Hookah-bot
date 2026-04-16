@@ -703,7 +703,12 @@ async def search_tobaccos(q: str = "", brand: str = "", limit: int = 40):
                 SELECT a.id, a.name, a.brand_name as brand, a.line, a.weight,
                        a.price, a.price_before_discount, a.has_discount,
                        a.in_stock, a.stores_count, a.total_amount,
-                       a.htreviews_id, a.image_url, a.is_bestseller,
+                       a.htreviews_id, a.is_bestseller,
+                       COALESCE(ht.image_url,
+                           CASE WHEN a.image_url LIKE '/%'
+                                THEN 'https://alibaba-market.ru' || a.image_url
+                                ELSE a.image_url END
+                       ) AS image_url,
                        ht.avg_rating, ht.strength_user, ht.strength_official,
                        ht.flavor_tags, ht.total_reviews, ht.url_path as htr_url
                 FROM scraper.ali_products a
@@ -730,7 +735,11 @@ async def search_tobaccos(q: str = "", brand: str = "", limit: int = 40):
             WITH ali_matches AS (
                 -- Только ali: чистые данные с brand/line/weight полями
                 SELECT a.id, a.name, a.brand_name AS brand, a.line, a.weight,
-                       a.price, a.image_url, a.in_stock, a.htreviews_id, a.is_bestseller,
+                       a.price,
+                       CASE WHEN a.image_url LIKE '/%'
+                            THEN 'https://alibaba-market.ru' || a.image_url
+                            ELSE a.image_url END AS image_url,
+                       a.in_stock, a.htreviews_id, a.is_bestseller,
                        a.one_c_id,
                        -- флейвор = название минус граммовка и скобки с уточнениями
                        lower(trim(regexp_replace(
@@ -748,7 +757,7 @@ async def search_tobaccos(q: str = "", brand: str = "", limit: int = 40):
             )
             SELECT DISTINCT ON (lower(m.brand), lower(coalesce(m.line,'')), m.flavor_key)
                 m.id, 'ali' AS source, m.name, m.brand, m.line, m.weight,
-                m.price, m.image_url, m.in_stock, m.htreviews_id, m.is_bestseller,
+                m.price, COALESCE(ht.image_url, m.image_url) AS image_url, m.in_stock, m.htreviews_id, m.is_bestseller,
                 NULL::numeric as has_discount, NULL::int as price_before_discount,
                 NULL::int as stores_count, NULL::int as total_amount,
                 ht.avg_rating, ht.strength_user, ht.strength_official,
