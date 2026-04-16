@@ -3286,8 +3286,10 @@ async function loadTopMixes() {
           el.innerHTML = '<div class="feed-widget-title">🏆 Топ миксов</div>' +
             comm.map((m, idx) => {
               const labData = JSON.stringify({name:m.title,pack_method:'секторами',items:m.items.map((it,i)=>({tobacco_name:it.tobacco_name,brand:it.brand,percentage:it.percentage,color:COLORS[i%COLORS.length]}))}).replace(/"/g,'&quot;');
-              const stars = Math.round(3 + Math.random()*2);
-              const starsHtml = '★'.repeat(stars) + '<span style="opacity:0.25">' + '★'.repeat(5-stars) + '</span>';
+              const starsVal = Math.round(parseFloat(m.avg_rating) || 0);
+              const starsHtml = starsVal > 0
+                ? '★'.repeat(starsVal) + '<span style="opacity:0.25">' + '★'.repeat(5-starsVal) + '</span>'
+                : '<span style="opacity:0.3">☆☆☆☆☆</span>';
               const tobaccos = m.items.map(it=>`<div style="display:flex;justify-content:space-between;gap:6px"><span style="color:var(--text)">${it.tobacco_name}</span><span style="color:var(--text3);font-family:\'JetBrains Mono\';font-size:0.68rem">${it.percentage}%</span></div>`).join('');
               return `<div class="top-mix-item" onclick="loadMixToLab(${labData})">
                 <div style="display:flex;align-items:center;gap:8px;margin-bottom:5px">
@@ -3307,8 +3309,10 @@ async function loadTopMixes() {
     const label = rows[0]._period === 'week' ? 'недели' : 'всех времён';
     el.innerHTML = '<div class="feed-widget-title">🏆 Топ миксов ' + label + '</div>' +
       rows.map((m,idx)=>{
-        const stars = Math.round(3 + Math.random()*2);
-        const starsHtml = '★'.repeat(stars) + '<span style="opacity:0.25">' + '★'.repeat(5-stars) + '</span>';
+        const starsVal = Math.round(parseFloat(m.avg_rating) || 0);
+        const starsHtml = starsVal > 0
+          ? '★'.repeat(starsVal) + '<span style="opacity:0.25">' + '★'.repeat(5-starsVal) + '</span>'
+          : '<span style="opacity:0.3">☆☆☆☆☆</span>';
         const tobaccos = (m.items||[]).map(it=>`<div style="display:flex;justify-content:space-between;gap:6px"><span style="color:var(--text)">${it.tobacco_name}</span><span style="color:var(--text3);font-family:'JetBrains Mono';font-size:0.68rem">${it.percentage}%</span></div>`).join('');
         return `<div class="top-mix-item" onclick="loadMixToLab(${JSON.stringify(m).replace(/"/g,'&quot;')})">
           <div style="display:flex;align-items:center;gap:8px;margin-bottom:5px">

@@ -6,7 +6,7 @@ from fastapi import FastAPI, Request, Header, HTTPException, Depends
 from fastapi.responses import JSONResponse, HTMLResponse
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
-import asyncpg, hashlib, secrets, json, re, httpx, os
+import asyncpg, hashlib, secrets, json, re, httpx, os, bcrypt as _bcrypt
 from typing import Optional
 
 # ── TRANSLITERATION ──────────────────────────────────────────────────────────
@@ -113,7 +113,7 @@ try:
 except Exception:
     pass
 
-DB_DSN   = os.environ.get("DB_DSN", "postgresql://hookah:hookah123@localhost:5432/hookah_db")
+DB_DSN   = os.environ.get("DB_DSN", "postgresql://hookah:hookah@localhost:5432/hookah_db")
 GROQ_KEY = os.environ.get("GROQ_KEY", "")
 GROQ_URL = "https://api.groq.com/openai/v1/chat/completions"
 GROQ_MODEL = "llama-3.3-70b-versatile"
@@ -573,7 +573,14 @@ CREATE TABLE IF NOT EXISTS hl_mix_ratings (
 # ── HELPERS ──────────────────────────────────────────────────────────────────
 
 def hash_pw(pw: str) -> str:
-    return hashlib.sha256(pw.encode()).hexdigest()
+    """Hash password with bcrypt (cost=12)."""
+    return _bcrypt.hashpw(pw.encode(), _bcrypt.gensalt(12)).decode()
+
+def _verify_pw(pw: str, stored: str) -> bool:
+    """Verify password. Supports bcrypt and legacy sha256 (auto-migration on login)."""
+    if stored.startswith("$2"):          # bcrypt hash
+        return _bcrypt.checkpw(pw.encode(), stored.encode())
+    return stored == hashlib.sha256(pw.encode()).hexdigest()  # legacy sha256
 
 def make_token() -> str:
     return secrets.token_hex(32)
@@ -644,10 +651,15 @@ async def login(request: Request):
     password  = d.get("password") or ""
     async with pool.acquire() as conn:
         row = await conn.fetchrow(
-            "SELECT * FROM hl_users WHERE (lower(email)=$1 OR lower(username)=$1) AND pass_hash=$2",
-            login_val, hash_pw(password))
-        if not row:
+            "SELECT * FROM hl_users WHERE lower(email)=$1 OR lower(username)=$1",
+            login_val)
+        if not row or not _verify_pw(password, row["pass_hash"]):
             raise HTTPException(401, "Неверный логин или пароль")
+        # Auto-migrate legacy sha256 → bcrypt on successful login
+        if not row["pass_hash"].startswith("$2"):
+            await conn.execute(
+                "UPDATE hl_users SET pass_hash=$1 WHERE id=$2",
+                hash_pw(password), row["id"])
         token = make_token()
         await conn.execute("INSERT INTO hl_sessions (token,user_id) VALUES ($1,$2)", token, row["id"])
     return {"token": token, "username": row["username"], "user_id": row["id"]}
@@ -676,6 +688,18 @@ async def get_me(user=Depends(req_user)):
 async def update_me(request: Request, user=Depends(req_user)):
     d = await request.json()
     async with pool.acquire() as conn:
+        if "username" in d and d["username"]:
+            uname = d["username"].strip()
+            if len(uname) < 3 or len(uname) > 30:
+                raise HTTPException(400, "Никнейм: 3–30 символов")
+            if not re.match(r'^[a-zA-Z0-9_а-яА-ЯёЁ]+$', uname):
+                raise HTTPException(400, "Никнейм: только буквы, цифры и _")
+            taken = await conn.fetchval(
+                "SELECT 1 FROM hl_users WHERE lower(username)=$1 AND id!=$2",
+                uname.lower(), user["id"])
+            if taken:
+                raise HTTPException(409, "Никнейм уже занят")
+            await conn.execute("UPDATE hl_users SET username=$1 WHERE id=$2", uname, user["id"])
         if "bio" in d or "avatar" in d:
             await conn.execute(
                 "UPDATE hl_users SET bio=COALESCE($1,bio), avatar=COALESCE($2,avatar) WHERE id=$3",
@@ -934,20 +958,21 @@ async def get_feed(offset: int = 0, limit: int = 20):
             SELECT m.id, m.name, m.description, m.bowl_type, m.bowl_grams,
                    m.pack_method, m.coal_tip, m.strength, m.created_at, m.is_llm,
                    u.username, u.avatar,
-                   (SELECT COUNT(*) FROM hl_likes l WHERE l.mix_id=m.id) as likes,
-                   (SELECT COUNT(*) FROM hl_saves s WHERE s.mix_id=m.id) as saves,
-                   (SELECT COUNT(*) FROM hl_comments c WHERE c.mix_id=m.id) as comments
+                   (SELECT COUNT(*) FROM hl_likes    l WHERE l.mix_id=m.id) AS likes,
+                   (SELECT COUNT(*) FROM hl_saves    s WHERE s.mix_id=m.id) AS saves,
+                   (SELECT COUNT(*) FROM hl_comments c WHERE c.mix_id=m.id) AS comments,
+                   COALESCE(
+                       (SELECT JSON_AGG(mi ORDER BY mi.sort_order)
+                        FROM hl_mix_items mi WHERE mi.mix_id=m.id),
+                       '[]'::json
+                   ) AS items
             FROM hl_mixes m
             JOIN hl_users u ON u.id=m.user_id
             WHERE m.is_public=TRUE
             ORDER BY m.created_at DESC
             OFFSET $1 LIMIT $2
         """, offset, limit)
-        result = []
-        for row in rows:
-            items = await _mix_items(conn, row["id"])
-            result.append({**dict(row), "items": items})
-        return result
+        return [dict(row) for row in rows]
 
 @app.get("/api/saved")
 async def get_saved(user=Depends(req_user)):
@@ -956,18 +981,19 @@ async def get_saved(user=Depends(req_user)):
             SELECT m.id, m.name, m.description, m.bowl_type, m.bowl_grams,
                    m.pack_method, m.coal_tip, m.strength, m.created_at,
                    u.username, u.avatar,
-                   (SELECT COUNT(*) FROM hl_likes l WHERE l.mix_id=m.id) as likes
+                   (SELECT COUNT(*) FROM hl_likes l WHERE l.mix_id=m.id) AS likes,
+                   COALESCE(
+                       (SELECT JSON_AGG(mi ORDER BY mi.sort_order)
+                        FROM hl_mix_items mi WHERE mi.mix_id=m.id),
+                       '[]'::json
+                   ) AS items
             FROM hl_saves s
             JOIN hl_mixes m ON m.id=s.mix_id
             JOIN hl_users u ON u.id=m.user_id
             WHERE s.user_id=$1
             ORDER BY m.created_at DESC
         """, user["id"])
-        result = []
-        for row in rows:
-            items = await _mix_items(conn, row["id"])
-            result.append({**dict(row), "items": items})
-        return result
+        return [dict(row) for row in rows]
 
 # ── PROFILE ──────────────────────────────────────────────────────────────────
 
@@ -1281,13 +1307,21 @@ async def get_community_mixes(limit: int = 20):
 
 @app.get("/api/catalog/top-mixes")
 async def get_top_mixes(period: str = "week", limit: int = 10):
+    items_subq = """
+        COALESCE(
+            (SELECT JSON_AGG(mi ORDER BY mi.sort_order)
+             FROM hl_mix_items mi WHERE mi.mix_id=m.id),
+            '[]'::json
+        ) AS items
+    """
     async with pool.acquire() as conn:
         if period == "all":
-            rows = await conn.fetch("""
+            rows = await conn.fetch(f"""
                 SELECT m.id, m.name, m.pack_method, m.bowl_type, m.strength,
                        u.username, u.avatar,
-                       COUNT(DISTINCT l.user_id) as likes,
-                       COALESCE(ROUND(AVG(r.rating),1),0) as avg_rating
+                       COUNT(DISTINCT l.user_id) AS likes,
+                       COALESCE(ROUND(AVG(r.rating),1),0) AS avg_rating,
+                       {items_subq}
                 FROM hl_mixes m
                 JOIN hl_users u ON u.id=m.user_id
                 LEFT JOIN hl_likes l ON l.mix_id=m.id
@@ -1299,11 +1333,12 @@ async def get_top_mixes(period: str = "week", limit: int = 10):
             """, limit)
         else:
             days = 7 if period == "week" else 30
-            rows = await conn.fetch("""
+            rows = await conn.fetch(f"""
                 SELECT m.id, m.name, m.pack_method, m.bowl_type, m.strength,
                        u.username, u.avatar,
-                       COUNT(DISTINCT l.user_id) as likes,
-                       COALESCE(ROUND(AVG(r.rating),1),0) as avg_rating
+                       COUNT(DISTINCT l.user_id) AS likes,
+                       COALESCE(ROUND(AVG(r.rating),1),0) AS avg_rating,
+                       {items_subq}
                 FROM hl_mixes m
                 JOIN hl_users u ON u.id=m.user_id
                 LEFT JOIN hl_likes l ON l.mix_id=m.id
@@ -1314,12 +1349,7 @@ async def get_top_mixes(period: str = "week", limit: int = 10):
                 ORDER BY likes DESC, avg_rating DESC
                 LIMIT $2
             """, days, limit)
-        result = []
-        for row in rows:
-            async with pool.acquire() as conn2:
-                items = await _mix_items(conn2, row["id"])
-            result.append({**dict(row), "items": items})
-        return result
+        return [dict(r) for r in rows]
 
 @app.get("/api/catalog/mixes")
 async def get_catalog_mixes(
@@ -1332,7 +1362,9 @@ async def get_catalog_mixes(
 ):
     limit  = max(1, min(50, limit))
     offset = max(0, offset)
-    order  = "m.created_at DESC" if sort != "top" else "likes DESC, avg_rating DESC"
+    # Whitelist sort to prevent any SQL injection risk
+    sort = sort if sort in ("new", "top") else "new"
+    order = "m.created_at DESC" if sort == "new" else "likes DESC, avg_rating DESC"
     async with pool.acquire() as conn:
         rows = await conn.fetch(f"""
             SELECT m.id, m.name, m.description, m.bowl_type, m.bowl_grams,
@@ -1341,7 +1373,12 @@ async def get_catalog_mixes(
                    (SELECT COUNT(*) FROM hl_likes    l WHERE l.mix_id = m.id) AS likes,
                    (SELECT COUNT(*) FROM hl_saves    s WHERE s.mix_id = m.id) AS saves,
                    (SELECT COUNT(*) FROM hl_comments c WHERE c.mix_id = m.id) AS comments,
-                   COALESCE(ROUND(AVG(r.rating), 1), 0) AS avg_rating
+                   COALESCE(ROUND(AVG(r.rating), 1), 0) AS avg_rating,
+                   COALESCE(
+                       (SELECT JSON_AGG(mi ORDER BY mi.sort_order)
+                        FROM hl_mix_items mi WHERE mi.mix_id = m.id),
+                       '[]'::json
+                   ) AS items
             FROM hl_mixes m
             JOIN hl_users u ON u.id = m.user_id
             LEFT JOIN hl_mix_ratings r ON r.mix_id = m.id
@@ -1365,11 +1402,7 @@ async def get_catalog_mixes(
               AND ($3 = '' OR m.bowl_type ILIKE '%'||$3||'%')
         """, q, strength, bowl_type)
 
-        result = []
-        for row in rows:
-            items = await _mix_items(conn, row["id"])
-            result.append({**dict(row), "items": items})
-        return {"items": result, "total": total}
+        return {"items": [dict(r) for r in rows], "total": total}
 
 # ── EQUIPMENT ─────────────────────────────────────────────────────────────────
 
@@ -1528,11 +1561,21 @@ async def llm_generate(request: Request):
 
 async def _fetch_mixes(user_id: int):
     async with pool.acquire() as conn:
-        rows = await conn.fetch(
-            "SELECT * FROM hl_mixes WHERE user_id=$1 ORDER BY created_at DESC", user_id)
-        result = []
-        for row in rows:
-            items = await _mix_items(conn, row["id"])
-            stats = await _mix_stats(conn, row["id"])
-            result.append({**dict(row), "items": items, **stats})
-        return result
+        rows = await conn.fetch("""
+            SELECT m.*,
+                   (SELECT COUNT(*) FROM hl_likes    l WHERE l.mix_id=m.id) AS likes,
+                   (SELECT COUNT(*) FROM hl_saves    s WHERE s.mix_id=m.id) AS saves,
+                   (SELECT COUNT(*) FROM hl_comments c WHERE c.mix_id=m.id) AS comments,
+                   COALESCE(ROUND(AVG(r.rating),1), 0) AS avg_rating,
+                   COALESCE(
+                       (SELECT JSON_AGG(mi ORDER BY mi.sort_order)
+                        FROM hl_mix_items mi WHERE mi.mix_id=m.id),
+                       '[]'::json
+                   ) AS items
+            FROM hl_mixes m
+            LEFT JOIN hl_mix_ratings r ON r.mix_id=m.id
+            WHERE m.user_id=$1
+            GROUP BY m.id
+            ORDER BY m.created_at DESC
+        """, user_id)
+        return [dict(r) for r in rows]
