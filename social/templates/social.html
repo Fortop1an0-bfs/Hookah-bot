@@ -563,7 +563,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Space 
 .tob-card-img-placeholder{font-size:2.6rem;opacity:0.15;user-select:none}
 .tob-card-stock{position:absolute;top:8px;right:8px;width:7px;height:7px;border-radius:50%;z-index:2;box-shadow:0 0 0 2px rgba(0,0,0,0.5)}
 .tob-card-body{padding:9px 12px 11px;display:flex;flex-direction:column;gap:5px}
-.tob-card-name{font-size:0.82rem;font-weight:600;line-height:1.35;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tob-card-name{font-size:0.82rem;font-weight:600;line-height:1.35;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 .tob-card-meta{display:flex;align-items:center;gap:5px;flex-wrap:nowrap;min-width:0}
 .tob-card-price{font-size:0.88rem;font-weight:700;color:var(--gold);white-space:nowrap;flex-shrink:0}
 .tob-card-price-old{font-size:0.62rem;color:var(--text3);text-decoration:line-through;white-space:nowrap;flex-shrink:0}
@@ -2890,6 +2890,7 @@ async function loadCatalog(offset=0) {
         <div class="tob-card-body">
           <div class="tob-card-name">${cleanTobName(t.name)}</div>
           <div class="tob-card-meta">
+            <span class="tob-card-price">${t.price}₽</span>${disc}
             ${revs}
             ${strCol?`<span class="tob-card-strength">${strCol}</span>`:''}
             <button class="tob-card-add" onclick="event.stopPropagation();addFromCatalog(${JSON.stringify(t).replace(/"/g,'&quot;')})">+ В микс</button>

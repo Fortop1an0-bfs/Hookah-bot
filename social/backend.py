@@ -119,7 +119,7 @@ try:
 except Exception:
     pass
 
-DB_DSN   = os.environ.get("DB_DSN", "postgresql://hookah:hookah@localhost:5432/hookah_db")
+DB_DSN   = os.environ.get("DB_DSN", "postgresql://hookah:hookah123@localhost:5432/hookah_db")
 GROQ_KEY = os.environ.get("GROQ_KEY", "")
 GROQ_URL = "https://api.groq.com/openai/v1/chat/completions"
 GROQ_MODEL = "llama-3.3-70b-versatile"
