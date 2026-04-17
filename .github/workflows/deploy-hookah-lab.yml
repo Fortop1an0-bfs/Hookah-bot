@@ -51,6 +51,9 @@ jobs:
             cp /opt/hookah/social/backend.py /opt/hookah-lab/backend.py
             cp /opt/hookah/social/templates/social.html /opt/hookah-lab/templates/social.html
 
+            echo "[deploy] install python deps"
+            pip install -r /opt/hookah/requirements.txt --break-system-packages -q
+
             echo "[deploy] restart service"
             systemctl restart hookah-lab.service
             systemctl is-active --quiet hookah-lab.service
