@@ -6,7 +6,13 @@ from fastapi import FastAPI, Request, Header, HTTPException, Depends
 from fastapi.responses import JSONResponse, HTMLResponse
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
-import asyncpg, hashlib, secrets, json, re, httpx, os, bcrypt as _bcrypt
+import asyncpg, hashlib, secrets, json, re, httpx, os
+try:
+    import bcrypt as _bcrypt
+    _BCRYPT_OK = True
+except ImportError:
+    _bcrypt = None          # type: ignore
+    _BCRYPT_OK = False
 from typing import Optional
 
 # ── TRANSLITERATION ──────────────────────────────────────────────────────────
@@ -573,14 +579,16 @@ CREATE TABLE IF NOT EXISTS hl_mix_ratings (
 # ── HELPERS ──────────────────────────────────────────────────────────────────
 
 def hash_pw(pw: str) -> str:
-    """Hash password with bcrypt (cost=12)."""
-    return _bcrypt.hashpw(pw.encode(), _bcrypt.gensalt(12)).decode()
+    """Hash password with bcrypt (cost=12), fallback to sha256 if bcrypt unavailable."""
+    if _BCRYPT_OK:
+        return _bcrypt.hashpw(pw.encode(), _bcrypt.gensalt(12)).decode()
+    return hashlib.sha256(pw.encode()).hexdigest()
 
 def _verify_pw(pw: str, stored: str) -> bool:
-    """Verify password. Supports bcrypt and legacy sha256 (auto-migration on login)."""
+    """Verify password. Supports bcrypt and legacy sha256."""
     if stored.startswith("$2"):          # bcrypt hash
-        return _bcrypt.checkpw(pw.encode(), stored.encode())
-    return stored == hashlib.sha256(pw.encode()).hexdigest()  # legacy sha256
+        return _BCRYPT_OK and _bcrypt.checkpw(pw.encode(), stored.encode())
+    return stored == hashlib.sha256(pw.encode()).hexdigest()  # sha256
 
 def make_token() -> str:
     return secrets.token_hex(32)
