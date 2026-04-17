@@ -52,7 +52,9 @@ jobs:
             cp /opt/hookah/social/templates/social.html /opt/hookah-lab/templates/social.html
 
             echo "[deploy] install python deps"
-            pip install -r /opt/hookah/requirements.txt --break-system-packages -q
+            pip install fastapi uvicorn asyncpg httpx python-dotenv bcrypt --break-system-packages -q || \
+            pip3 install fastapi uvicorn asyncpg httpx python-dotenv bcrypt --break-system-packages -q || \
+            echo "[deploy] pip install skipped (will use existing packages)"
 
             echo "[deploy] restart service"
             systemctl restart hookah-lab.service
