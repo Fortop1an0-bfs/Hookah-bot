@@ -2890,7 +2890,6 @@ async function loadCatalog(offset=0) {
         <div class="tob-card-body">
           <div class="tob-card-name">${cleanTobName(t.name)}</div>
           <div class="tob-card-meta">
-            <span class="tob-card-price">${t.price}₽</span>${disc}
             ${revs}
             ${strCol?`<span class="tob-card-strength">${strCol}</span>`:''}
             <button class="tob-card-add" onclick="event.stopPropagation();addFromCatalog(${JSON.stringify(t).replace(/"/g,'&quot;')})">+ В микс</button>
