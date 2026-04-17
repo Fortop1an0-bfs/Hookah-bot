@@ -7,6 +7,17 @@ from fastapi.responses import JSONResponse, HTMLResponse
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 import asyncpg, hashlib, secrets, json, re, httpx, os
+
+def _fix_items(rows):
+    """Parse items JSON string → list for rows that contain an 'items' column."""
+    result = []
+    for row in rows:
+        d = dict(row)
+        if isinstance(d.get('items'), str):
+            try: d['items'] = json.loads(d['items'])
+            except: d['items'] = []
+        result.append(d)
+    return result
 try:
     import bcrypt as _bcrypt
     _BCRYPT_OK = True
@@ -980,7 +991,7 @@ async def get_feed(offset: int = 0, limit: int = 20):
             ORDER BY m.created_at DESC
             OFFSET $1 LIMIT $2
         """, offset, limit)
-        return [dict(row) for row in rows]
+        return _fix_items(rows)
 
 @app.get("/api/saved")
 async def get_saved(user=Depends(req_user)):
@@ -1001,7 +1012,7 @@ async def get_saved(user=Depends(req_user)):
             WHERE s.user_id=$1
             ORDER BY m.created_at DESC
         """, user["id"])
-        return [dict(row) for row in rows]
+        return _fix_items(rows)
 
 # ── PROFILE ──────────────────────────────────────────────────────────────────
 
@@ -1369,7 +1380,7 @@ async def get_top_mixes(period: str = "week", limit: int = 10):
                 ORDER BY likes DESC, avg_rating DESC
                 LIMIT $2
             """, days, limit)
-        return [dict(r) for r in rows]
+        return _fix_items(rows)
 
 @app.get("/api/catalog/mixes")
 async def get_catalog_mixes(
@@ -1422,7 +1433,7 @@ async def get_catalog_mixes(
               AND ($3 = '' OR m.bowl_type ILIKE '%'||$3||'%')
         """, q, strength, bowl_type)
 
-        return {"items": [dict(r) for r in rows], "total": total}
+        return {"items": _fix_items(rows), "total": total}
 
 # ── EQUIPMENT ─────────────────────────────────────────────────────────────────
 
@@ -1598,4 +1609,4 @@ async def _fetch_mixes(user_id: int):
             GROUP BY m.id
             ORDER BY m.created_at DESC
         """, user_id)
-        return [dict(r) for r in rows]
+        return _fix_items(rows)
